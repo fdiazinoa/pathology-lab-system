@@ -148,16 +148,19 @@ const Login = () => {
                         />
                     </div>
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all transform active:scale-[0.98] flex justify-center items-center text-base disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {loading ? (
-                            <span className="mr-2 animate-spin">⟳</span>
-                        ) : null}
-                        Iniciar Sesión
-                    </button>
+                    <div className="pt-2">
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            style={{ backgroundColor: '#2563eb' }}
+                            className="w-full py-3.5 px-4 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition-all transform active:scale-[0.98] flex justify-center items-center text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {loading ? (
+                                <span className="mr-2 animate-spin">⟳</span>
+                            ) : null}
+                            Iniciar Sesión
+                        </button>
+                    </div>
                 </form>
 
                 {/* Divider */}
