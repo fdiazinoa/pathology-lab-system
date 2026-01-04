@@ -37,9 +37,13 @@ const MacroscopyModule = () => {
             }
             // Load images from centralized storage
             if (caseData.images && caseData.images.length > 0 && !activeImage) {
+                // First try to load macroscopy-specific images
                 const macroImages = caseData.images.filter(img => img.moduleOrigin === 'macroscopy');
                 if (macroImages.length > 0) {
                     setActiveImage(macroImages[0]);
+                } else if (caseData.images.length > 0) {
+                    // If no macroscopy images, load any available image
+                    setActiveImage(caseData.images[0]);
                 }
             }
         }
@@ -133,8 +137,8 @@ const MacroscopyModule = () => {
 
     if (!caseData) return <div>Cargando caso...</div>;
 
-    // Get macroscopy images from centralized storage
-    const macroscopyImages = caseData.images ? caseData.images.filter(img => img.moduleOrigin === 'macroscopy') : [];
+    // Get all case images (prioritize macroscopy-tagged, but show all)
+    const macroscopyImages = caseData.images || [];
 
     return (
         <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">

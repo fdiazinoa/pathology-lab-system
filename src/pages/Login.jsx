@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useData } from '../services/DataContext';
 import { AlertCircle } from 'lucide-react';
 import Button from '../components/Button';
+import { useGoogleLogin } from '@react-oauth/google';
 
 const Login = () => {
     const navigate = useNavigate();
-    const { login, settings } = useData();
+    const { login, loginWithGoogle, loginWithGoogleProfile, settings } = useData();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -31,8 +32,47 @@ const Login = () => {
         }
     };
 
+    const googleLogin = useGoogleLogin({
+        scope: "email profile openid",
+        onSuccess: async (tokenResponse) => {
+            console.log("Google Login Success:", tokenResponse);
+
+            try {
+                const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+                });
+
+                if (!userInfoResponse.ok) {
+                    throw new Error(`Failed to fetch user info: ${userInfoResponse.status} ${userInfoResponse.statusText}`);
+                }
+
+                const userInfo = await userInfoResponse.json();
+                console.log("Google User Info:", userInfo);
+
+                const result = await loginWithGoogleProfile(userInfo);
+                if (result.success) {
+                    navigate('/dashboard');
+                } else {
+                    setError(result.message);
+                }
+
+            } catch (error) {
+                console.error("Error fetching Google user info:", error);
+                setError(`Error de Google: ${error.message || 'Desconocido'}`);
+            }
+        },
+        onError: errorResponse => {
+            console.error("Google Login Failed:", errorResponse);
+            setError(`Error al iniciar sesión con Google: ${JSON.stringify(errorResponse)}`);
+        },
+    });
+
     const handleSocialLogin = (provider) => {
-        alert(`La integración con ${provider} se configurará en la siguiente fase.`);
+        if (provider === 'Google') {
+            googleLogin();
+        } else {
+            alert(`La integración con ${provider} se configurará en la siguiente fase.`);
+        }
     };
 
     return (

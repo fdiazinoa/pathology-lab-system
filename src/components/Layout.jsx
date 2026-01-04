@@ -1,12 +1,12 @@
 
 import React from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Settings, LogOut, Menu, X, Bell, Search, Plus, Activity, TrendingUp, Globe, Map, Presentation, Shield, Server, Stethoscope, DollarSign, FilePlus, Inbox, Truck, Package, Microscope, History, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Settings, LogOut, Menu, X, Bell, Search, Plus, Activity, TrendingUp, Globe, Map, Presentation, Shield, Server, Stethoscope, DollarSign, FilePlus, Inbox, Truck, Package, Microscope, History, ShieldCheck, ShieldAlert, FlaskConical, Dna, BarChart3 } from 'lucide-react';
 import { useData } from '../services/DataContext';
 
 const Layout = ({ children }) => {
     const location = useLocation();
-    const { logout, currentUser, roles } = useData();
+    const { logout, currentUser, roles, isProductionMode } = useData();
 
     // Get user role name
     const userRoleName = roles.find(r => r.id === currentUser?.roleId)?.name || 'Usuario';
@@ -60,6 +60,7 @@ const Layout = ({ children }) => {
                 { path: '/users', label: 'Usuarios', icon: Users },
                 { path: '/roles', label: 'Roles y Permisos', icon: Shield },
                 { path: '/audit-log', label: 'Registro de Auditoría', icon: History },
+                ...(userRoleName === 'Administrador' ? [{ path: '/usage-dashboard', label: 'Dashboard de Uso', icon: BarChart3 }] : []),
                 { path: '/settings', label: 'Configuración', icon: Settings },
             ]
         }
@@ -120,6 +121,17 @@ const Layout = ({ children }) => {
 
             {/* Main Content */}
             <main className="flex flex-col min-w-0" style={{ overflowY: 'auto' }}>
+                {isProductionMode ? (
+                    <div className="bg-red-600 text-white px-4 py-2 text-center font-bold text-xs shadow-md sticky top-0 z-30 flex items-center justify-center gap-2 uppercase tracking-widest">
+                        <Dna size={14} />
+                        🧬 MODO PRODUCCIÓN – Datos Reales y Operación Crítica
+                    </div>
+                ) : (
+                    <div className="bg-blue-600 text-white px-4 py-2 text-center font-bold text-xs shadow-md sticky top-0 z-30 flex items-center justify-center gap-2 uppercase tracking-widest">
+                        <FlaskConical size={14} />
+                        🧪 MODO DEMO – Entorno de Pruebas y Datos Simulados
+                    </div>
+                )}
                 <header className="bg-white border-b border-border px-8 py-4 flex justify-between items-center shrink-0 sticky top-0 z-10">
                     <h2 className="text-xl font-bold text-text-main">
                         {allNavItems.find(i => i.path === location.pathname)?.label || 'Pathology System'}

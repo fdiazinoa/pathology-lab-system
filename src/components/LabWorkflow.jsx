@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Camera, Layers, Scissors, Monitor, CheckCircle, AlertTriangle, Clock, Activity, ScanBarcode, FileText, CheckSquare, Microscope } from 'lucide-react';
 import Card from './Card';
 import Button from './Button';
+import { useData } from '../services/DataContext';
 
 const WorkflowStep = ({ title, icon: Icon, data, onAction, isLoading, status, canAdvance, requiresQR }) => {
     const isCompleted = data && data.completed;
@@ -65,6 +66,7 @@ const WorkflowStep = ({ title, icon: Icon, data, onAction, isLoading, status, ca
 };
 
 const LabWorkflow = ({ trackingData, onUpdateTracking, settings, currentUser, caseId }) => {
+    const { logUsageEvent } = useData();
     const safeTrackingData = trackingData || {};
     const [processingStep, setProcessingStep] = useState(null);
 
@@ -108,6 +110,7 @@ const LabWorkflow = ({ trackingData, onUpdateTracking, settings, currentUser, ca
 
         // 3. Update
         onUpdateTracking(stageId, newData);
+        logUsageEvent('Workflow', 'StageTransition', { stageId, caseId });
         setProcessingStep(null);
     };
 

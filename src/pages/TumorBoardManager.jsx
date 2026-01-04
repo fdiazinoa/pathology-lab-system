@@ -8,7 +8,7 @@ import Modal from '../components/Modal';
 
 const TumorBoardManager = () => {
     const navigate = useNavigate();
-    const { cases, updateCaseTumorBoard } = useData();
+    const { cases, updateCaseTumorBoard, logUsageEvent } = useData();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [selectedCaseId, setSelectedCaseId] = useState('');
 
@@ -24,6 +24,7 @@ const TumorBoardManager = () => {
             participants: []
         };
         updateCaseTumorBoard(selectedCaseId, initialData);
+        logUsageEvent('TumorBoard', 'Scheduled', { caseId: selectedCaseId });
         setIsAddModalOpen(false);
         setSelectedCaseId('');
     };
@@ -60,8 +61,8 @@ const TumorBoardManager = () => {
                                 <div>
                                     <div className="flex items-center gap-3 mb-2">
                                         <span className={`px-2 py-1 rounded-full text-xs font-bold border ${c.tumorBoard.status === 'Concluded' ? 'bg-green-100 text-green-800 border-green-200' :
-                                                c.tumorBoard.status === 'In Progress' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                                                    'bg-yellow-100 text-yellow-800 border-yellow-200'
+                                            c.tumorBoard.status === 'In Progress' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                                'bg-yellow-100 text-yellow-800 border-yellow-200'
                                             }`}>
                                             {c.tumorBoard.status === 'Concluded' ? 'Finalizado' :
                                                 c.tumorBoard.status === 'In Progress' ? 'En Progreso' : 'Programado'}
@@ -76,7 +77,10 @@ const TumorBoardManager = () => {
                                 </div>
                                 <div className="flex items-center gap-3">
                                     {c.tumorBoard.status !== 'Concluded' ? (
-                                        <Button onClick={() => navigate(`/tumor-board/${c.id}`)}>
+                                        <Button onClick={() => {
+                                            logUsageEvent('TumorBoard', 'SessionStarted', { caseId: c.id });
+                                            navigate(`/tumor-board/${c.id}`);
+                                        }}>
                                             <Play size={18} className="mr-2" />
                                             Iniciar Sesión
                                         </Button>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, FileText, Clock, CheckCircle, Trash2 } from 'lucide-react';
+import { Plus, Search, FileText, Clock, CheckCircle, Trash2, Eye } from 'lucide-react';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -149,6 +149,14 @@ const Dashboard = () => {
                                                         'bg-green-50 text-green-700 border-green-200'
                                                     }`}>
                                                     {c.aiClassification.nature.toUpperCase()}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {c.secondLook?.active && (
+                                            <div className="mt-1 flex items-center gap-1">
+                                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-indigo-50 text-indigo-700 border-indigo-200 flex items-center gap-1">
+                                                    <Eye size={10} />
+                                                    SEGUNDO VISTAZO
                                                 </span>
                                             </div>
                                         )}

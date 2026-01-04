@@ -8,7 +8,7 @@ const fileToBase64 = (file) => {
     });
 };
 
-export const analyzeCase = async (textData, images, organ, apiKey, preClassification = null) => {
+export const analyzeCase = async (textData, images, organ, apiKey, preClassification = null, reinforcement = "") => {
     // --- REAL AI MODE ---
     if (apiKey) {
         try {
@@ -28,7 +28,8 @@ export const analyzeCase = async (textData, images, organ, apiKey, preClassifica
                     2. "similarCases": Un array de 2 casos similares típicos para este diagnóstico (ejemplos teóricos). Cada objeto debe tener: "diagnosis", "description" (breve descripción de la presentación típica), y "imageUrl" (usa null).
                     3. "references": Un array de 3 referencias bibliográficas o guías clínicas relevantes (ej. WHO Classification, artículos de PubMed). Cada objeto debe tener: "title" y "source".
                     
-                    Enfócate en patrones visuales, atipia celular y distorsión arquitectural visible en las imágenes. Responde SIEMPRE en ESPAÑOL.`
+                    Enfócate en patrones visuales, atipia celular y distorsión arquitectural visible en las imágenes. Responde SIEMPRE en ESPAÑOL.
+                    ${reinforcement}`
                 }
             ];
 
@@ -456,7 +457,7 @@ export const validateDiagnosis = (diagnosis, organ, macroscopy, microscopy, imag
         }, 800);
     });
 };
-export const preClassifyCase = async (images, apiKey) => {
+export const preClassifyCase = async (images, apiKey, reinforcement = "") => {
     // --- REAL AI MODE ---
     if (apiKey) {
         try {
@@ -475,7 +476,8 @@ export const preClassifyCase = async (images, apiKey) => {
                     4. "probability": Un número de 0 a 100 indicando la confianza en que sea MALIGNO (si es benigno, será bajo).
                     5. "reasoning": Breve justificación en Español (max 15 palabras).
 
-                    Sé sensible para detectar malignidad (prioriza sensibilidad sobre especificidad para triaje).`
+                    Sé sensible para detectar malignidad (prioriza sensibilidad sobre especificidad para triaje).
+                    ${reinforcement}`
                 }
             ];
 
@@ -558,7 +560,7 @@ export const preClassifyCase = async (images, apiKey) => {
         }, 1500);
     });
 };
-export const analyzeQuantitativeMetrics = async (images, type, apiKey) => {
+export const analyzeQuantitativeMetrics = async (images, type, apiKey, reinforcement = "") => {
     // --- REAL AI MODE ---
     if (apiKey) {
         try {
@@ -580,7 +582,8 @@ export const analyzeQuantitativeMetrics = async (images, type, apiKey) => {
                 {
                     type: "text",
                     text: `Eres un experto en patología digital cuantitativa. ${promptText}
-                    Responde con un JSON estructurado.`
+                    Responde con un JSON estructurado.
+                    ${reinforcement}`
                 }
             ];
 
@@ -652,7 +655,7 @@ export const analyzeQuantitativeMetrics = async (images, type, apiKey) => {
     });
 };
 
-export const generateStructuredReport = async (text, apiKey) => {
+export const generateStructuredReport = async (text, apiKey, reinforcement = "") => {
     // --- REAL AI MODE ---
     if (apiKey) {
         try {
@@ -671,7 +674,8 @@ export const generateStructuredReport = async (text, apiKey) => {
                     5. "diagnosis": Diagnóstico patológico final, formateado profesionalmente.
                     6. "clinicalData": Datos clínicos si se mencionan.
 
-                    Responde SIEMPRE en ESPAÑOL.`
+                    Responde SIEMPRE en ESPAÑOL.
+                    ${reinforcement}`
                 }
             ];
 
@@ -737,7 +741,7 @@ export const generateStructuredReport = async (text, apiKey) => {
     });
 };
 
-export const analyzeQualityControl = async (images, apiKey) => {
+export const analyzeQualityControl = async (images, apiKey, reinforcement = "") => {
     // --- REAL AI MODE ---
     if (apiKey) {
         try {
@@ -762,7 +766,8 @@ export const analyzeQualityControl = async (images, apiKey) => {
                         "issues": ["Lista", "de", "problemas", "detectados"],
                         "recommendation": "Aceptable" | "Reprocesar" | "Recortar",
                         "reasoning": "Breve explicación"
-                    }`
+                    }
+                    ${reinforcement}`
                 }
             ];
 
@@ -814,7 +819,7 @@ export const analyzeQualityControl = async (images, apiKey) => {
     });
 };
 
-export const validateHistologyImage = async (file, apiKey) => {
+export const validateHistologyImage = async (file, apiKey, reinforcement = "") => {
     // --- REAL AI MODE ---
     if (apiKey) {
         try {
@@ -830,7 +835,8 @@ export const validateHistologyImage = async (file, apiKey) => {
                     {
                         "isValid": true/false,
                         "reason": "Explicación breve en Español"
-                    }`
+                    }
+                    ${reinforcement}`
                 },
                 {
                     type: "image_url",
@@ -885,7 +891,7 @@ export const validateHistologyImage = async (file, apiKey) => {
 
 
 
-export const analyzeMacroscopy = async (images, apiKey) => {
+export const analyzeMacroscopy = async (images, apiKey, reinforcement = "") => {
     // --- REAL AI MODE ---
     if (apiKey) {
         try {
@@ -909,7 +915,8 @@ export const analyzeMacroscopy = async (images, apiKey) => {
                         "margins": "Estado de márgenes sugerido",
                         "dimensions": "Dimensiones estimadas",
                         "suspiciousAreas": ["Lista de áreas"]
-                    }`
+                    }
+                    ${reinforcement}`
                 }
             ];
 

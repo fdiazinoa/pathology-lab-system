@@ -29,8 +29,11 @@ import DeliveryManager from './pages/DeliveryManager';
 import MyDeliveries from './pages/MyDeliveries';
 import DispatchModule from './pages/DispatchModule';
 import AuditLog from './pages/AuditLog';
+import UsageDashboard from './pages/UsageDashboard';
 import { DataProvider, useData } from './services/DataContext';
+import { AIConfigProvider } from './ai/AIConfigContext';
 import ErrorBoundary from './components/ErrorBoundary';
+import ConnectionWizard from './pages/ConnectionWizard';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -137,10 +140,25 @@ const AppRoutes = () => {
                 </ProtectedRoute>
             } />
 
+
+            <Route path="/usage-dashboard" element={
+                <ProtectedRoute>
+                    <Layout>
+                        <UsageDashboard />
+                    </Layout>
+                </ProtectedRoute>
+            } />
             <Route path="/settings" element={
                 <ProtectedRoute>
                     <Layout>
                         <SettingsPage />
+                    </Layout>
+                </ProtectedRoute>
+            } />
+            <Route path="/settings/connection-wizard" element={
+                <ProtectedRoute>
+                    <Layout>
+                        <ConnectionWizard />
                     </Layout>
                 </ProtectedRoute>
             } />
@@ -249,11 +267,13 @@ const AppRoutes = () => {
 function App() {
     return (
         <ErrorBoundary>
-            <DataProvider>
-                <Router>
-                    <AppRoutes />
-                </Router>
-            </DataProvider>
+            <AIConfigProvider>
+                <DataProvider>
+                    <Router>
+                        <AppRoutes />
+                    </Router>
+                </DataProvider>
+            </AIConfigProvider>
         </ErrorBoundary>
     );
 }

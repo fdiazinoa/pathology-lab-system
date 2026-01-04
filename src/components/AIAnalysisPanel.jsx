@@ -1,10 +1,38 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { AlertTriangle, Check, BookOpen } from 'lucide-react';
 import Card from './Card';
 import Button from './Button';
+import { useData } from '../services/DataContext';
+import * as aiTelemetry from '../ai/aiTelemetry';
 
 const AIAnalysisPanel = ({ results, onSelectDiagnosis }) => {
+    const { logUsageEvent } = useData();
+    const startTimeRef = useRef(Date.now());
+
+    useEffect(() => {
+        if (results) {
+            aiTelemetry.logAIInteraction({
+                module_name: 'Diagnostics',
+                action: 'viewed',
+                time_to_action_ms: 0
+            });
+            logUsageEvent('AI', 'Viewed', { type: 'Diagnostics' });
+            startTimeRef.current = Date.now();
+        }
+    }, [results]);
+
     if (!results) return null;
+
+    const handleSelect = (diagnosis) => {
+        const timeToAction = Date.now() - startTimeRef.current;
+        aiTelemetry.logAIInteraction({
+            module_name: 'Diagnostics',
+            action: 'accepted',
+            time_to_action_ms: timeToAction
+        });
+        logUsageEvent('AI', 'Accepted', { diagnosis, timeToAction });
+        onSelectDiagnosis(diagnosis);
+    };
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -29,7 +57,7 @@ const AIAnalysisPanel = ({ results, onSelectDiagnosis }) => {
                                 <div className="flex justify-between items-start mb-2">
                                     <h4 className="font-bold text-lg text-text-main">{sug.diagnosis}</h4>
                                     <span className={`px-2 py-1 rounded text-xs font-bold ${sug.probability === 'Alta' ? 'bg-green-100 text-success' :
-                                            sug.probability === 'Media' ? 'bg-yellow-100 text-warning' : 'bg-gray-100 text-text-secondary'
+                                        sug.probability === 'Media' ? 'bg-yellow-100 text-warning' : 'bg-gray-100 text-text-secondary'
                                         }`}>
                                         Probabilidad {sug.probability}
                                     </span>
@@ -40,7 +68,7 @@ const AIAnalysisPanel = ({ results, onSelectDiagnosis }) => {
                                         }`}>
                                         {sug.type}
                                     </span>
-                                    <Button size="sm" variant="secondary" onClick={() => onSelectDiagnosis(sug.diagnosis)}>
+                                    <Button size="sm" variant="secondary" onClick={() => handleSelect(sug.diagnosis)}>
                                         <Check size={14} className="mr-1" />
                                         Seleccionar
                                     </Button>

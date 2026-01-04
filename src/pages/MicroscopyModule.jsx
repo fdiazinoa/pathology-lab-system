@@ -45,9 +45,13 @@ const MicroscopyModule = () => {
             }
             // Load images from centralized storage
             if (caseData.images && caseData.images.length > 0 && !activeImage) {
+                // Prioritize microscopy images, but fallback to any image if none found
                 const microImages = caseData.images.filter(img => img.moduleOrigin === 'microscopy');
                 if (microImages.length > 0) {
                     setActiveImage(microImages[0]);
+                } else {
+                    // Fallback: Use the first available image (e.g. uploaded in Case Manager)
+                    setActiveImage(caseData.images[0]);
                 }
             }
         }
