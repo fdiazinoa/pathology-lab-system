@@ -19,6 +19,15 @@ class DemoDataProvider extends DataProvider {
         if (!localStorage.getItem('app_global_cases')) {
             localStorage.setItem('app_global_cases', JSON.stringify(MOCK_GLOBAL_CASES));
         }
+        if (!localStorage.getItem('app_centers')) {
+            const MOCK_CENTERS = [
+                { id: '1', name: 'Hospital Central', address: 'Av. Principal 123, Ciudad', phone: '(555) 123-4567', location: 'https://maps.google.com/?q=19.432608,-99.133209' },
+                { id: '2', name: 'Clínica San José', address: 'Calle 5 #45-67, Zona Norte', phone: '(555) 987-6543', location: 'https://maps.google.com/?q=19.42847,-99.12766' },
+                { id: '3', name: 'Centro Médico del Valle', address: 'Av. Universidad 789, Del Valle', phone: '(555) 246-8135', location: 'https://maps.google.com/?q=19.3794,-99.1591' },
+                { id: '4', name: 'Unidad de Patología Especializada', address: 'Calle Roble 22, Consultorio 304', phone: '(555) 369-2580', location: 'https://maps.google.com/?q=19.4000,-99.1700' }
+            ];
+            localStorage.setItem('app_centers', JSON.stringify(MOCK_CENTERS));
+        }
     }
 
     // Helper to simulate async delay

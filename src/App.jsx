@@ -22,6 +22,7 @@ import LaboratoryPerformance from './pages/LaboratoryPerformance';
 import GlobalCaseNetwork from './pages/GlobalCaseNetwork';
 import CaseMap from './pages/CaseMap';
 import InsurersManager from './pages/InsurersManager';
+import CentersManager from './pages/CentersManager';
 import OrgansManager from './pages/OrgansManager';
 import EquipmentManager from './pages/EquipmentManager';
 import SampleReception from './pages/SampleReception';
@@ -30,6 +31,7 @@ import MyDeliveries from './pages/MyDeliveries';
 import DispatchModule from './pages/DispatchModule';
 import AuditLog from './pages/AuditLog';
 import UsageDashboard from './pages/UsageDashboard';
+import Help from './pages/Help';
 import { DataProvider, useData } from './services/DataContext';
 import { AIConfigProvider } from './ai/AIConfigContext';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -148,6 +150,13 @@ const AppRoutes = () => {
                     </Layout>
                 </ProtectedRoute>
             } />
+            <Route path="/help" element={
+                <ProtectedRoute>
+                    <Layout>
+                        <Help />
+                    </Layout>
+                </ProtectedRoute>
+            } />
             <Route path="/settings" element={
                 <ProtectedRoute>
                     <Layout>
@@ -236,6 +245,13 @@ const AppRoutes = () => {
                 <ProtectedRoute>
                     <Layout>
                         <InsurersManager />
+                    </Layout>
+                </ProtectedRoute>
+            } />
+            <Route path="/centers" element={
+                <ProtectedRoute>
+                    <Layout>
+                        <CentersManager />
                     </Layout>
                 </ProtectedRoute>
             } />

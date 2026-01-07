@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Settings, LogOut, Menu, X, Bell, Search, Plus, Activity, TrendingUp, Globe, Map, Presentation, Shield, Server, Stethoscope, DollarSign, FilePlus, Inbox, Truck, Package, Microscope, History, ShieldCheck, ShieldAlert, FlaskConical, Dna, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Settings, LogOut, Menu, X, Bell, Search, Plus, Activity, TrendingUp, Globe, Map, Presentation, Shield, Server, Stethoscope, DollarSign, FilePlus, Inbox, Truck, Package, Microscope, History, ShieldCheck, ShieldAlert, FlaskConical, Dna, BarChart3, BookOpen, Building } from 'lucide-react';
 import { useData } from '../services/DataContext';
 
 const Layout = ({ children }) => {
@@ -47,6 +47,7 @@ const Layout = ({ children }) => {
         {
             category: 'Catálogos',
             items: [
+                { path: '/centers', label: 'Centros', icon: Building },
                 { path: '/insurers', label: 'Aseguradoras', icon: Shield },
                 { path: '/organs', label: 'Órganos', icon: Activity },
                 { path: '/equipment', label: 'Equipos', icon: Server },
@@ -62,6 +63,7 @@ const Layout = ({ children }) => {
                 { path: '/audit-log', label: 'Registro de Auditoría', icon: History },
                 ...(userRoleName === 'Administrador' ? [{ path: '/usage-dashboard', label: 'Dashboard de Uso', icon: BarChart3 }] : []),
                 { path: '/settings', label: 'Configuración', icon: Settings },
+                { path: '/help', label: 'Ayuda', icon: BookOpen },
             ]
         }
     ];

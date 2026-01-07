@@ -58,6 +58,7 @@ export const DataProvider = ({ children }) => {
     const [roles, setRoles] = useState([]);
     const [users, setUsers] = useState([]);
     const [exams, setExams] = useState([]);
+    const [centers, setCenters] = useState([]);
 
     // Temporary/UI-only state
     const [lisConnection, setLisConnection] = useState({ status: 'Disconnected', lastSync: null, logs: [] });
@@ -70,7 +71,7 @@ export const DataProvider = ({ children }) => {
             const [
                 loadedUser, loadedPatients, loadedCases, loadedGlobalCases, loadedAudit,
                 loadedDeliveries, loadedSettings, loadedHistory, loadedConfig,
-                loadedInsurers, loadedOrgans, loadedDoctors, loadedEquipment, loadedRoles, loadedUsers, loadedExams
+                loadedInsurers, loadedOrgans, loadedDoctors, loadedEquipment, loadedRoles, loadedUsers, loadedExams, loadedCenters
             ] = await Promise.all([
                 dataProvider.getCurrentUser(),
                 dataProvider.getPatients(),
@@ -87,7 +88,8 @@ export const DataProvider = ({ children }) => {
                 dataProvider.getEquipment(),
                 dataProvider.getRoles(),
                 dataProvider.getUsers(),
-                dataProvider.getExams()
+                dataProvider.getExams(),
+                dataProvider.getCenters()
             ]);
 
             setCurrentUser(loadedUser);
@@ -106,9 +108,10 @@ export const DataProvider = ({ children }) => {
             setRoles(loadedRoles);
             setUsers(loadedUsers);
             setExams(loadedExams);
+            setCenters(loadedCenters);
 
-        } catch (err) {
-            console.error("Error loading data from provider:", err);
+        } catch (error) {
+            console.error("Error loading data:", error);
         } finally {
             setLoading(false);
         }
@@ -358,6 +361,28 @@ export const DataProvider = ({ children }) => {
     const updateExam = useCallback(async (e) => { if (dataProvider) { await dataProvider.updateExam(e); setExams(prev => prev.map(x => x.id === e.id ? e : x)); } }, [dataProvider]);
     const deleteExam = useCallback(async (id) => { if (dataProvider) { await dataProvider.deleteExam(id); setExams(prev => prev.filter(x => x.id !== id)); } }, [dataProvider]);
 
+    // --- Centers Actions ---
+    const addCenter = useCallback(async (center) => {
+        if (!dataProvider) return;
+        const newCenter = await dataProvider.addCenter(center);
+        setCenters(prev => [...prev, newCenter]);
+        return newCenter;
+    }, [dataProvider]);
+
+    const updateCenter = useCallback(async (id, updates) => {
+        if (!dataProvider) return;
+        const updated = await dataProvider.updateCenter(id, updates);
+        if (updated) {
+            setCenters(prev => prev.map(c => c.id === id ? updated : c));
+        }
+    }, [dataProvider]);
+
+    const deleteCenter = useCallback(async (id) => {
+        if (!dataProvider) return;
+        await dataProvider.deleteCenter(id);
+        setCenters(prev => prev.filter(c => c.id !== id));
+    }, [dataProvider]);
+
     const addRole = useCallback(async (r) => { if (dataProvider) { await dataProvider.addRole(r); setRoles(prev => [...prev, r]); } }, [dataProvider]);
     const updateRole = useCallback(async (r) => { if (dataProvider) { await dataProvider.updateRole(r); setRoles(prev => prev.map(x => x.id === r.id ? r : x)); } }, [dataProvider]);
     const deleteRole = useCallback(async (id) => { if (dataProvider) { await dataProvider.deleteRole(id); setRoles(prev => prev.filter(x => x.id !== id)); } }, [dataProvider]);
@@ -526,6 +551,7 @@ export const DataProvider = ({ children }) => {
         doctors, addDoctor, updateDoctor, deleteDoctor,
         equipment, addEquipment, updateEquipment, deleteEquipment,
         exams, addExam, updateExam, deleteExam,
+        centers, addCenter, updateCenter, deleteCenter,
         roles, addRole, updateRole, deleteRole,
         users, addUser, updateUser, deleteUser,
         lisConnection, toggleLisConnection, simulateLisDataTransfer,
@@ -547,6 +573,7 @@ export const DataProvider = ({ children }) => {
         doctors, addDoctor, updateDoctor, deleteDoctor,
         equipment, addEquipment, updateEquipment, deleteEquipment,
         exams, addExam, updateExam, deleteExam,
+        centers, addCenter, updateCenter, deleteCenter,
         roles, addRole, updateRole, deleteRole,
         users, addUser, updateUser, deleteUser,
         lisConnection, toggleLisConnection, simulateLisDataTransfer,

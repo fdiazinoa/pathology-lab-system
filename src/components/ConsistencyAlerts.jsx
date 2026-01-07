@@ -1,3 +1,4 @@
+import React from 'react';
 import { AlertTriangle, Info, CheckCircle } from 'lucide-react';
 import { useData } from '../services/DataContext';
 

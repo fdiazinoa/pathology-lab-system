@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save, Upload, Building, Phone, MapPin, Stethoscope, Mic, MicOff, History, Settings as SettingsIcon, Printer, Plus, Trash2, Edit2, CheckCircle, AlertCircle, Database, ShieldAlert, AlertTriangle, Sparkles, Info, Search, X, CheckSquare, Eye, Users, Globe, Map, Download, RefreshCw, FlaskConical, BookOpen } from 'lucide-react';
+import { Save, Upload, Building, Phone, MapPin, Stethoscope, Mic, MicOff, History, Settings as SettingsIcon, Printer, Plus, Trash2, Edit2, CheckCircle, AlertCircle, Database, ShieldAlert, AlertTriangle, Sparkles, Info, CheckSquare, Eye, Users, Globe, Map, Download, RefreshCw, FlaskConical, BookOpen } from 'lucide-react';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -234,14 +234,15 @@ const HELP_SECTIONS = [
     }
 ];
 
+export { HELP_SECTIONS };
+
 const Settings = () => {
     const navigate = useNavigate();
     const { settings, updateSettings, configHistory, currentUser, testPrinter, isProductionMode, switchSystemMode, resetDemoData, runMigration, createBackup, restoreBackup, getBackupHistory, downloadBackup } = useData();
     const { config: aiConfig, updateConfig: updateAIConfig } = useAIConfig();
-    const [helpSearchQuery, setHelpSearchQuery] = useState('');
     const [formData, setFormData] = useState(settings);
     const [loading, setLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState('general'); // 'general' | 'printers' | 'help' | 'backups'
+    const [activeTab, setActiveTab] = useState('general'); // 'general' | 'printers' | 'ai' | 'backups'
 
     // Mode Switch State
     const [showModeModal, setShowModeModal] = useState(false);
@@ -500,13 +501,7 @@ const Settings = () => {
                     Impresoras
                 </button>
 
-                <button
-                    className={`px-4 py-2 font-medium text-sm flex items-center gap-2 ${activeTab === 'help' ? 'border-b-2 border-primary text-primary' : 'text-text-secondary hover:text-text-main'}`}
-                    onClick={() => setActiveTab('help')}
-                >
-                    <AlertCircle size={16} />
-                    Ayuda
-                </button>
+
 
                 {isProductionMode && currentUser?.roleId === '1' && (
                     <button
@@ -547,251 +542,6 @@ const Settings = () => {
                     <Button variant="secondary" onClick={handleResetDemo} className="text-xs py-1.5">
                         Reiniciar Datos de Prueba
                     </Button>
-                </div>
-            )}
-
-            {activeTab === 'help' && (
-                <div className="space-y-6">
-                    {/* Help Search Bar */}
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
-                        <input
-                            type="text"
-                            placeholder="Buscar en la ayuda (ej. 'IA', 'casos previos', 'consistencia')..."
-                            className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-white focus:ring-2 focus:ring-primary outline-none transition-all shadow-sm"
-                            value={helpSearchQuery}
-                            onChange={(e) => setHelpSearchQuery(e.target.value)}
-                        />
-                        {helpSearchQuery && (
-                            <button
-                                onClick={() => setHelpSearchQuery('')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-main"
-                            >
-                                <X size={16} />
-                            </button>
-                        )}
-                    </div>
-
-                    {HELP_SECTIONS.filter(card =>
-                        card.title.toLowerCase().includes(helpSearchQuery.toLowerCase()) ||
-                        card.sections.some(s =>
-                            s.title.toLowerCase().includes(helpSearchQuery.toLowerCase()) ||
-                            s.content.toLowerCase().includes(helpSearchQuery.toLowerCase())
-                        )
-                    ).map((card) => (
-                        <Card key={card.id} title={card.title}>
-                            <div className="space-y-6">
-                                {card.sections.map((section, sIdx) => (
-                                    <section key={sIdx} className={sIdx > 0 ? "pt-4 border-t border-gray-100" : ""}>
-                                        <h3 className="font-bold text-text-main flex items-center gap-2">
-                                            {sIdx === 0 && card.icon && <card.icon size={18} className="text-primary" />}
-                                            {section.title}
-                                        </h3>
-                                        <p className="text-sm text-text-secondary mt-2 leading-relaxed">
-                                            {section.content}
-                                        </p>
-                                    </section>
-                                ))}
-
-                                {card.footer && (
-                                    <div className={`p-4 rounded-lg border flex gap-3 ${card.footer.type === 'warning' ? 'bg-amber-50 border-amber-100' : 'bg-blue-50 border-blue-100'
-                                        }`}>
-                                        {card.footer.type === 'warning' ? (
-                                            <AlertTriangle className="text-amber-600 flex-shrink-0" size={24} />
-                                        ) : (
-                                            <ShieldAlert className="text-blue-600 flex-shrink-0" size={24} />
-                                        )}
-                                        <div>
-                                            <h4 className={`text-sm font-bold ${card.footer.type === 'warning' ? 'text-amber-900' : 'text-blue-900'
-                                                }`}>{card.footer.title}</h4>
-                                            <p className={`text-xs mt-1 leading-relaxed ${card.footer.type === 'warning' ? 'text-amber-800' : 'text-blue-800'
-                                                }`}>
-                                                {card.footer.content}
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </Card>
-                    ))}
-
-                    {HELP_SECTIONS.filter(card =>
-                        card.title.toLowerCase().includes(helpSearchQuery.toLowerCase()) ||
-                        card.sections.some(s =>
-                            s.title.toLowerCase().includes(helpSearchQuery.toLowerCase()) ||
-                            s.content.toLowerCase().includes(helpSearchQuery.toLowerCase())
-                        )
-                    ).length === 0 && (
-                            <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-                                <Search size={48} className="mx-auto text-gray-300 mb-4" />
-                                <h3 className="text-lg font-medium text-text-main">No se encontraron resultados</h3>
-                                <p className="text-text-secondary mt-1">Intente con palabras clave como "IA", "casos" o "informe".</p>
-                                <Button
-                                    variant="ghost"
-                                    onClick={() => setHelpSearchQuery('')}
-                                    className="mt-4"
-                                >
-                                    Limpiar búsqueda
-                                </Button>
-                            </div>
-                        )}
-
-                    {!helpSearchQuery && (
-                        <>
-                            <Card title="SISTEMA LISTO PARA USO DIARIO CON IA">
-                                <div className="space-y-6">
-                                    <p className="text-sm text-text-secondary leading-relaxed">
-                                        Use esta lista de verificación para confirmar que el sistema está correctamente configurado y alineado con los estándares de seguridad y operación del laboratorio.
-                                    </p>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {[
-                                            {
-                                                category: "1. Estado general de la IA",
-                                                items: [
-                                                    "La IA está habilitada en la configuración del sistema.",
-                                                    "El sistema funciona correctamente si la IA se desactiva.",
-                                                    "Existe un mensaje claro cuando la IA no está disponible."
-                                                ]
-                                            },
-                                            {
-                                                category: "2. Calidad y uso de imágenes",
-                                                items: [
-                                                    "Se evalúa la calidad técnica antes del análisis.",
-                                                    "Imágenes de baja calidad son marcadas para revisión.",
-                                                    "El diagnóstico no depende de la IA si la calidad es baja."
-                                                ]
-                                            },
-                                            {
-                                                category: "3. Resultados asistidos por IA",
-                                                items: [
-                                                    "Los resultados se presentan como sugerencias.",
-                                                    "Todas las sugerencias indican validación requerida.",
-                                                    "Las métricas están marcadas como aproximadas."
-                                                ]
-                                            },
-                                            {
-                                                category: "4. Control del flujo de trabajo",
-                                                items: [
-                                                    "Los módulos se pueden activar/desactivar individualmente.",
-                                                    "El sistema continúa operando ante fallos de un módulo.",
-                                                    "No se bloquea el trabajo del patólogo por errores de IA."
-                                                ]
-                                            },
-                                            {
-                                                category: "5. Presentación en la interfaz (UI)",
-                                                items: [
-                                                    "Se utiliza lenguaje prudente y no afirmativo.",
-                                                    "No se usan términos como 'diagnóstico confirmado'.",
-                                                    "Las secciones IA se ocultan si no hay resultados."
-                                                ]
-                                            },
-                                            {
-                                                category: "6. Seguridad y confiabilidad",
-                                                items: [
-                                                    "Las respuestas de IA son validadas antes de mostrarse.",
-                                                    "El sistema maneja errores sin afectar la estabilidad.",
-                                                    "Existe un modo seguro (fallback) ante fallos."
-                                                ]
-                                            },
-                                            {
-                                                category: "7. Uso responsable",
-                                                items: [
-                                                    "Se informa que la decisión final es del patólogo.",
-                                                    "Los usuarios entienden el rol de la IA como apoyo.",
-                                                    "El sistema no reemplaza el criterio clínico humano."
-                                                ]
-                                            },
-                                            {
-                                                category: "8. Seguimiento y mejora",
-                                                items: [
-                                                    "Se registran métricas básicas de uso de la IA.",
-                                                    "Se puede identificar qué módulos aportan más valor.",
-                                                    "El sistema permite ajustes futuros sin rediseño."
-                                                ]
-                                            }
-                                        ].map((cat, idx) => (
-                                            <div key={idx} className="space-y-3">
-                                                <h4 className="text-sm font-bold text-text-main flex items-center gap-2">
-                                                    <CheckCircle size={16} className="text-green-600" />
-                                                    {cat.category}
-                                                </h4>
-                                                <div className="space-y-2 pl-6">
-                                                    {cat.items.map((item, iIdx) => (
-                                                        <label key={iIdx} className="flex items-start gap-2 cursor-pointer group">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="mt-0.5 h-3.5 w-3.5 text-primary rounded border-gray-300 focus:ring-primary cursor-pointer"
-                                                            />
-                                                            <span className="text-xs text-text-secondary group-hover:text-text-main transition-colors">
-                                                                {item}
-                                                            </span>
-                                                        </label>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-100 flex gap-3">
-                                        <CheckCircle className="text-green-600 flex-shrink-0" size={24} />
-                                        <div>
-                                            <h4 className="text-sm font-bold text-green-900">Certificación de Operación</h4>
-                                            <p className="text-xs text-green-800 mt-1 leading-relaxed">
-                                                Si todos los puntos anteriores están verificados, el sistema se considera <strong>Listo para Uso Clínico</strong> bajo supervisión profesional.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </Card>
-
-                            <Card title="Instrucciones de Configuración Técnica">
-                                <div className="space-y-4">
-                                    <h3 className="font-medium text-text-main">Prueba de Conexión a Base de Datos Real</h3>
-                                    <p className="text-sm text-text-secondary">
-                                        Para probar la conexión a una base de datos PostgreSQL real desde el Wizard, es necesario ejecutar el servidor backend de pruebas.
-                                    </p>
-
-                                    <div className="bg-gray-800 text-gray-100 p-4 rounded-md font-mono text-sm overflow-x-auto">
-                                        <p className="text-gray-400 mb-2"># 1. Detenga el proceso actual (Ctrl + C)</p>
-                                        <p className="text-gray-400 mb-2"># 2. Ejecute el siguiente comando para iniciar frontend + backend:</p>
-                                        <p className="text-green-400">npm run dev:full</p>
-                                        <br />
-                                        <p className="text-gray-400 mb-2"># 3. Vuelva a esta página y acceda al Wizard.</p>
-                                    </div>
-
-                                    <div className="bg-blue-50 p-4 rounded-md flex gap-3 border border-blue-100">
-                                        <AlertCircle className="text-blue-600 flex-shrink-0" size={20} />
-                                        <p className="text-sm text-blue-800">
-                                            El servidor backend se ejecutará en el puerto <strong>3001</strong> y actuará como puente para validar las credenciales de su base de datos.
-                                        </p>
-                                    </div>
-
-                                    <div className="pt-6 border-t border-gray-100">
-                                        <h3 className="font-medium text-text-main mb-3 flex items-center gap-2">
-                                            <Database size={18} className="text-primary" />
-                                            Arquitectura de Datos y Telemetría
-                                        </h3>
-                                        <div className="space-y-4">
-                                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                                <h4 className="text-sm font-bold text-text-main mb-1">Orquestación y Validación</h4>
-                                                <p className="text-xs text-text-secondary leading-relaxed">
-                                                    Los módulos se ejecutan en una secuencia lógica (QC → Triaje → Diagnóstico). Cada respuesta de la IA es validada mediante esquemas estrictos (Zod) para asegurar que los datos sean precisos y estructurados.
-                                                </p>
-                                            </div>
-
-                                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                                <h4 className="text-sm font-bold text-text-main mb-1">Telemetría y Mejora Continua</h4>
-                                                <p className="text-xs text-text-secondary leading-relaxed">
-                                                    Se registran métricas de rendimiento y uso para optimizar los modelos de forma anónima, sin incluir datos sensibles ni imágenes de pacientes.
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </Card>
-                        </>
-                    )}
                 </div>
             )}
 
@@ -1693,12 +1443,6 @@ const Settings = () => {
             }
 
             <div className="flex justify-end">
-                {activeTab !== 'ai' && (
-                    <Button type="submit" isLoading={loading}>
-                        <Save size={20} className="mr-2" />
-                        Guardar Cambios
-                    </Button>
-                )}
             </div>
         </div >
     );
