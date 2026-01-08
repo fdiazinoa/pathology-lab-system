@@ -240,6 +240,73 @@ class ProductionDataProvider extends DataProvider {
         ];
     }
 
+    // --- Roles ---
+    async getRoles() {
+        const saved = localStorage.getItem('prod_roles');
+        if (saved) return JSON.parse(saved);
+        // Default roles for prod simulation
+        return [
+            { id: '1', name: 'Administrador', permissions: ['all'] },
+            { id: '2', name: 'Patólogo', permissions: ['read_cases', 'edit_cases', 'sign_reports'] },
+            { id: '3', name: 'Técnico', permissions: ['read_cases', 'edit_cases'] },
+            { id: '4', name: 'Secretaria', permissions: ['read_cases', 'create_cases'] }
+        ];
+    }
+
+    async addRole(role) {
+        const roles = await this.getRoles();
+        const newRole = { ...role, id: Date.now().toString() };
+        const newRoles = [...roles, newRole];
+        localStorage.setItem('prod_roles', JSON.stringify(newRoles));
+        return newRole;
+    }
+
+    async updateRole(role) {
+        const roles = await this.getRoles();
+        const newRoles = roles.map(r => r.id === role.id ? role : r);
+        localStorage.setItem('prod_roles', JSON.stringify(newRoles));
+        return role;
+    }
+
+    async deleteRole(id) {
+        const roles = await this.getRoles();
+        const newRoles = roles.filter(r => r.id !== id);
+        localStorage.setItem('prod_roles', JSON.stringify(newRoles));
+        return true;
+    }
+
+    // --- Centers ---
+    async getCenters() {
+        const saved = localStorage.getItem('prod_centers');
+        return saved ? JSON.parse(saved) : [];
+    }
+
+    async addCenter(center) {
+        const centers = await this.getCenters();
+        const newCenter = { ...center, id: Date.now().toString() };
+        centers.push(newCenter);
+        localStorage.setItem('prod_centers', JSON.stringify(centers));
+        return newCenter;
+    }
+
+    async updateCenter(id, updates) {
+        const centers = await this.getCenters();
+        const index = centers.findIndex(c => c.id === id);
+        if (index !== -1) {
+            centers[index] = { ...centers[index], ...updates };
+            localStorage.setItem('prod_centers', JSON.stringify(centers));
+            return centers[index];
+        }
+        return null;
+    }
+
+    async deleteCenter(id) {
+        const centers = await this.getCenters();
+        const filtered = centers.filter(c => c.id !== id);
+        localStorage.setItem('prod_centers', JSON.stringify(filtered));
+        return true;
+    }
+
     async getExams() {
         return [
             { id: '1', code: '88305', name: 'Biopsia Nivel IV', pricePrivate: 2500 },

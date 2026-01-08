@@ -283,6 +283,42 @@ class DemoDataProvider extends DataProvider {
         return delivery;
     }
 
+    // --- Centers ---
+    async getCenters() {
+        await this._delay();
+        const saved = localStorage.getItem('app_centers');
+        return saved ? JSON.parse(saved) : [];
+    }
+
+    async addCenter(center) {
+        await this._delay();
+        const centers = await this.getCenters();
+        const newCenter = { ...center, id: Date.now().toString() };
+        centers.push(newCenter);
+        localStorage.setItem('app_centers', JSON.stringify(centers));
+        return newCenter;
+    }
+
+    async updateCenter(id, updates) {
+        await this._delay();
+        const centers = await this.getCenters();
+        const index = centers.findIndex(c => c.id === id);
+        if (index !== -1) {
+            centers[index] = { ...centers[index], ...updates };
+            localStorage.setItem('app_centers', JSON.stringify(centers));
+            return centers[index];
+        }
+        return null;
+    }
+
+    async deleteCenter(id) {
+        await this._delay();
+        const centers = await this.getCenters();
+        const filtered = centers.filter(c => c.id !== id);
+        localStorage.setItem('app_centers', JSON.stringify(filtered));
+        return true;
+    }
+
     // --- Catalogs ---
     async getInsurers() {
         return [

@@ -22,6 +22,7 @@ export const DataProvider = ({ children }) => {
         const mode = savedMode;
 
         let provider;
+        console.log("Initializing DataProvider. Mode:", mode);
         if (mode === 'PROD') {
             provider = new ProductionDataProvider();
             setIsProductionMode(true);
@@ -29,6 +30,7 @@ export const DataProvider = ({ children }) => {
             provider = new DemoDataProvider();
             setIsProductionMode(false);
         }
+        console.log("Provider instance created:", provider.constructor.name);
         setDataProvider(provider);
         const bService = new BackupService(provider);
         setBackupService(bService);
@@ -363,7 +365,16 @@ export const DataProvider = ({ children }) => {
 
     // --- Centers Actions ---
     const addCenter = useCallback(async (center) => {
-        if (!dataProvider) return;
+        console.log("DataContext: addCenter called", center);
+        if (!dataProvider) {
+            console.error("DataContext: dataProvider is null");
+            return;
+        }
+        console.log("DataContext: using provider", dataProvider.constructor.name);
+        if (typeof dataProvider.addCenter !== 'function') {
+            console.error("DataContext: provider does not have addCenter method", dataProvider);
+            throw new Error("Provider missing addCenter method");
+        }
         const newCenter = await dataProvider.addCenter(center);
         setCenters(prev => [...prev, newCenter]);
         return newCenter;

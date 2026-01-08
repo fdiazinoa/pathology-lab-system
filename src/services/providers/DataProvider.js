@@ -77,6 +77,12 @@ class DataProvider {
     async addExam(exam) { throw new Error("Method 'addExam' must be implemented."); }
     async updateExam(exam) { throw new Error("Method 'updateExam' must be implemented."); }
     async deleteExam(id) { throw new Error("Method 'deleteExam' must be implemented."); }
+
+    // --- Centers ---
+    async getCenters() { throw new Error("Method 'getCenters' must be implemented."); }
+    async addCenter(center) { throw new Error("Method 'addCenter' must be implemented."); }
+    async updateCenter(center) { throw new Error("Method 'updateCenter' must be implemented."); }
+    async deleteCenter(id) { throw new Error("Method 'deleteCenter' must be implemented."); }
 }
 
 export default DataProvider;
