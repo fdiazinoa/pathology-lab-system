@@ -36,13 +36,34 @@ import { DataProvider, useData } from './services/DataContext';
 import { AIConfigProvider } from './ai/AIConfigContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import ConnectionWizard from './pages/ConnectionWizard';
+import { SetupProvider } from './context/SetupContext';
+import SetupLayout from './pages/setup/SetupLayout';
+import Welcome from './pages/setup/steps/Welcome';
+import ModeSelection from './pages/setup/steps/ModeSelection';
+import DatabaseConfig from './pages/setup/steps/DatabaseConfig';
+import AIConfig from './pages/setup/steps/AIConfig';
+import BackupConfig from './pages/setup/steps/BackupConfig';
+import Summary from './pages/setup/steps/Summary';
 
 // Protected Route Component
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     const { currentUser } = useData();
+    const isSetupCompleted = localStorage.getItem('setupCompleted') === 'true';
+
+    if (!isSetupCompleted) {
+        return <Navigate to="/setup/welcome" replace />;
+    }
+
     if (!currentUser) {
         return <Navigate to="/login" replace />;
     }
+
+    // Check role permission
+    if (allowedRoles.length > 0 && !allowedRoles.includes(currentUser.roleId)) {
+        // Redirect to dashboard if authorized, or login if not
+        return <Navigate to="/dashboard" replace />;
+    }
+
     return children;
 };
 
@@ -50,6 +71,21 @@ const AppRoutes = () => {
     return (
         <Routes>
             <Route path="/login" element={<Login />} />
+
+            {/* Setup Wizard Routes */}
+            <Route path="/setup" element={
+                <SetupProvider>
+                    <SetupLayout />
+                </SetupProvider>
+            }>
+                <Route index element={<Navigate to="welcome" replace />} />
+                <Route path="welcome" element={<Welcome />} />
+                <Route path="mode" element={<ModeSelection />} />
+                <Route path="database" element={<DatabaseConfig />} />
+                <Route path="ai" element={<AIConfig />} />
+                <Route path="backups" element={<BackupConfig />} />
+                <Route path="summary" element={<Summary />} />
+            </Route>
 
             <Route path="/" element={
                 <ProtectedRoute>
@@ -66,56 +102,56 @@ const AppRoutes = () => {
                 </ProtectedRoute>
             } />
             <Route path="/patients" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1', '2', '3']}>
                     <Layout>
                         <PatientManager />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/reception" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1', '3']}>
                     <Layout>
                         <SampleReception />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/logistics" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1', '4']}>
                     <Layout>
                         <DeliveryManager />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/my-deliveries" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1', '4']}>
                     <Layout>
                         <MyDeliveries />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/dispatch" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1', '4']}>
                     <Layout>
                         <DispatchModule />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/cases/new" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1', '2', '3']}>
                     <Layout>
                         <CaseManager />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/cases/:id" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1', '2', '3']}>
                     <Layout>
                         <ReportView />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/cases/:id/edit" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1', '2', '3']}>
                     <Layout>
                         <CaseManager />
                     </Layout>
@@ -144,7 +180,7 @@ const AppRoutes = () => {
 
 
             <Route path="/usage-dashboard" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1']}>
                     <Layout>
                         <UsageDashboard />
                     </Layout>
@@ -158,119 +194,119 @@ const AppRoutes = () => {
                 </ProtectedRoute>
             } />
             <Route path="/settings" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1', '2']}>
                     <Layout>
                         <SettingsPage />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/settings/connection-wizard" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1']}>
                     <Layout>
                         <ConnectionWizard />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/users" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1']}>
                     <Layout>
                         <UsersManager />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/roles" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1']}>
                     <Layout>
                         <RolesManager />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/tariffs" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1', '2']}>
                     <Layout>
                         <TariffsManager />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/doctors" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1', '2']}>
                     <Layout>
                         <DoctorsManager />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/tumor-board" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1', '2']}>
                     <Layout>
                         <TumorBoardManager />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/tumor-board/:id" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1', '2']}>
                     <Layout>
                         <TumorBoardSession />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/analytics" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1']}>
                     <Layout>
                         <EpidemiologyAnalytics />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/performance" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1']}>
                     <Layout>
                         <LaboratoryPerformance />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/global-network" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1', '2']}>
                     <Layout>
                         <GlobalCaseNetwork />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/case-map" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1', '2']}>
                     <Layout>
                         <CaseMap />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/insurers" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1', '2']}>
                     <Layout>
                         <InsurersManager />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/centers" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1', '2']}>
                     <Layout>
                         <CentersManager />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/organs" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1', '2']}>
                     <Layout>
                         <OrgansManager />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/equipment" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1', '2']}>
                     <Layout>
                         <EquipmentManager />
                     </Layout>
                 </ProtectedRoute>
             } />
             <Route path="/audit-log" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['1']}>
                     <Layout>
                         <AuditLog />
                     </Layout>

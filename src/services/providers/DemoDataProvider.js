@@ -96,8 +96,13 @@ class DemoDataProvider extends DataProvider {
     }
 
     async getCurrentUser() {
-        const saved = localStorage.getItem('app_user');
-        return saved ? JSON.parse(saved) : null;
+        try {
+            const saved = localStorage.getItem('app_user');
+            return saved ? JSON.parse(saved) : null;
+        } catch (e) {
+            console.error("Error parsing app_user", e);
+            return null;
+        }
     }
 
     async getUsers() {
@@ -122,8 +127,13 @@ class DemoDataProvider extends DataProvider {
     // --- Patients ---
     async getPatients() {
         await this._delay();
-        const saved = localStorage.getItem('app_patients');
-        return saved ? JSON.parse(saved) : MOCK_PATIENTS;
+        try {
+            const saved = localStorage.getItem('app_patients');
+            return saved ? JSON.parse(saved) : MOCK_PATIENTS;
+        } catch (e) {
+            console.error("Error parsing app_patients", e);
+            return MOCK_PATIENTS;
+        }
     }
 
     async addPatient(patient) {
@@ -145,8 +155,13 @@ class DemoDataProvider extends DataProvider {
     // --- Cases ---
     async getCases() {
         await this._delay();
-        const saved = localStorage.getItem('app_cases');
-        return saved ? JSON.parse(saved) : MOCK_CASES;
+        try {
+            const saved = localStorage.getItem('app_cases');
+            return saved ? JSON.parse(saved) : MOCK_CASES;
+        } catch (e) {
+            console.error("Error parsing app_cases", e);
+            return MOCK_CASES;
+        }
     }
 
     async getCase(id) {
@@ -180,8 +195,13 @@ class DemoDataProvider extends DataProvider {
 
     async getGlobalCases() {
         await this._delay();
-        const saved = localStorage.getItem('app_global_cases');
-        return saved ? JSON.parse(saved) : MOCK_GLOBAL_CASES;
+        try {
+            const saved = localStorage.getItem('app_global_cases');
+            return saved ? JSON.parse(saved) : MOCK_GLOBAL_CASES;
+        } catch (e) {
+            console.error("Error parsing app_global_cases", e);
+            return MOCK_GLOBAL_CASES;
+        }
     }
 
     async publishToGlobal(caseId, description) {
@@ -244,8 +264,13 @@ class DemoDataProvider extends DataProvider {
                 autoPrintLabels: false
             }
         };
-        const saved = localStorage.getItem('app_settings');
-        return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
+        try {
+            const saved = localStorage.getItem('app_settings');
+            return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
+        } catch (e) {
+            console.error("Error parsing app_settings", e);
+            return defaultSettings;
+        }
     }
 
     async updateSettings(settings) {

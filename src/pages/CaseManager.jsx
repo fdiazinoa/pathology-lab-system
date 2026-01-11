@@ -15,6 +15,7 @@ import ImageUploader from '../components/ImageUploader';
 import AIAnalysisPanel from '../components/AIAnalysisPanel';
 import Modal from '../components/Modal';
 import LabWorkflow from '../components/LabWorkflow';
+import SpecimenManager from '../components/SpecimenManager';
 import CaseComparator from '../components/CaseComparator';
 import { useData } from '../services/DataContext';
 import { analyzeCase, trainModel, validateDiagnosis, preClassifyCase, analyzeQuantitativeMetrics, generateStructuredReport, analyzeQualityControl, analyzeMacroscopy } from '../services/aiService';
@@ -185,6 +186,8 @@ const CaseManager = () => {
         diagnosis: '',
         paymentType: 'Privado',
         arsName: '',
+        policyNumber: '',
+        specimens: [], // Hierarchical Data: Specimens -> Blocks
         images: [],
         contributeToAi: true,
         aiClassification: null,
@@ -244,6 +247,8 @@ const CaseManager = () => {
                     images: existingCase.images || [],
                     paymentType: existingCase.paymentType || 'Privado',
                     arsName: existingCase.arsName || '',
+                    policyNumber: existingCase.policyNumber || '',
+                    specimens: existingCase.specimens || [],
                     contributeToAi: existingCase.contributeToAi !== undefined ? existingCase.contributeToAi : true,
                     aiClassification: existingCase.aiClassification || null,
                     quantitativeResults: existingCase.quantitativeResults || {},
@@ -257,16 +262,37 @@ const CaseManager = () => {
         }
     }, [id, cases, exams]);
 
-    const getPrice = (examId, pType) => {
+    const calculatePrice = (examId, pType, insurerName) => {
         const exam = exams?.find(e => e.id === examId);
         if (!exam) return 0;
-        return pType === 'Privado' ? exam.pricePrivate : exam.priceInsurance;
+
+        if (pType === 'Privado') {
+            return exam.pricePrivate || 0;
+        } else {
+            // Logic for Insurance Tariff
+            const insurer = insurers?.find(i => i.name === insurerName);
+            if (!insurer) return exam.pricePrivate || 0; // Default if insurer not found
+
+            const tariff = insurer.tariff;
+            if (!tariff) return exam.pricePrivate || 0;
+
+            if (tariff.includes('%')) {
+                const percentage = parseFloat(tariff.replace('%', '')) / 100;
+                return (exam.pricePrivate || 0) * percentage;
+            } else if (tariff.toLowerCase().includes('fixed')) {
+                // Extract number from string like "Fixed $1500"
+                const match = tariff.match(/\d+/);
+                return match ? parseInt(match[0], 10) : 0;
+            } else {
+                return exam.pricePrivate || 0;
+            }
+        }
     };
 
     const handleExamChange = (e) => {
         const selectedExamId = e.target.value;
         const selectedExam = exams.find(ex => ex.id === selectedExamId);
-        const newPrice = getPrice(selectedExamId, formData.paymentType);
+        const newPrice = calculatePrice(selectedExamId, formData.paymentType, formData.arsName);
 
         setFormData(prev => ({
             ...prev,
@@ -278,13 +304,25 @@ const CaseManager = () => {
 
     const handlePaymentTypeChange = (e) => {
         const newPaymentType = e.target.value;
-        const newPrice = getPrice(formData.examId, newPaymentType);
+        const newPrice = calculatePrice(formData.examId, newPaymentType, formData.arsName);
 
         setFormData(prev => ({
             ...prev,
             paymentType: newPaymentType,
             price: newPrice,
-            arsName: newPaymentType === 'Privado' ? '' : prev.arsName
+            arsName: newPaymentType === 'Privado' ? '' : prev.arsName,
+            policyNumber: newPaymentType === 'Privado' ? '' : prev.policyNumber
+        }));
+    };
+
+    const handleInsurerChange = (e) => {
+        const newInsurerName = e.target.value;
+        const newPrice = calculatePrice(formData.examId, formData.paymentType, newInsurerName);
+
+        setFormData(prev => ({
+            ...prev,
+            arsName: newInsurerName,
+            price: newPrice
         }));
     };
 
@@ -567,52 +605,74 @@ const CaseManager = () => {
         // If editing, keep ID, else create new
         const caseId = id || `C-${new Date().getFullYear()}-${String(cases.length + 1).padStart(3, '0')}`;
 
+        // Get existing case data if editing to prevent overwriting other fields
+        const existingCase = id ? getCase(id) : {};
+
         const caseData = {
+            ...existingCase, // Merge existing data first
             id: caseId,
             patientName: selectedPatient ? selectedPatient.name : 'Desconocido',
             age: selectedPatient ? selectedPatient.age : '?',
             sex: selectedPatient ? selectedPatient.sex : '?',
             status: 'Finalizado',
-            createdAt: id ? (getCase(id)?.createdAt) : new Date().toISOString().split('T')[0],
+            createdAt: id ? (existingCase?.createdAt) : new Date().toISOString().split('T')[0],
             updatedAt: new Date().toISOString().split('T')[0],
             aiCertified: isCertified,
-            ...formData
+            ...formData, // Overwrite with form data
+            // Ensure nested objects are merged if needed, but formData has the full state for these:
+            quantitativeResults: { ...(existingCase?.quantitativeResults || {}), ...formData.quantitativeResults },
+            secondLook: { ...(existingCase?.secondLook || {}), ...formData.secondLook }
         };
 
         // Simulate save delay
         setTimeout(async () => {
-            const logAction = id ? 'Edición de Datos Generales' : 'Creación de Caso';
-            const logDetails = id ? 'Se modificaron los datos básicos del caso.' : 'Caso registrado en el sistema.';
+            try {
+                const logAction = id ? 'Edición de Datos Generales' : 'Creación de Caso';
+                const logDetails = id ? 'Se modificaron los datos básicos del caso.' : 'Caso registrado en el sistema.';
 
-            const caseWithLog = {
-                ...caseData,
-                auditLogs: [...(caseData.auditLogs || []), {
-                    date: new Date().toISOString(),
-                    user: currentUser ? currentUser.name : 'Sistema',
-                    action: logAction,
-                    details: logDetails
-                }]
-            };
+                const caseWithLog = {
+                    ...caseData,
+                    auditLogs: [...(caseData.auditLogs || []), {
+                        date: new Date().toISOString(),
+                        user: currentUser ? currentUser.name : 'Sistema',
+                        action: logAction,
+                        details: logDetails
+                    }]
+                };
 
-            if (id) {
-                updateCase(caseWithLog);
-            } else {
-                addCase(caseWithLog);
-                navigate('/dashboard');
-            }
+                if (id) {
+                    await updateCase(caseWithLog);
+                } else {
+                    await addCase(caseWithLog);
+                    // For new cases, we wait a bit more to ensure state propagation or just navigate
+                }
 
-            if (formData.contributeToAi) {
-                try {
-                    await trainModel(caseWithLog);
-                    // In a real app, we might show a toast here, for now we will alert
-                    alert(isCertified ? "Caso guardado y CERTIFICADO por IA." : "Caso guardado exitosamente.");
-                } catch (err) {
-                    console.error("Training error", err);
+                if (formData.contributeToAi) {
+                    try {
+                        await trainModel(caseWithLog);
+                        // In a real app, we might show a toast here, for now we will alert
+                        // alert(isCertified ? "Caso guardado y CERTIFICADO por IA." : "Caso guardado exitosamente.");
+                    } catch (err) {
+                        console.error("Training error", err);
+                    }
+                }
+
+                setLoading(false);
+                // Navigate ONLY after everything is done
+                if (!id) {
+                    navigate('/dashboard');
+                } else {
+                    navigate(`/cases/${caseId}`);
+                }
+            } catch (error) {
+                console.error("Error saving case:", error);
+                setLoading(false);
+                if (error.name === 'QuotaExceededError' || error.message.includes('quota')) {
+                    alert("Error: No hay suficiente espacio en el almacenamiento local para guardar las imágenes. Intente reducir el tamaño o cantidad de imágenes.");
+                } else {
+                    alert("Error al guardar el caso: " + error.message);
                 }
             }
-
-            setLoading(false);
-            navigate(`/cases/${caseId}`);
         }, 1000);
     };
 
@@ -859,22 +919,31 @@ const CaseManager = () => {
                             </div>
 
                             {formData.paymentType === 'Asegurado' && (
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-sm font-medium text-text-main">Seleccionar ARS / Seguro</label>
-                                    <select
-                                        className="flex w-full rounded-md border border-border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
-                                        value={formData.arsName || ''}
-                                        onChange={e => setFormData({ ...formData, arsName: e.target.value })}
+                                <>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-sm font-medium text-text-main">Seleccionar ARS / Seguro</label>
+                                        <select
+                                            className="flex w-full rounded-md border border-border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
+                                            value={formData.arsName || ''}
+                                            onChange={handleInsurerChange}
+                                            required
+                                        >
+                                            <option value="">Seleccionar...</option>
+                                            {insurers && insurers.map(ins => (
+                                                <option key={ins.id} value={ins.name}>
+                                                    {ins.name} ({ins.tariff})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <Input
+                                        label="No. de Póliza / Afiliado"
+                                        placeholder="Ej. 001-2345678-9"
+                                        value={formData.policyNumber}
+                                        onChange={e => setFormData({ ...formData, policyNumber: e.target.value })}
                                         required
-                                    >
-                                        <option value="">Seleccionar...</option>
-                                        {insurers && insurers.map(ins => (
-                                            <option key={ins.id} value={ins.name}>
-                                                {ins.name} ({ins.tariff})
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                                    />
+                                </>
                             )}
 
                             <div className="flex flex-col gap-1.5">
@@ -927,6 +996,14 @@ const CaseManager = () => {
                         />
                     )}
 
+                    {/* Specimen Management */}
+                    <div className="mb-6">
+                        <SpecimenManager
+                            specimens={formData.specimens}
+                            onUpdate={(updatedSpecimens) => setFormData({ ...formData, specimens: updatedSpecimens })}
+                        />
+                    </div>
+
                     {/* Macroscopy & Microscopy */}
                     <Card title="Descripción">
                         <div className="space-y-4">
@@ -968,7 +1045,7 @@ const CaseManager = () => {
                                     onChange={e => setFormData({ ...formData, macroscopy: e.target.value })}
                                     className="flex-1"
                                 />
-                                {settings?.aiEnabled && (
+                                {settings?.aiEnabled && settings?.openaiApiKey && (
                                     <div className="mt-8">
                                         <Button
                                             type="button"
@@ -1105,7 +1182,7 @@ const CaseManager = () => {
                             </div>
                         )}
 
-                        {settings?.aiEnabled && formData.aiClassification && (
+                        {settings?.aiEnabled && settings?.openaiApiKey && formData.aiClassification && (
                             <div className={`mt - 4 p - 3 rounded - lg border ${formData.aiClassification.nature === 'Maligno' ? 'bg-red-50 border-red-200' :
                                 formData.aiClassification.nature === 'Sospechoso' ? 'bg-yellow-50 border-yellow-200' :
                                     'bg-green-50 border-green-200'
@@ -1134,7 +1211,7 @@ const CaseManager = () => {
                         )}
 
                         {/* Quantitative Analysis Section */}
-                        {settings?.aiEnabled && (
+                        {settings?.aiEnabled && settings?.openaiApiKey && (
                             <div className="mt-6 border-t border-border pt-4">
                                 <h4 className="text-sm font-bold text-text-main mb-3 flex items-center gap-2">
                                     <Activity size={16} className="text-primary" />

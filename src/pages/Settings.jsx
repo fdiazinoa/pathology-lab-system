@@ -6,6 +6,7 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import { useData } from '../services/DataContext';
 import { useAIConfig } from '../ai/AIConfigContext';
+import { testConnection } from '../services/aiService';
 
 const HELP_SECTIONS = [
     {
@@ -259,6 +260,10 @@ const Settings = () => {
     const [backupHistory, setBackupHistory] = useState([]);
     const [isBackingUp, setIsBackingUp] = useState(false);
 
+    // AI Connection Test State
+    const [testingConnection, setTestingConnection] = useState(false);
+    const [connectionStatus, setConnectionStatus] = useState(null);
+
     useEffect(() => {
         if (activeTab === 'backups') {
             setBackupHistory(getBackupHistory());
@@ -464,6 +469,23 @@ const Settings = () => {
         }
     };
 
+    const handleTestConnection = async () => {
+        setTestingConnection(true);
+        setConnectionStatus(null);
+        try {
+            const result = await testConnection({
+                provider: aiConfig.provider,
+                model: aiConfig.model,
+                apiKey: formData.openaiApiKey // Use current input value
+            });
+            setConnectionStatus(result);
+        } catch (error) {
+            setConnectionStatus({ success: false, message: error.message });
+        } finally {
+            setTestingConnection(false);
+        }
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         setLoading(true);
@@ -546,6 +568,38 @@ const Settings = () => {
             )}
 
 
+
+            {/* --- INSTALLATION WIZARD (ADMIN ONLY) --- */}
+            {
+                currentUser?.roleId === '1' && (
+                    <div className="mt-8 pt-8 border-t border-gray-200">
+                        <h3 className="text-lg font-semibold text-text-main mb-4 flex items-center gap-2">
+                            <Sparkles size={20} className="text-blue-600" />
+                            Asistente de Configuración
+                        </h3>
+
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 flex items-center justify-between">
+                            <div>
+                                <h4 className="font-bold text-blue-900 mb-2">Re-ejecutar Asistente de Instalación</h4>
+                                <p className="text-sm text-blue-800 max-w-xl">
+                                    Permite modificar la configuración de conexión a base de datos, almacenamiento, IA y respaldos.
+                                    No elimina datos existentes, pero puede requerir reinicio de servicios.
+                                </p>
+                            </div>
+                            <Button
+                                onClick={() => {
+                                    if (window.confirm('¿Desea volver a ejecutar el asistente de configuración?')) {
+                                        navigate('/setup/welcome');
+                                    }
+                                }}
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                                Iniciar Asistente
+                            </Button>
+                        </div>
+                    </div>
+                )
+            }
 
             {/* --- SYSTEM MODE CONTROL (ADMIN ONLY) --- */}
             {
@@ -1224,20 +1278,112 @@ const Settings = () => {
 
                                 {formData.aiEnabled && (
                                     <>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-text-main mb-1">Proveedor de IA</label>
+                                                <select
+                                                    className="w-full p-2 border border-border rounded-md outline-none focus:ring-2 focus:ring-primary bg-white"
+                                                    value={aiConfig.provider}
+                                                    onChange={(e) => {
+                                                        const newProvider = e.target.value;
+                                                        let defaultModel = '';
+                                                        if (newProvider === 'google') defaultModel = 'gemini-1.5-pro';
+                                                        else if (newProvider === 'openai') defaultModel = 'gpt-4o';
+                                                        else if (newProvider === 'anthropic') defaultModel = 'claude-3-opus';
+
+                                                        updateAIConfig({ provider: newProvider, model: defaultModel || aiConfig.model });
+                                                    }}
+                                                >
+                                                    <option value="openai">OpenAI</option>
+                                                    <option value="anthropic">Anthropic</option>
+                                                    <option value="google">Google Gemini</option>
+                                                    <option value="local">Local LLM (Ollama)</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-text-main mb-1">Modelo</label>
+                                                {aiConfig.provider === 'google' ? (
+                                                    <select
+                                                        className="w-full p-2 border border-border rounded-md outline-none focus:ring-2 focus:ring-primary bg-white"
+                                                        value={aiConfig.model}
+                                                        onChange={(e) => updateAIConfig({ model: e.target.value })}
+                                                    >
+                                                        <option value="gemini-1.5-pro">Gemini 1.5 Pro (Recomendado)</option>
+                                                        <option value="gemini-1.5-flash">Gemini 1.5 Flash (Rápido)</option>
+                                                        <option value="gemini-1.0-pro">Gemini 1.0 Pro</option>
+                                                        <option value="gemini-ultra">Gemini Ultra</option>
+                                                    </select>
+                                                ) : aiConfig.provider === 'openai' ? (
+                                                    <div className="space-y-2">
+                                                        <select
+                                                            className="w-full p-2 border border-border rounded-md outline-none focus:ring-2 focus:ring-primary bg-white"
+                                                            value={['gpt-5.2', 'gpt-5', 'gpt-4o', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'].includes(aiConfig.model) ? aiConfig.model : 'custom'}
+                                                            onChange={(e) => {
+                                                                if (e.target.value === 'custom') {
+                                                                    updateAIConfig({ model: '' });
+                                                                } else {
+                                                                    updateAIConfig({ model: e.target.value });
+                                                                }
+                                                            }}
+                                                        >
+                                                            <option value="gpt-5.2">GPT-5.2 (SOTA 2026)</option>
+                                                            <option value="gpt-5">GPT-5</option>
+                                                            <option value="gpt-4o">GPT-4o</option>
+                                                            <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                                            <option value="gpt-4">GPT-4 (Clásico)</option>
+                                                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                                            <option value="custom">Otro / Personalizado...</option>
+                                                        </select>
+                                                        {(!['gpt-5.2', 'gpt-5', 'gpt-4o', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'].includes(aiConfig.model)) && (
+                                                            <Input
+                                                                placeholder="Nombre del modelo (ej: gpt-6-preview)"
+                                                                value={aiConfig.model}
+                                                                onChange={(e) => updateAIConfig({ model: e.target.value })}
+                                                            />
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <Input
+                                                        placeholder="claude-3-opus"
+                                                        value={aiConfig.model}
+                                                        onChange={(e) => updateAIConfig({ model: e.target.value })}
+                                                    />
+                                                )}
+                                            </div>
+                                        </div>
+
                                         <Input
-                                            label="OpenAI API Key"
+                                            label={aiConfig.provider === 'google' ? "Google API Key" : aiConfig.provider === 'anthropic' ? "Anthropic API Key" : "OpenAI API Key"}
                                             type="password"
                                             placeholder="sk-..."
                                             value={formData.openaiApiKey || ''}
                                             onChange={e => setFormData({ ...formData, openaiApiKey: e.target.value })}
                                         />
                                         <p className="text-xs text-text-secondary">
-                                            El sistema utiliza GPT-4o para análisis avanzado. La llave se almacena de forma segura en su navegador.
+                                            Recomendamos <strong>GPT-5.2</strong> para obtener la máxima precisión diagnóstica. La llave se almacena de forma segura en su navegador.
                                         </p>
+
+                                        <div className="flex items-center gap-3 mt-2">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={handleTestConnection}
+                                                isLoading={testingConnection}
+                                                disabled={!formData.openaiApiKey && aiConfig.provider !== 'local'}
+                                            >
+                                                Probar Conexión
+                                            </Button>
+                                            {connectionStatus && (
+                                                <span className={`text-xs font-medium ${connectionStatus.success ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {connectionStatus.success ? '✓ Conexión Exitosa' : `✗ Error: ${connectionStatus.message || connectionStatus.error || 'Desconocido'}`}
+                                                </span>
+                                            )}
+                                        </div>
                                         {!formData.openaiApiKey && (
-                                            <div className="p-3 bg-blue-50 text-blue-700 text-xs rounded-md border border-blue-100 flex items-center gap-2">
+                                            <div className="p-3 bg-amber-50 text-amber-800 text-xs rounded-md border border-amber-100 flex items-center gap-2">
                                                 <Info size={14} />
-                                                <span>Modo Simulación: Se utilizarán respuestas de prueba predefinidas.</span>
+                                                <span>Se requiere una API Key válida para activar los módulos de IA en el sistema.</span>
                                             </div>
                                         )}
                                     </>

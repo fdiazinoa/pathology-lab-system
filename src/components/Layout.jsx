@@ -15,55 +15,55 @@ const Layout = ({ children }) => {
         {
             category: 'Dashboard',
             items: [
-                { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-                { path: '/analytics', label: 'Inteligencia de Negocio', icon: Activity },
-                { path: '/performance', label: 'Rendimiento y Costos', icon: TrendingUp },
+                { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, allowedRoles: ['1', '2', '3', '4'] },
+                { path: '/analytics', label: 'Inteligencia de Negocio', icon: Activity, allowedRoles: ['1'] },
+                { path: '/performance', label: 'Rendimiento y Costos', icon: TrendingUp, allowedRoles: ['1'] },
             ]
         },
         {
             category: 'Gestión de Casos',
             items: [
-                { path: '/cases/new', label: 'Nuevo Caso', icon: FilePlus },
-                { path: '/reception', label: 'Recepción', icon: Inbox },
-                { path: '/patients', label: 'Pacientes', icon: Users },
+                { path: '/cases/new', label: 'Nuevo Caso', icon: FilePlus, allowedRoles: ['1', '2', '3'] },
+                { path: '/reception', label: 'Recepción', icon: Inbox, allowedRoles: ['1', '3'] },
+                { path: '/patients', label: 'Pacientes', icon: Users, allowedRoles: ['1', '2', '3'] },
             ]
         },
         {
             category: 'Logística',
             items: [
-                { path: '/logistics', label: 'Logística', icon: Truck },
-                { path: '/dispatch', label: 'Despacho de Resultados', icon: ShieldCheck },
-                { path: '/my-deliveries', label: 'Mis Entregas', icon: Package },
+                { path: '/logistics', label: 'Logística', icon: Truck, allowedRoles: ['1', '4'] },
+                { path: '/dispatch', label: 'Despacho de Resultados', icon: ShieldCheck, allowedRoles: ['1', '4'] },
+                { path: '/my-deliveries', label: 'Mis Entregas', icon: Package, allowedRoles: ['1', '4'] },
             ]
         },
         {
             category: 'Red y Colaboración',
             items: [
-                { path: '/tumor-board', label: 'Tumor Board', icon: Presentation },
-                { path: '/global-network', label: 'Red Global de Casos', icon: Globe },
-                { path: '/case-map', label: 'Mapa de Casos', icon: Map },
+                { path: '/tumor-board', label: 'Tumor Board', icon: Presentation, allowedRoles: ['1', '2'] },
+                { path: '/global-network', label: 'Red Global de Casos', icon: Globe, allowedRoles: ['1', '2'] },
+                { path: '/case-map', label: 'Mapa de Casos', icon: Map, allowedRoles: ['1', '2'] },
             ]
         },
         {
             category: 'Catálogos',
             items: [
-                { path: '/centers', label: 'Centros', icon: Building },
-                { path: '/insurers', label: 'Aseguradoras', icon: Shield },
-                { path: '/organs', label: 'Órganos', icon: Activity },
-                { path: '/equipment', label: 'Equipos', icon: Server },
-                { path: '/doctors', label: 'Doctores', icon: Stethoscope },
-                { path: '/tariffs', label: 'Tarifas', icon: DollarSign },
+                { path: '/centers', label: 'Centros', icon: Building, allowedRoles: ['1', '2'] },
+                { path: '/insurers', label: 'Aseguradoras', icon: Shield, allowedRoles: ['1', '2'] },
+                { path: '/organs', label: 'Órganos', icon: Activity, allowedRoles: ['1', '2'] },
+                { path: '/equipment', label: 'Equipos', icon: Server, allowedRoles: ['1', '2'] },
+                { path: '/doctors', label: 'Doctores', icon: Stethoscope, allowedRoles: ['1', '2'] },
+                { path: '/tariffs', label: 'Tarifas', icon: DollarSign, allowedRoles: ['1', '2'] },
             ]
         },
         {
             category: 'Configuración',
             items: [
-                { path: '/users', label: 'Usuarios', icon: Users },
-                { path: '/roles', label: 'Roles y Permisos', icon: Shield },
-                { path: '/audit-log', label: 'Registro de Auditoría', icon: History },
-                ...(userRoleName === 'Administrador' ? [{ path: '/usage-dashboard', label: 'Dashboard de Uso', icon: BarChart3 }] : []),
-                { path: '/settings', label: 'Configuración', icon: Settings },
-                { path: '/help', label: 'Ayuda', icon: BookOpen },
+                { path: '/users', label: 'Usuarios', icon: Users, allowedRoles: ['1'] },
+                { path: '/roles', label: 'Roles y Permisos', icon: Shield, allowedRoles: ['1'] },
+                { path: '/audit-log', label: 'Registro de Auditoría', icon: History, allowedRoles: ['1'] },
+                ...(userRoleName === 'Administrador' ? [{ path: '/usage-dashboard', label: 'Dashboard de Uso', icon: BarChart3, allowedRoles: ['1'] }] : []),
+                { path: '/settings', label: 'Configuración', icon: Settings, allowedRoles: ['1', '2'] },
+                { path: '/help', label: 'Ayuda', icon: BookOpen, allowedRoles: ['1', '2', '3', '4'] },
             ]
         }
     ];
@@ -83,31 +83,40 @@ const Layout = ({ children }) => {
                 </div>
 
                 <nav className="flex-1 p-4 space-y-6">
-                    {navCategories.map((group) => (
-                        <div key={group.category} className="space-y-1">
-                            <h3 className="px-4 text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2">
-                                {group.category}
-                            </h3>
-                            {group.items.map((item) => {
-                                const Icon = item.icon;
-                                return (
-                                    <NavLink
-                                        key={item.path}
-                                        to={item.path}
-                                        className={({ isActive }) =>
-                                            `flex items-center gap-3 px-4 py-2.5 rounded-md transition-colors ${isActive
-                                                ? 'bg-primary-light text-primary font-medium'
-                                                : 'text-text-secondary hover:bg-gray-50 hover:text-text-main'
-                                            } `
-                                        }
-                                    >
-                                        <Icon size={18} />
-                                        <span className="text-sm">{item.label}</span>
-                                    </NavLink>
-                                );
-                            })}
-                        </div>
-                    ))}
+                    {navCategories.map((group) => {
+                        // Filter items based on user role
+                        const visibleItems = group.items.filter(item =>
+                            !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
+                        );
+
+                        if (visibleItems.length === 0) return null;
+
+                        return (
+                            <div key={group.category} className="space-y-1">
+                                <h3 className="px-4 text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2">
+                                    {group.category}
+                                </h3>
+                                {visibleItems.map((item) => {
+                                    const Icon = item.icon;
+                                    return (
+                                        <NavLink
+                                            key={item.path}
+                                            to={item.path}
+                                            className={({ isActive }) =>
+                                                `flex items-center gap-3 px-4 py-2.5 rounded-md transition-colors ${isActive
+                                                    ? 'bg-primary-light text-primary font-medium'
+                                                    : 'text-text-secondary hover:bg-gray-50 hover:text-text-main'
+                                                } `
+                                            }
+                                        >
+                                            <Icon size={18} />
+                                            <span className="text-sm">{item.label}</span>
+                                        </NavLink>
+                                    );
+                                })}
+                            </div>
+                        );
+                    })}
                 </nav>
 
                 <div className="p-4 border-t border-border shrink-0 sticky bottom-0 bg-white z-10">
@@ -129,7 +138,7 @@ const Layout = ({ children }) => {
                         🧬 MODO PRODUCCIÓN – Datos Reales y Operación Crítica
                     </div>
                 ) : (
-                    <div className="bg-blue-600 text-white px-4 py-2 text-center font-bold text-xs shadow-md sticky top-0 z-30 flex items-center justify-center gap-2 uppercase tracking-widest">
+                    <div className="bg-blue-100 text-blue-900 border-b border-blue-200 px-4 py-2 text-center font-bold text-xs shadow-sm sticky top-0 z-30 flex items-center justify-center gap-2 uppercase tracking-widest">
                         <FlaskConical size={14} />
                         🧪 MODO DEMO – Entorno de Pruebas y Datos Simulados
                     </div>

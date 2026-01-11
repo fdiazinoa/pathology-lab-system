@@ -7,10 +7,10 @@ import Input from '../components/Input';
 import { useData } from '../services/DataContext';
 
 const PatientManager = () => {
-    const { patients, addPatient } = useData();
+    const { patients, addPatient, insurers } = useData();
     const [searchTerm, setSearchTerm] = useState('');
     const [showForm, setShowForm] = useState(false);
-    const [newPatient, setNewPatient] = useState({ name: '', age: '', sex: 'F', history: '', cedula: '' });
+    const [newPatient, setNewPatient] = useState({ name: '', age: '', sex: 'F', history: '', cedula: '', arsName: '', policyNumber: '' });
 
     const handleCreatePatient = (e) => {
         e.preventDefault();
@@ -39,7 +39,7 @@ const PatientManager = () => {
         };
         addPatient(patient);
         setShowForm(false);
-        setNewPatient({ name: '', age: '', sex: 'F', history: '', cedula: '' });
+        setNewPatient({ name: '', age: '', sex: 'F', history: '', cedula: '', arsName: '', policyNumber: '' });
     };
 
     const filteredPatients = patients.filter(p =>
@@ -93,6 +93,25 @@ const PatientManager = () => {
                                 placeholder={newPatient.age && parseInt(newPatient.age) < 18 ? "Opcional (se generará código)" : "Obligatorio si > 18 años"}
                                 value={newPatient.cedula}
                                 onChange={e => setNewPatient({ ...newPatient, cedula: e.target.value })}
+                            />
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-sm font-medium text-text-main">ARS / Seguro (Opcional)</label>
+                                <select
+                                    className="flex w-full rounded-md border border-border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
+                                    value={newPatient.arsName}
+                                    onChange={e => setNewPatient({ ...newPatient, arsName: e.target.value })}
+                                >
+                                    <option value="">Ninguno / Privado</option>
+                                    {insurers && insurers.map(ins => (
+                                        <option key={ins.id} value={ins.name}>{ins.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <Input
+                                label="No. de Póliza"
+                                placeholder="Opcional"
+                                value={newPatient.policyNumber}
+                                onChange={e => setNewPatient({ ...newPatient, policyNumber: e.target.value })}
                             />
                         </div>
                         <Input

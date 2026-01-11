@@ -31,6 +31,8 @@ CREATE TABLE IF NOT EXISTS patients (
     city TEXT,
     region TEXT,
     history TEXT,
+    ars_name TEXT,
+    policy_number TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -68,6 +70,7 @@ CREATE TABLE IF NOT EXISTS cases (
     diagnosis TEXT,
     payment_type TEXT,
     ars_name TEXT,
+    policy_number TEXT,
     cost DECIMAL(10, 2),
     technician_time INTEGER DEFAULT 0,
     pathologist_time INTEGER DEFAULT 0,
@@ -83,6 +86,27 @@ CREATE TABLE IF NOT EXISTS cases (
     audit_logs JSONB DEFAULT '[]',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 6.1 Specimens Table (1:N with Cases)
+CREATE TABLE IF NOT EXISTS specimens (
+    id TEXT PRIMARY KEY,
+    case_id TEXT REFERENCES cases(id) ON DELETE CASCADE,
+    type TEXT NOT NULL,
+    description TEXT,
+    collection_date TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 6.2 Blocks Table (1:N with Specimens)
+CREATE TABLE IF NOT EXISTS blocks (
+    id TEXT PRIMARY KEY,
+    specimen_id TEXT REFERENCES specimens(id) ON DELETE CASCADE,
+    label TEXT NOT NULL,
+    status TEXT DEFAULT 'pending',
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 7. Global Cases Table (Collaboration)

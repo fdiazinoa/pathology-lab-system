@@ -10,7 +10,7 @@ import { useData } from '../services/DataContext';
 
 const SampleReception = () => {
     const navigate = useNavigate();
-    const { patients, doctors, originCenters, addCase, addPatient, currentUser, addAuditLog } = useData();
+    const { patients, doctors, centers: originCenters, insurers, addCase, addPatient, currentUser, addAuditLog } = useData();
     const [loading, setLoading] = useState(false);
     const searchRef = useRef(null);
 
@@ -27,7 +27,10 @@ const SampleReception = () => {
         sampleType: 'Biopsia',
         priority: 'Normal', // Normal, Urgente
         description: '',
-        collectionDate: new Date().toISOString().slice(0, 16)
+        collectionDate: new Date().toISOString().slice(0, 16),
+        paymentType: 'Privado',
+        arsName: '',
+        policyNumber: ''
     });
 
     const [generatedSample, setGeneratedSample] = useState(null);
@@ -112,6 +115,9 @@ const SampleReception = () => {
             status: 'Recibida', // Initial status
             priority: formData.priority,
             clinicalData: formData.description,
+            paymentType: formData.paymentType,
+            arsName: formData.arsName,
+            policyNumber: formData.policyNumber,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             receivedBy: currentUser ? currentUser.name : 'Sistema',
@@ -241,6 +247,46 @@ const SampleReception = () => {
                                 ))}
                             </select>
                         </div>
+
+                        {/* Payment Type */}
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-sm font-medium text-text-main">Tipo de Pago / Cobertura</label>
+                            <select
+                                className="flex w-full rounded-md border border-border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
+                                value={formData.paymentType}
+                                onChange={e => setFormData({ ...formData, paymentType: e.target.value })}
+                            >
+                                <option value="Privado">Privado</option>
+                                <option value="Asegurado">Asegurado</option>
+                            </select>
+                        </div>
+
+                        {/* Insurance Fields */}
+                        {formData.paymentType === 'Asegurado' && (
+                            <>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-medium text-text-main">ARS / Seguro</label>
+                                    <select
+                                        className="flex w-full rounded-md border border-border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
+                                        value={formData.arsName}
+                                        onChange={e => setFormData({ ...formData, arsName: e.target.value })}
+                                        required
+                                    >
+                                        <option value="">Seleccionar ARS...</option>
+                                        {insurers && insurers.map(ins => (
+                                            <option key={ins.id} value={ins.name}>{ins.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <Input
+                                    label="No. de Póliza"
+                                    placeholder="Ej. 001-2345678-9"
+                                    value={formData.policyNumber}
+                                    onChange={e => setFormData({ ...formData, policyNumber: e.target.value })}
+                                    required
+                                />
+                            </>
+                        )}
 
                         {/* Sample Type */}
                         <div className="flex flex-col gap-1.5">

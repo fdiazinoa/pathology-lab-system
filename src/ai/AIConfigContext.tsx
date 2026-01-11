@@ -6,6 +6,9 @@ export interface AIConfig {
         max_retries: number;
         fallback_enabled: boolean;
     };
+    provider: string;
+    apiKey: string;
+    model: string;
     modules: {
         qc_enabled: boolean;
         triage_enabled: boolean;
@@ -26,6 +29,9 @@ const DEFAULT_CONFIG: AIConfig = {
         max_retries: 2,
         fallback_enabled: true,
     },
+    provider: 'openai',
+    apiKey: '',
+    model: 'gpt-4',
     modules: {
         qc_enabled: true,
         triage_enabled: true,
@@ -52,8 +58,23 @@ const AIConfigContext = createContext<AIConfigContextType | undefined>(undefined
 
 export const AIConfigProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [config, setConfig] = useState<AIConfig>(() => {
-        const saved = localStorage.getItem(AI_CONFIG_KEY);
-        return saved ? JSON.parse(saved) : DEFAULT_CONFIG;
+        try {
+            const saved = localStorage.getItem(AI_CONFIG_KEY);
+            if (!saved) return DEFAULT_CONFIG;
+
+            const parsed = JSON.parse(saved);
+            // Deep merge to ensure all nested properties exist
+            return {
+                ...DEFAULT_CONFIG,
+                ...parsed,
+                global: { ...DEFAULT_CONFIG.global, ...(parsed.global || {}) },
+                modules: { ...DEFAULT_CONFIG.modules, ...(parsed.modules || {}) },
+                rules: { ...DEFAULT_CONFIG.rules, ...(parsed.rules || {}) },
+            };
+        } catch (e) {
+            console.error("Failed to parse AI config from localStorage, resetting to default.", e);
+            return DEFAULT_CONFIG;
+        }
     });
 
     useEffect(() => {
@@ -93,6 +114,20 @@ export const useAIConfig = () => {
  * Utility for non-React components (like the orchestrator) to get the current config.
  */
 export const getAIConfigSync = (): AIConfig => {
-    const saved = localStorage.getItem(AI_CONFIG_KEY);
-    return saved ? JSON.parse(saved) : DEFAULT_CONFIG;
+    try {
+        const saved = localStorage.getItem(AI_CONFIG_KEY);
+        if (!saved) return DEFAULT_CONFIG;
+
+        const parsed = JSON.parse(saved);
+        return {
+            ...DEFAULT_CONFIG,
+            ...parsed,
+            global: { ...DEFAULT_CONFIG.global, ...(parsed.global || {}) },
+            modules: { ...DEFAULT_CONFIG.modules, ...(parsed.modules || {}) },
+            rules: { ...DEFAULT_CONFIG.rules, ...(parsed.rules || {}) },
+        };
+    } catch (e) {
+        console.error("Failed to parse AI config sync, returning default.", e);
+        return DEFAULT_CONFIG;
+    }
 };
