@@ -5,6 +5,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+console.log('Starting server...');
+
 const app = express();
 const port = 3001;
 
@@ -47,6 +49,14 @@ app.post('/api/test-db-connection', async (req, res) => {
     }
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
     console.log(`Backend server running on http://localhost:${port}`);
+});
+
+server.on('error', (e) => {
+    if (e.code === 'EADDRINUSE') {
+        console.error(`Port ${port} is already in use`);
+    } else {
+        console.error('Server error:', e);
+    }
 });

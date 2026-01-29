@@ -5,11 +5,11 @@ import { useData } from '../services/DataContext';
 import Button from '../components/Button';
 
 const STAGES = [
-    { id: 'Histología', label: 'Histología / Corte', color: 'bg-blue-50 border-blue-200 text-blue-800' },
-    { id: 'Microscopía', label: 'Microscopía', color: 'bg-purple-50 border-purple-200 text-purple-800' },
-    { id: 'Estudio Especial', label: 'Estudios Especiales', color: 'bg-yellow-50 border-yellow-200 text-yellow-800' },
-    { id: 'Por Firmar', label: 'Por Firmar', color: 'bg-orange-50 border-orange-200 text-orange-800' },
-    { id: 'Finalizado', label: 'Finalizado', color: 'bg-green-50 border-green-200 text-green-800' }
+    { id: 'histologia', label: 'Histología / Corte', color: 'bg-blue-50 border-blue-200 text-blue-800' },
+    { id: 'microscopia', label: 'Microscopía', color: 'bg-purple-50 border-purple-200 text-purple-800' },
+    { id: 'estudios_especiales', label: 'Estudios Especiales', color: 'bg-yellow-50 border-yellow-200 text-yellow-800' },
+    { id: 'por_firmar', label: 'Por Firmar', color: 'bg-orange-50 border-orange-200 text-orange-800' },
+    { id: 'finalizado', label: 'Finalizado', color: 'bg-green-50 border-green-200 text-green-800' }
 ];
 
 const CaseMap = () => {
@@ -17,7 +17,18 @@ const CaseMap = () => {
     const { cases, updateCaseStage } = useData();
 
     const getCasesByStage = (stage) => {
-        return cases.filter(c => (c.stage || 'Histología') === stage);
+        return cases.filter(c => {
+            const currentStage = c.stage || 'histologia';
+            // Map legacy accented stages to new IDs if necessary
+            let normalizedStage = currentStage;
+            if (currentStage === 'Histología') normalizedStage = 'histologia';
+            if (currentStage === 'Microscopía') normalizedStage = 'microscopia';
+            if (currentStage === 'Estudio Especial') normalizedStage = 'estudios_especiales';
+            if (currentStage === 'Por Firmar') normalizedStage = 'por_firmar';
+            if (currentStage === 'Finalizado') normalizedStage = 'finalizado';
+
+            return normalizedStage === stage;
+        });
     };
 
     const calculateSLA = (createdAt) => {
@@ -31,19 +42,27 @@ const CaseMap = () => {
     };
 
     const handleDragStart = (e, caseId) => {
-        e.dataTransfer.setData('caseId', caseId);
+        console.log('Drag Start:', caseId);
+        e.dataTransfer.setData('text/plain', caseId);
+        e.dataTransfer.setData('case_id', caseId); // Fallback
+        e.dataTransfer.effectAllowed = 'move';
     };
 
     const handleDrop = (e, stageId) => {
         e.preventDefault();
-        const caseId = e.dataTransfer.getData('caseId');
+        const caseId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('case_id');
+        console.log('Drop Case:', caseId, 'Target Stage:', stageId);
+
         if (caseId) {
             updateCaseStage(caseId, stageId);
+        } else {
+            console.error('No caseId found in dataTransfer');
         }
     };
 
     const handleDragOver = (e) => {
         e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
     };
 
     return (

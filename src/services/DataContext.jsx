@@ -164,8 +164,10 @@ export const DataProvider = ({ children }) => {
     }, [dataProvider]);
 
     const loginWithGoogleProfile = useCallback(async (profile) => {
-        console.warn("loginWithGoogleProfile not fully implemented in provider yet.");
-        return { success: false, message: "Not implemented" };
+        if (!dataProvider) return { success: false, message: 'Provider not ready' };
+        const result = await dataProvider.loginWithGoogleProfile(profile);
+        if (result.success) setCurrentUser(result.user);
+        return result;
     }, [dataProvider]);
 
     const runMigration = useCallback(async (options) => {
@@ -281,11 +283,30 @@ export const DataProvider = ({ children }) => {
     const updateCaseStage = useCallback(async (id, newStage) => {
         const currentCase = cases.find(c => c.id === id);
         if (!currentCase) return;
+
         const oldStage = currentCase.stage;
-        const updatedCase = { ...currentCase, stage: newStage };
+
+        // Create the log entry locally
+        const userRole = roles.find(r => r.id === currentUser?.roleId)?.name || 'Sistema';
+        const logEntry = {
+            date: new Date().toISOString(),
+            user: currentUser ? currentUser.name : 'Sistema',
+            role: userRole,
+            device: 'Terminal-Lab-01',
+            action: 'Cambio de Etapa',
+            details: `Etapa cambiada de "${oldStage}" a "${newStage}".`
+        };
+
+        const updatedCase = {
+            ...currentCase,
+            stage: newStage,
+            auditLogs: [...(currentCase.auditLogs || []), logEntry]
+        };
+
+        console.log('[DataContext] Atomic Update:', updatedCase);
         await updateCase(updatedCase);
-        await addAuditLog(id, 'Cambio de Etapa', `Etapa cambiada de "${oldStage}" a "${newStage}".`);
-    }, [cases, updateCase, addAuditLog]);
+        // Do NOT call addAuditLog here as it causes a race condition with stale state
+    }, [cases, updateCase, currentUser, roles]);
 
     const updateCaseInterconsultation = useCallback(async (id, data) => {
         const currentCase = cases.find(c => c.id === id);

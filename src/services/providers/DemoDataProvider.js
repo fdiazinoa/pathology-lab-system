@@ -90,6 +90,34 @@ class DemoDataProvider extends DataProvider {
         }
     }
 
+    async loginWithGoogleProfile(profile) {
+        await this._delay(500);
+        try {
+            const { email, name, picture, sub } = profile;
+
+            let users = await this.getUsers();
+            let user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+
+            if (!user) {
+                user = {
+                    id: `google_${sub}`,
+                    name: name,
+                    email: email,
+                    roleId: '2', // Default to Pathologist for demo
+                    status: 'Active',
+                    lastLogin: new Date().toISOString(),
+                    avatar: picture,
+                    authProvider: 'google'
+                };
+            }
+            localStorage.setItem('app_user', JSON.stringify(user));
+            return { success: true, user };
+        } catch (e) {
+            console.error(e);
+            return { success: false, message: 'Google login profile error' };
+        }
+    }
+
     async logout() {
         localStorage.removeItem('app_user');
         return true;
@@ -178,10 +206,12 @@ class DemoDataProvider extends DataProvider {
     }
 
     async updateCase(updatedCase) {
+        console.log('[DemoDataProvider] updateCase called with:', updatedCase);
         await this._delay();
         const cases = await this.getCases();
         const newCases = cases.map(c => c.id === updatedCase.id ? updatedCase : c);
         localStorage.setItem('app_cases', JSON.stringify(newCases));
+        console.log('[DemoDataProvider] Saved to localStorage. New cases count:', newCases.length);
         return updatedCase;
     }
 
