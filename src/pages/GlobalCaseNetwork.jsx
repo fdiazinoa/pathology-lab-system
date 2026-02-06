@@ -83,22 +83,23 @@ const GlobalCaseNetwork = () => {
             {activeTab === 'feed' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {globalCases.map((c) => (
-                        <Card key={c.id} className="overflow-hidden flex flex-col h-full animate-fade-in">
-                            <div className="h-48 bg-gray-200 -mx-6 -mt-6 mb-4 relative">
-                                <img src={c.imageUrl} alt={c.diagnosis} className="w-full h-full object-cover" />
-                                <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                        <Card key={c.id} className="overflow-hidden flex flex-col h-full animate-fade-in border-none shadow-md">
+                            <div className="h-48 bg-gray-200 -mx-6 -mt-6 mb-4 relative group">
+                                <img src={c.imageUrl} alt={c.diagnosis} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full font-medium">
                                     {c.country}
                                 </div>
                             </div>
                             <div className="flex-1">
-                                <h3 className="font-bold text-lg text-primary mb-1">{c.diagnosis}</h3>
-                                <p className="text-sm text-text-secondary mb-2">{c.institution}</p>
-                                <p className="text-sm text-gray-700 mb-4 line-clamp-2">{c.description}</p>
+                                <h3 className="font-bold text-lg text-text-main mb-1 tracking-tight">{c.diagnosis}</h3>
+                                <p className="text-sm text-primary font-medium mb-2">{c.institution}</p>
+                                <p className="text-sm text-text-secondary mb-4 line-clamp-3 leading-relaxed">{c.description}</p>
                             </div>
-                            <div className="flex justify-between items-center pt-4 border-t border-border mt-auto">
-                                <div className="flex gap-4 text-text-secondary text-sm">
-                                    <span className="flex items-center gap-1"><ThumbsUp size={14} /> {c.likes}</span>
-                                    <span className="flex items-center gap-1"><MessageSquare size={14} /> {c.comments}</span>
+                            <div className="flex justify-between items-center pt-4 border-t border-gray-100 mt-auto">
+                                <div className="flex gap-4 text-text-tertiary text-sm">
+                                    <span className="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer"><ThumbsUp size={14} /> {c.likes}</span>
+                                    <span className="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer"><MessageSquare size={14} /> {c.comments}</span>
                                 </div>
                                 <Button variant="ghost" size="sm" onClick={() => navigate(`/cases/${c.id}`)}>Ver Detalles</Button>
                             </div>
@@ -109,10 +110,10 @@ const GlobalCaseNetwork = () => {
 
             {activeTab === 'upload' && (
                 <div className="max-w-2xl mx-auto">
-                    <Card title="Compartir Caso con la Red Global">
+                    <Card title="Compartir Caso con la Red Global" className="border-none shadow-lg">
                         {publishSuccess ? (
                             <div className="py-12 text-center space-y-4">
-                                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
+                                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
                                     <CheckCircle size={32} />
                                 </div>
                                 <h3 className="text-xl font-bold text-text-main">¡Caso Publicado Exitosamente!</h3>
@@ -120,17 +121,18 @@ const GlobalCaseNetwork = () => {
                             </div>
                         ) : (
                             <form onSubmit={handlePublish} className="space-y-6">
-                                <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg flex gap-3">
-                                    <BrainCircuit className="text-blue-600 shrink-0" size={20} />
-                                    <p className="text-xs text-blue-800">
-                                        <strong>Privacidad Garantizada:</strong> Al publicar, el sistema anonimiza automáticamente el nombre, ID y datos sensibles del paciente. Solo se compartirá el diagnóstico, órgano e imágenes.
+                                <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-xl flex gap-3 text-sm">
+                                    <BrainCircuit className="text-blue-600 shrink-0 mt-0.5" size={20} />
+                                    <p className="text-blue-800 leading-relaxed">
+                                        <strong className="block mb-1 text-blue-900">Privacidad Garantizada</strong>
+                                        Al publicar, el sistema anonimiza automáticamente el nombre, ID y datos sensibles del paciente. Solo se compartirá el diagnóstico, órgano e imágenes para fines científicos.
                                     </p>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-text-main mb-1">Seleccionar Caso Finalizado</label>
+                                    <label className="block text-sm font-medium text-text-main mb-1.5">Seleccionar Caso Finalizado</label>
                                     <select
-                                        className="w-full p-2 border border-border rounded-md outline-none focus:ring-2 focus:ring-primary bg-white"
+                                        className="w-full p-2.5 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 bg-white transition-all"
                                         value={selectedCaseId}
                                         onChange={(e) => setSelectedCaseId(e.target.value)}
                                         required
@@ -143,22 +145,24 @@ const GlobalCaseNetwork = () => {
                                         ))}
                                     </select>
                                     {finalCases.length === 0 && (
-                                        <p className="text-xs text-red-500 mt-1">No hay casos finalizados disponibles para compartir.</p>
+                                        <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
+                                            <Activity size={12} /> No hay casos finalizados disponibles para compartir.
+                                        </p>
                                     )}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-text-main mb-1">Descripción para la Comunidad (Opcional)</label>
+                                    <label className="block text-sm font-medium text-text-main mb-1.5">Descripción para la Comunidad (Opcional)</label>
                                     <textarea
-                                        className="w-full p-2 border border-border rounded-md outline-none focus:ring-2 focus:ring-primary min-h-[120px]"
+                                        className="w-full p-3 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 min-h-[120px] transition-all resize-y"
                                         placeholder="Describa por qué este caso es relevante o qué dudas tiene..."
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
                                     />
                                 </div>
 
-                                <div className="flex justify-end gap-3">
-                                    <Button type="button" variant="secondary" onClick={() => setActiveTab('feed')}>
+                                <div className="flex justify-end gap-3 pt-2">
+                                    <Button type="button" variant="ghost" onClick={() => setActiveTab('feed')}>
                                         Cancelar
                                     </Button>
                                     <Button type="submit" isLoading={isPublishing} disabled={!selectedCaseId}>
@@ -174,31 +178,31 @@ const GlobalCaseNetwork = () => {
 
             {activeTab === 'stats' && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <Card title="Estado del Modelo Federado">
-                        <div className="grid grid-cols-3 gap-4 mb-6">
-                            <div className="text-center p-4 bg-blue-50 rounded-lg">
+                    <Card title="Estado del Modelo Federado" className="h-full">
+                        <div className="grid grid-cols-3 gap-4 mb-8 mt-2">
+                            <div className="text-center p-4 bg-blue-50/50 rounded-xl border border-blue-50">
                                 <BrainCircuit className="mx-auto text-blue-600 mb-2" />
                                 <div className="text-2xl font-bold text-blue-800">{modelStats[0].value}%</div>
-                                <div className="text-xs text-blue-600">{modelStats[0].name}</div>
+                                <div className="text-xs font-medium text-blue-600 uppercase tracking-wide">{modelStats[0].name}</div>
                             </div>
-                            <div className="text-center p-4 bg-green-50 rounded-lg">
+                            <div className="text-center p-4 bg-green-50/50 rounded-xl border border-green-50">
                                 <Database className="mx-auto text-green-600 mb-2" />
                                 <div className="text-2xl font-bold text-green-800">{(modelStats[1].value / 1000).toFixed(1)}k</div>
-                                <div className="text-xs text-green-600">{modelStats[1].name}</div>
+                                <div className="text-xs font-medium text-green-600 uppercase tracking-wide">{modelStats[1].name}</div>
                             </div>
-                            <div className="text-center p-4 bg-purple-50 rounded-lg">
+                            <div className="text-center p-4 bg-purple-50/50 rounded-xl border border-purple-50">
                                 <Globe className="mx-auto text-purple-600 mb-2" />
                                 <div className="text-2xl font-bold text-purple-800">{modelStats[2].value}</div>
-                                <div className="text-xs text-purple-600">{modelStats[2].name}</div>
+                                <div className="text-xs font-medium text-purple-600 uppercase tracking-wide">{modelStats[2].name}</div>
                             </div>
                         </div>
-                        <p className="text-sm text-gray-600">
-                            El modelo global se actualiza cada 24 horas con los pesos sinápticos compartidos por los laboratorios participantes, garantizando la privacidad de los datos locales.
+                        <p className="text-sm text-text-secondary leading-relaxed bg-gray-50 p-4 rounded-lg border border-gray-100">
+                            <strong>Nota Técnica:</strong> El modelo global se actualiza cada 24 horas con los pesos sinápticos compartidos por los laboratorios participantes, garantizando la privacidad de los datos locales (Federated Learning).
                         </p>
                     </Card>
 
-                    <Card title="Contribución por Región">
-                        <div className="h-64 w-full">
+                    <Card title="Contribución por Región" className="h-full">
+                        <div className="h-64 w-full mt-4">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
@@ -213,10 +217,10 @@ const GlobalCaseNetwork = () => {
                                         label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                                     >
                                         {contributionData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeWidth={0} />
                                         ))}
                                     </Pie>
-                                    <Tooltip />
+                                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>

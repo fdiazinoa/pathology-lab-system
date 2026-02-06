@@ -72,19 +72,21 @@ const Layout = ({ children }) => {
     const allNavItems = navCategories.flatMap(cat => cat.items);
 
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: '256px 1fr', height: '100vh', overflow: 'hidden' }} className="bg-app">
+        <div className="grid grid-cols-[260px_1fr] h-screen w-full overflow-hidden bg-slate-50 font-sans text-slate-900">
             {/* Sidebar */}
-            <aside className="bg-white border-r border-border shadow-sm z-20 flex flex-col" style={{ overflowY: 'auto' }}>
-                <div className="p-6 flex items-center gap-3 border-b border-border shrink-0 sticky top-0 bg-white z-10">
-                    <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center text-white">
-                        <Microscope size={20} />
+            <aside className="flex flex-col h-full bg-white border-r border-slate-200 shadow-sm z-30 overflow-y-auto">
+                <div className="p-6 flex items-center gap-3 shrink-0 sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-100">
+                    <div className="w-9 h-9 bg-teal-600 rounded-xl shadow-sm flex items-center justify-center text-white">
+                        <Microscope size={20} strokeWidth={2} />
                     </div>
-                    <h1 className="font-bold text-lg text-primary">PathAI Lab</h1>
+                    <div>
+                        <h1 className="font-bold text-lg text-slate-900 tracking-tight leading-none">PathAI</h1>
+                        <p className="text-[10px] font-semibold text-teal-600 uppercase tracking-wider">Enterprise Lab</p>
+                    </div>
                 </div>
 
-                <nav className="flex-1 p-4 space-y-6">
+                <nav className="flex-1 px-3 py-4 space-y-8">
                     {navCategories.map((group) => {
-                        // Filter items based on user role
                         const visibleItems = group.items.filter(item =>
                             !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
                         );
@@ -93,23 +95,24 @@ const Layout = ({ children }) => {
 
                         return (
                             <div key={group.category} className="space-y-1">
-                                <h3 className="px-4 text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2">
+                                <h3 className="px-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">
                                     {group.category}
                                 </h3>
                                 {visibleItems.map((item) => {
                                     const Icon = item.icon;
+                                    const isActive = location.pathname === item.path;
                                     return (
                                         <NavLink
                                             key={item.path}
                                             to={item.path}
                                             className={({ isActive }) =>
-                                                `flex items-center gap-3 px-4 py-2.5 rounded-md transition-colors ${isActive
-                                                    ? 'bg-primary-light text-primary font-medium'
-                                                    : 'text-text-secondary hover:bg-gray-50 hover:text-text-main'
+                                                `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive
+                                                    ? 'bg-teal-50 text-teal-700 font-medium shadow-sm'
+                                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                                                 } `
                                             }
                                         >
-                                            <Icon size={18} />
+                                            <Icon size={18} strokeWidth={1.75} className={`transition-colors ${isActive ? 'text-teal-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
                                             <span className="text-sm">{item.label}</span>
                                         </NavLink>
                                     );
@@ -119,46 +122,56 @@ const Layout = ({ children }) => {
                     })}
                 </nav>
 
-                <div className="p-4 border-t border-border shrink-0 sticky bottom-0 bg-white z-10">
+                <div className="p-4 border-t border-slate-100 shrink-0 sticky bottom-0 bg-white/90 backdrop-blur-md z-40">
                     <button
                         onClick={logout}
-                        className="flex items-center gap-3 px-4 py-3 w-full text-text-secondary hover:text-danger transition-colors rounded-md hover:bg-red-50"
+                        className="flex items-center gap-3 px-3 py-2 w-full text-slate-500 hover:text-red-600 transition-all rounded-lg hover:bg-red-50 group"
                     >
-                        <LogOut size={20} />
-                        <span>Cerrar Sesión</span>
+                        <LogOut size={18} strokeWidth={1.5} className="group-hover:stroke-red-600" />
+                        <span className="text-sm font-medium">Cerrar Sesión</span>
                     </button>
                 </div>
             </aside>
 
             {/* Main Content */}
-            <main className="flex flex-col min-w-0" style={{ overflowY: 'auto' }}>
+            <main className="flex flex-col flex-1 h-full min-w-0 bg-slate-50 overflow-y-auto relative z-0">
                 {isProductionMode ? (
-                    <div className="bg-red-600 text-white px-4 py-2 text-center font-bold text-xs shadow-md sticky top-0 z-30 flex items-center justify-center gap-2 uppercase tracking-widest">
-                        <Dna size={14} />
-                        🧬 MODO PRODUCCIÓN – Datos Reales y Operación Crítica
+                    <div className="bg-red-600 text-white px-4 py-1.5 text-center font-bold text-[10px] shadow-sm sticky top-0 z-50 flex items-center justify-center gap-2 uppercase tracking-widest">
+                        <Dna size={12} />
+                        🧬 MODO PRODUCCIÓN – Operación Crítica
                     </div>
                 ) : (
-                    <div className="bg-blue-100 text-blue-900 border-b border-blue-200 px-4 py-2 text-center font-bold text-xs shadow-sm sticky top-0 z-30 flex items-center justify-center gap-2 uppercase tracking-widest">
-                        <FlaskConical size={14} />
-                        🧪 MODO DEMO – Entorno de Pruebas y Datos Simulados
+                    <div className="bg-indigo-50 text-indigo-700 border-b border-indigo-100 px-4 py-1.5 text-center font-bold text-[10px] sticky top-0 z-50 flex items-center justify-center gap-2 uppercase tracking-widest backdrop-blur-sm">
+                        <FlaskConical size={12} />
+                        🧪 MODO DEMO – Simulador
                     </div>
                 )}
-                <header className="bg-white border-b border-border px-8 py-4 flex justify-between items-center shrink-0 sticky top-0 z-10">
-                    <h2 className="text-xl font-bold text-text-main">
-                        {allNavItems.find(i => i.path === location.pathname)?.label || 'Pathology System'}
-                    </h2>
-                    <div className="flex items-center gap-4">
-                        <div className="text-right">
-                            <p className="text-sm font-medium">{currentUser?.name || 'Usuario'}</p>
-                            <p className="text-xs text-text-secondary">{userRoleName}</p>
+
+                <header className="px-8 py-4 flex justify-between items-center shrink-0 sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/50">
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                            {allNavItems.find(i => i.path === location.pathname)?.label || 'Pathology System'}
+                        </h2>
+                    </div>
+                    <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm animate-pulse"></span>
+                            <span className="text-xs font-medium text-slate-500">Sistema Operativo</span>
                         </div>
-                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-text-secondary font-bold">
-                            {currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'US'}
+                        <div className="h-6 w-px bg-slate-200"></div>
+                        <div className="flex items-center gap-3 pl-2">
+                            <div className="text-right">
+                                <p className="text-sm font-semibold text-slate-900 leading-tight">{currentUser?.name || 'Usuario'}</p>
+                                <p className="text-xs text-slate-500 font-medium">{userRoleName}</p>
+                            </div>
+                            <div className="w-9 h-9 rounded-full bg-slate-100 border border-white shadow-sm flex items-center justify-center text-teal-700 font-bold">
+                                {currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'US'}
+                            </div>
                         </div>
                     </div>
                 </header>
 
-                <div className="p-8">
+                <div className="flex-1 p-8 max-w-[1600px] mx-auto w-full">
                     {children || <Outlet />}
                 </div>
             </main>

@@ -1,32 +1,63 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
 :root {
-  /* Medical Teal Palette */
+  /* Medical Teal Palette (Refined) */
   --primary: #0d9488;
   --primary-hover: #0f766e;
   --primary-light: #ccfbf1;
+  --primary-subtle: #f0fdfa;
 
-  /* Neutral Palette */
-  --bg-app: #f0f9ff;
+  /* Modern Slate Palette */
+  --bg-app: #f8fafc;
+  /* Slate-50 */
   --bg-surface: #ffffff;
   --text-main: #0f172a;
+  /* Slate-900 */
   --text-secondary: #64748b;
+  /* Slate-500 */
+  --text-tertiary: #94a3b8;
+  /* Slate-400 */
   --border: #e2e8f0;
+  /* Slate-200 */
+  --border-subtle: #f1f5f9;
+  /* Slate-100 */
 
-  /* Status Colors */
-  --success: #22c55e;
+  /* Status Colors (Pastel Pills) */
+  --success: #10b981;
+  --success-bg: #ecfdf5;
+  --success-text: #065f46;
+
   --warning: #f59e0b;
-  --danger: #ef4444;
-  --info: #3b82f6;
+  --warning-bg: #fffbeb;
+  --warning-text: #92400e;
 
-  /* Spacing & Radius */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
+  --danger: #ef4444;
+  --danger-bg: #fef2f2;
+  --danger-text: #991b1b;
+
+  --info: #3b82f6;
+  --info-bg: #eff6ff;
+  --info-text: #1e40af;
+
+  /* Spacing & Radius (Refined) */
+  --radius-sm: 0.5rem;
+  /* 8px */
+  --radius-md: 0.75rem;
+  /* 12px */
+  --radius-lg: 1rem;
+  /* 16px */
+  --radius-xl: 1.5rem;
+  /* 24px */
+
+  /* Soft Shadows (Apple/Linear style) */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.025);
+  --shadow-float: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.01);
 
   /* Typography */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 * {
@@ -39,8 +70,63 @@ body {
   font-family: var(--font-sans);
   background-color: var(--bg-app);
   color: var(--text-main);
-  line-height: 1.5;
+  line-height: 1.6;
+  /* More breathing room */
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glassmorphism Utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Paper Styles for Reports */
+.paper-a4 {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 20mm;
+  margin: 0 auto;
+  background: white;
+  box-shadow: var(--shadow-float);
+}
+
+.paper-letter {
+  width: 215.9mm;
+  min-height: 279.4mm;
+  padding: 20mm;
+  margin: 0 auto;
+  background: white;
+  box-shadow: var(--shadow-float);
+}
+
+/* Scrollbar Refining */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 a {
@@ -1046,4 +1132,74 @@ select {
     background: white;
     z-index: 9999;
   }
+}
+
+/* --- Added Modern Enterprise Utilities (Manual Fix) --- */
+
+.rounded-xl {
+  border-radius: var(--radius-xl);
+}
+
+.rounded-2xl {
+  border-radius: 1.25rem;
+  /* 20px */
+}
+
+/* Backdrop Blur */
+.backdrop-blur-md {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.backdrop-blur-xl {
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* Primary Opacity Variants */
+.bg-primary\/10 {
+  background-color: rgba(13, 148, 136, 0.1);
+}
+
+.bg-primary\/5 {
+  background-color: rgba(13, 148, 136, 0.05);
+}
+
+.hover\:bg-primary\/10:hover {
+  background-color: rgba(13, 148, 136, 0.1);
+}
+
+/* Rings */
+.ring-2 {
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.ring-primary\/5 {
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.05);
+}
+
+/* Tracking */
+.tracking-tight {
+  letter-spacing: -0.025em;
+}
+
+.tracking-wider {
+  letter-spacing: 0.05em;
+}
+
+.tracking-widest {
+  letter-spacing: 0.1em;
+}
+
+/* Text Colors (Force High Contrast) */
+.text-text-main {
+  color: var(--text-main) !important;
+}
+
+.text-text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+.text-text-tertiary {
+  color: var(--text-tertiary) !important;
 }

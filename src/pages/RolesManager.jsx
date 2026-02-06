@@ -23,7 +23,7 @@ const ACTIONS = [
 ];
 
 const RolesManager = () => {
-    const { roles, addRole, updateRole, deleteRole } = useData();
+    const { roles = [], addRole, updateRole, deleteRole } = useData();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingRole, setEditingRole] = useState(null);
     const [formData, setFormData] = useState({
@@ -90,22 +90,22 @@ const RolesManager = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {roles.map(role => (
-                    <Card key={role.id} className="hover:shadow-md transition-shadow">
+                {(roles || []).map(role => (
+                    <Card key={role.id} className="hover:shadow-md transition-shadow bg-gradient-to-br from-white to-slate-50 border-none shadow-sm">
                         <div className="flex justify-between items-start mb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                                    <Shield size={24} />
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-blue-500/10 text-blue-600 rounded-xl">
+                                    <Shield size={24} strokeWidth={1.5} />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-lg text-text-main">{role.name}</h3>
+                                    <h3 className="font-bold text-lg text-text-main tracking-tight">{role.name}</h3>
                                     <p className="text-sm text-text-secondary">{role.description}</p>
                                 </div>
                             </div>
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => handleOpenModal(role)}
-                                    className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                                    className="p-1.5 text-text-tertiary hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
                                 >
                                     <Edit size={18} />
                                 </button>
@@ -115,21 +115,21 @@ const RolesManager = () => {
                                             deleteRole(role.id);
                                         }
                                     }}
-                                    className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                                    className="p-1.5 text-text-tertiary hover:text-danger hover:bg-red-50 rounded-lg transition-colors"
                                 >
                                     <Trash2 size={18} />
                                 </button>
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Acceso a Módulos</h4>
+                        <div className="space-y-3 pt-2 border-t border-gray-100">
+                            <h4 className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest">Acceso a Módulos</h4>
                             <div className="flex flex-wrap gap-2">
-                                {Object.entries(role.permissions).map(([module, perms]) => {
+                                {Object.entries(role.permissions || {}).map(([module, perms]) => {
                                     if (!perms.read) return null;
                                     const moduleLabel = MODULES.find(m => m.id === module)?.label || module;
                                     return (
-                                        <span key={module} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full border border-gray-200">
+                                        <span key={module} className="px-2 py-1 bg-white text-text-secondary text-xs font-medium rounded-full border border-gray-100 shadow-sm">
                                             {moduleLabel}
                                         </span>
                                     );
@@ -162,25 +162,25 @@ const RolesManager = () => {
                         />
                     </div>
 
-                    <div className="border rounded-lg overflow-hidden">
+                    <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
                         <table className="w-full text-sm text-left">
-                            <thead className="bg-gray-50 text-text-secondary font-medium border-b">
+                            <thead className="bg-slate-50/50 text-text-tertiary font-semibold uppercase tracking-wider text-xs border-b border-gray-100">
                                 <tr>
-                                    <th className="px-4 py-3">Módulo</th>
+                                    <th className="px-6 py-3">Módulo</th>
                                     {ACTIONS.map(action => (
-                                        <th key={action.id} className="px-4 py-3 text-center">{action.label}</th>
+                                        <th key={action.id} className="px-6 py-3 text-center">{action.label}</th>
                                     ))}
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
+                            <tbody className="divide-y divide-gray-50 bg-white">
                                 {MODULES.map(module => (
-                                    <tr key={module.id} className="hover:bg-gray-50">
-                                        <td className="px-4 py-3 font-medium text-text-main">{module.label}</td>
+                                    <tr key={module.id} className="hover:bg-slate-50/50 transition-colors">
+                                        <td className="px-6 py-4 font-medium text-text-main">{module.label}</td>
                                         {ACTIONS.map(action => (
-                                            <td key={action.id} className="px-4 py-3 text-center">
+                                            <td key={action.id} className="px-6 py-4 text-center">
                                                 <input
                                                     type="checkbox"
-                                                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                                    className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary/20 cursor-pointer"
                                                     checked={formData.permissions[module.id]?.[action.id] || false}
                                                     onChange={() => handlePermissionChange(module.id, action.id)}
                                                 />
@@ -192,8 +192,8 @@ const RolesManager = () => {
                         </table>
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-4">
-                        <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>
                             Cancelar
                         </Button>
                         <Button type="submit">

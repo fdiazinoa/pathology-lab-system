@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, FileText, Clock, CheckCircle, Trash2, Eye } from 'lucide-react';
+import { Plus, Search, FileText, Clock, CheckCircle, Trash2, Eye, LayoutDashboard, AlertTriangle } from 'lucide-react';
 import Card from '../components/Card';
 import Button from '../components/Button';
-import Input from '../components/Input';
 import { useData } from '../services/DataContext';
 
 const Dashboard = () => {
@@ -11,7 +10,16 @@ const Dashboard = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
 
-    const [sortBy, setSortBy] = useState('date'); // date, priority
+    const safeCases = cases || [];
+
+    const stats = useMemo(() => {
+        return {
+            total: safeCases.length,
+            pending: safeCases.filter(c => c.status === 'Borrador' || c.status === 'Pendiente').length,
+            completed: safeCases.filter(c => c.status === 'Finalizado').length,
+            urgent: safeCases.filter(c => c.priority === 'Urgente').length
+        };
+    }, [safeCases]);
 
     const handleDelete = (id) => {
         if (window.confirm(`¿Está seguro de que desea eliminar el caso ${id}? Esta acción es irreversible.`)) {
@@ -19,182 +27,196 @@ const Dashboard = () => {
         }
     };
 
-    const filteredCases = cases.filter(c => {
-        const patientName = c.patientName || '';
-        const caseId = c.id || '';
-        const matchesSearch = patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            caseId.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = filterStatus === 'all' || c.status === filterStatus;
-        return matchesSearch && matchesStatus;
-    }).sort((a, b) => {
-        if (sortBy === 'priority') {
-            // Sort by probability descending (Malignant first)
-            const probA = a.aiClassification ? a.aiClassification.probability : 0;
-            const probB = b.aiClassification ? b.aiClassification.probability : 0;
-            return probB - probA;
-        }
-        // Default: Date descending
-        return new Date(b.createdAt) - new Date(a.createdAt);
-    });
+    const filteredCases = useMemo(() => {
+        return safeCases.filter(c => {
+            const patientName = c.patientName || '';
+            const caseId = c.id || '';
+            const matchesSearch = patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                caseId.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesStatus = filterStatus === 'all' || c.status === filterStatus;
+            return matchesSearch && matchesStatus;
+        }).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    }, [safeCases, searchTerm, filterStatus]);
 
     const getStatusColor = (status) => {
-        if (!status) return 'text-gray-500 bg-gray-50 border-gray-200';
-        return status === 'Finalizado' ? 'text-success bg-green-50 border-green-200' : 'text-warning bg-yellow-50 border-yellow-200';
+        if (!status) return 'text-slate-500 bg-slate-50 border-slate-200';
+        switch (status) {
+            case 'Finalizado': return 'text-emerald-700 bg-emerald-50 border-emerald-200';
+            case 'Borrador': return 'text-amber-700 bg-amber-50 border-amber-200';
+            case 'Pendiente': return 'text-blue-700 bg-blue-50 border-blue-200';
+            default: return 'text-slate-700 bg-slate-50 border-slate-200';
+        }
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
+        <div className="space-y-8 pb-12">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-text-main">Panel Principal</h1>
-                    <p className="text-text-secondary">Resumen de casos recientes y actividad.</p>
+                    {/* Header is visually hidden or simplified since Layout provides the main title, but we keep a sub-header context */}
+                    <h2 className="text-lg font-medium text-slate-600 flex items-center gap-2">
+                        <LayoutDashboard size={20} />
+                        Resumen Operativo
+                    </h2>
                 </div>
                 <Link to="/cases/new">
-                    <Button>
+                    <Button className="shadow-lg shadow-teal-700/20 hover:shadow-teal-700/30 transition-all bg-teal-600 hover:bg-teal-700 text-white">
                         <Plus size={18} className="mr-2" />
                         Nuevo Caso
                     </Button>
                 </Link>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border-l-4 border-l-primary">
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card className="border-none shadow-md bg-white hover:shadow-lg transition-shadow">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-primary-light rounded-full text-primary">
-                            <FileText size={24} />
+                        <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl shadow-sm border border-blue-100">
+                            <FileText size={24} strokeWidth={2} />
                         </div>
                         <div>
-                            <p className="text-sm text-text-secondary">Casos Totales</p>
-                            <p className="text-2xl font-bold">{cases.length}</p>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Casos Totales</p>
+                            <p className="text-2xl font-bold text-slate-900 tracking-tight">{stats.total}</p>
                         </div>
                     </div>
                 </Card>
-                <Card className="border-l-4 border-l-warning">
+                <Card className="border-none shadow-md bg-white hover:shadow-lg transition-shadow">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-yellow-100 rounded-full text-warning">
-                            <Clock size={24} />
+                        <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl shadow-sm border border-amber-100">
+                            <Clock size={24} strokeWidth={2} />
                         </div>
                         <div>
-                            <p className="text-sm text-text-secondary">Pendientes</p>
-                            <p className="text-2xl font-bold">{cases.filter(c => c.status === 'Borrador').length}</p>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">En Proceso</p>
+                            <p className="text-2xl font-bold text-slate-900 tracking-tight">{stats.pending}</p>
                         </div>
                     </div>
                 </Card>
-                <Card className="border-l-4 border-l-success">
+                <Card className="border-none shadow-md bg-white hover:shadow-lg transition-shadow">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-green-100 rounded-full text-success">
-                            <CheckCircle size={24} />
+                        <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl shadow-sm border border-emerald-100">
+                            <CheckCircle size={24} strokeWidth={2} />
                         </div>
                         <div>
-                            <p className="text-sm text-text-secondary">Finalizados</p>
-                            <p className="text-2xl font-bold">{cases.filter(c => c.status === 'Finalizado').length}</p>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Finalizados</p>
+                            <p className="text-2xl font-bold text-slate-900 tracking-tight">{stats.completed}</p>
+                        </div>
+                    </div>
+                </Card>
+                <Card className="border-none shadow-md bg-white hover:shadow-lg transition-shadow">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-red-50 text-red-600 rounded-2xl shadow-sm border border-red-100">
+                            <AlertTriangle size={24} strokeWidth={2} />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Prioridad Alta</p>
+                            <p className="text-2xl font-bold text-slate-900 tracking-tight">{stats.urgent}</p>
                         </div>
                     </div>
                 </Card>
             </div>
 
-            <Card title="Casos Recientes">
-                <div className="mb-6 flex gap-4">
-                    <div className="flex-1">
-                        <Input
-                            placeholder="Buscar por paciente o ID..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            icon={<Search size={18} />}
-                        />
-                    </div>
-                    <select
-                        className="px-4 py-2 border border-border rounded-md bg-white text-sm focus:ring-2 focus:ring-primary outline-none"
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                    >
-                        <option value="all">Todos los estados</option>
-                        <option value="Borrador">Borrador</option>
-                        <option value="Finalizado">Finalizado</option>
-                    </select>
-                    <select
-                        className="px-4 py-2 border border-border rounded-md bg-white text-sm focus:ring-2 focus:ring-primary outline-none"
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                    >
-                        <option value="date">Más Recientes</option>
-                        <option value="priority">Prioridad (IA)</option>
-                    </select>
-                </div>
-
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="border-b border-border text-text-secondary text-sm">
-                                <th className="py-3 px-4 font-medium">ID Caso</th>
-                                <th className="py-3 px-4 font-medium">Paciente</th>
-                                <th className="py-3 px-4 font-medium">Tipo</th>
-                                <th className="py-3 px-4 font-medium">Órgano</th>
-                                <th className="py-3 px-4 font-medium">Estado</th>
-                                <th className="py-3 px-4 font-medium">Fecha</th>
-                                <th className="py-3 px-4 font-medium text-right">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredCases.map((c) => (
-                                <tr key={c.id} className="border-b border-border hover:bg-gray-50 transition-colors">
-                                    <td className="py-3 px-4 font-medium text-primary">{c.id}</td>
-                                    <td className="py-3 px-4">
-                                        <div className="font-medium">{c.patientName}</div>
-                                        <div className="text-xs text-text-secondary">{c.patientId}</div>
-                                        {c.aiClassification && (
-                                            <div className="mt-1">
-                                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${c.aiClassification.nature === 'Maligno' ? 'bg-red-50 text-red-700 border-red-200' :
-                                                    c.aiClassification.nature === 'Sospechoso' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                                                        'bg-green-50 text-green-700 border-green-200'
-                                                    }`}>
-                                                    {c.aiClassification.nature.toUpperCase()}
-                                                </span>
-                                            </div>
-                                        )}
-                                        {c.secondLook?.active && (
-                                            <div className="mt-1 flex items-center gap-1">
-                                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-indigo-50 text-indigo-700 border-indigo-200 flex items-center gap-1">
-                                                    <Eye size={10} />
-                                                    SEGUNDO VISTAZO
-                                                </span>
-                                            </div>
-                                        )}
-                                    </td>
-                                    <td className="py-3 px-4">
-                                        <span className="px-2 py-1 bg-gray-100 rounded text-xs font-medium">{c.type}</span>
-                                    </td>
-                                    <td className="py-3 px-4 text-sm">{c.organ}</td>
-                                    <td className="py-3 px-4">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(c.status)}`}>
-                                            {c.status || 'Sin Estado'}
-                                        </span>
-                                    </td>
-                                    <td className="py-3 px-4 text-sm text-text-secondary">{c.createdAt}</td>
-                                    <td className="py-3 px-4 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <Link to={`/cases/${c.id}`}>
-                                                <Button variant="ghost" size="sm">Ver</Button>
-                                            </Link>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handleDelete(c.id)}
-                                                className="text-red-600 hover:bg-red-50"
-                                            >
-                                                <Trash2 size={16} />
-                                            </Button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    {filteredCases.length === 0 && (
-                        <div className="text-center py-8 text-text-secondary">
-                            No se encontraron casos.
+            {/* Recent Cases Section */}
+            <Card className="border-none shadow-sm overflow-hidden bg-white" title="Casos Recientes">
+                <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <div className="relative w-full sm:w-72 group">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-600 transition-colors" size={16} />
+                            <input
+                                type="text"
+                                placeholder="Buscar por ID o Paciente..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all shadow-sm"
+                            />
                         </div>
-                    )}
+                        <select
+                            className="w-full sm:w-auto px-4 py-2 border border-slate-200 rounded-lg bg-white text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none shadow-sm cursor-pointer text-slate-600 font-medium"
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                        >
+                            <option value="all">Todos los estados</option>
+                            <option value="Borrador">Borrador</option>
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="Finalizado">Finalizado</option>
+                        </select>
+                    </div>
+
+                    <div className="overflow-x-auto rounded-lg border border-gray-100">
+                        <table className="w-full text-left">
+                            <thead className="bg-slate-50/80 border-b border-gray-100">
+                                <tr className="text-text-tertiary text-[11px] font-bold uppercase tracking-wider">
+                                    <th className="py-3 px-4">Caso</th>
+                                    <th className="py-3 px-4">Paciente</th>
+                                    <th className="py-3 px-4">Origen</th>
+                                    <th className="py-3 px-4">Estado</th>
+                                    <th className="py-3 px-4">Fecha</th>
+                                    <th className="py-3 px-4 text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50 bg-white">
+                                {filteredCases.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="6" className="py-12 text-center text-slate-400">
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                <div className="p-3 bg-slate-50 rounded-full">
+                                                    <Search size={24} className="opacity-20" />
+                                                </div>
+                                                <p className="text-sm font-medium text-slate-600">No se encontraron casos</p>
+                                                <p className="text-xs text-slate-400">Intenta ajustar los filtros de búsqueda</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    filteredCases.map((c) => (
+                                        <tr key={c.id} className="group hover:bg-slate-50/50 transition-colors duration-150">
+                                            <td className="py-3 px-4">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-mono text-sm font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded border border-teal-100">{c.id}</span>
+                                                    {c.priority === 'Urgente' && (
+                                                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" title="Urgente"></span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="py-3 px-4">
+                                                <div className="font-semibold text-slate-900 text-sm">{c.patientName}</div>
+                                                <div className="text-xs text-slate-500 mt-0.5">{c.patientId}</div>
+                                            </td>
+                                            <td className="py-3 px-4">
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-medium text-slate-600">{c.type || 'Biopsia'}</span>
+                                                    <span className="text-xs text-slate-400">{c.organ || 'N/A'}</span>
+                                                </div>
+                                            </td>
+                                            <td className="py-3 px-4">
+                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wide ${getStatusColor(c.status)}`}>
+                                                    {c.status || 'SIN ESTADO'}
+                                                </span>
+                                            </td>
+                                            <td className="py-3 px-4 text-sm text-slate-600">
+                                                {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-'}
+                                            </td>
+                                            <td className="py-3 px-4 text-right">
+                                                <div className="flex justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                    <Link to={`/cases/${c.id}`}>
+                                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50 hover:text-blue-700 rounded-lg">
+                                                            <Eye size={16} />
+                                                        </Button>
+                                                    </Link>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleDelete(c.id)}
+                                                        className="h-8 w-8 p-0 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </Card>
         </div>

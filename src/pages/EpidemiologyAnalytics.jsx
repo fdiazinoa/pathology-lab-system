@@ -118,7 +118,7 @@ const EpidemiologyAnalytics = () => {
                     <p className="text-text-secondary">Análisis avanzado de tendencias, incidencias y riesgos poblacionales.</p>
                 </div>
                 <div className="flex gap-2">
-                    <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                    <div className="bg-blue-500/10 text-blue-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 border border-blue-100 shadow-sm">
                         <Activity size={14} />
                         {cases.length} Casos Detectados
                     </div>
@@ -128,81 +128,87 @@ const EpidemiologyAnalytics = () => {
             {/* AI Alerts Section */}
             <div className="grid grid-cols-1 gap-4">
                 {!settings?.aiEnabled ? (
-                    <div className="p-4 rounded-lg border bg-gray-50 border-gray-200 text-gray-500 flex items-center gap-4 italic">
-                        <div className="p-2 rounded-full bg-white/50">
-                            <Info size={24} />
+                    <Card className="bg-gray-50/50 border-gray-100">
+                        <div className="flex items-center gap-4 text-gray-500">
+                            <div className="p-2 rounded-full bg-white shadow-sm">
+                                <Info size={24} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-lg">Módulo de IA Desactivado</h3>
+                                <p className="text-sm">Las alertas epidemiológicas basadas en IA están deshabilitadas en la configuración.</p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 className="font-bold text-lg">Módulo de IA Desactivado</h3>
-                            <p className="text-sm">Las alertas epidemiológicas basadas en IA están deshabilitadas en la configuración.</p>
-                        </div>
-                    </div>
+                    </Card>
                 ) : (
                     aiAlerts.map((alert, idx) => (
-                        <div key={idx} className={`p-4 rounded-lg border flex items-start gap-4 ${alert.type === 'warning' ? 'bg-orange-50 border-orange-200 text-orange-800' :
-                            alert.type === 'danger' ? 'bg-red-50 border-red-200 text-red-800' :
-                                'bg-blue-50 border-blue-200 text-blue-800'
+                        <Card key={idx} className={`border-l-4 ${alert.type === 'warning' ? 'border-l-orange-400 bg-orange-50/30' :
+                                alert.type === 'danger' ? 'border-l-red-500 bg-red-50/30' :
+                                    'border-l-blue-500 bg-blue-50/30'
                             }`}>
-                            <div className={`p-2 rounded-full bg-white/50`}>
-                                <alert.icon size={24} />
+                            <div className="flex items-start gap-4">
+                                <div className={`p-2 rounded-xl shadow-sm ${alert.type === 'warning' ? 'bg-orange-100 text-orange-600' :
+                                        alert.type === 'danger' ? 'bg-red-100 text-red-600' :
+                                            'bg-blue-100 text-blue-600'
+                                    }`}>
+                                    <alert.icon size={24} />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-lg text-text-main">{alert.title}</h3>
+                                    <p className="text-sm text-text-secondary mt-1">{alert.message}</p>
+                                </div>
+                                {cases.length === 0 && (
+                                    <Button size="sm" variant="outline" onClick={handleResetData}>
+                                        <Database size={16} className="mr-2" />
+                                        Cargar Datos Demo
+                                    </Button>
+                                )}
                             </div>
-                            <div className="flex-1">
-                                <h3 className="font-bold text-lg">{alert.title}</h3>
-                                <p className="text-sm opacity-90">{alert.message}</p>
-                            </div>
-                            {cases.length === 0 && (
-                                <Button size="sm" variant="outline" onClick={handleResetData}>
-                                    <Database size={16} className="mr-2" />
-                                    Cargar Datos Demo
-                                </Button>
-                            )}
-                        </div>
+                        </Card>
                     ))
                 )}
             </div>
 
             {cases.length === 0 ? (
-                <Card>
-                    <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-4">
-                            <Activity size={32} />
-                        </div>
-                        <h3 className="text-xl font-bold text-text-main mb-2">No hay datos suficientes</h3>
-                        <p className="text-text-secondary max-w-md mb-6">
-                            Para visualizar las estadísticas epidemiológicas, es necesario tener casos registrados en el sistema.
-                        </p>
-                        <Button onClick={handleResetData}>
-                            <Database size={20} className="mr-2" />
-                            Cargar Casos de Prueba
-                        </Button>
+                <Card className="py-12 flex flex-col items-center justify-center text-center">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-400 mb-4 shadow-inner">
+                        <Activity size={32} />
                     </div>
+                    <h3 className="text-xl font-bold text-text-main mb-2">No hay datos suficientes</h3>
+                    <p className="text-text-secondary max-w-md mb-6">
+                        Para visualizar las estadísticas epidemiológicas, es necesario tener casos registrados en el sistema.
+                    </p>
+                    <Button onClick={handleResetData}>
+                        <Database size={20} className="mr-2" />
+                        Cargar Casos de Prueba
+                    </Button>
                 </Card>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Incidence Chart */}
                     <Card title="Incidencia por Órgano (Top 5)">
                         <div className="space-y-4">
-                            {/* Text Summary Fallback */}
-                            <div className="bg-blue-50 p-3 rounded border border-blue-100">
+                            <div className="bg-gradient-to-r from-blue-50 to-white p-3 rounded-lg border border-blue-100/50">
                                 <ul className="text-xs space-y-1">
                                     {incidenceData.map((d, i) => (
-                                        <li key={i} className="flex justify-between">
-                                            <span className="font-medium">{d.name}:</span>
-                                            <span className="font-bold text-blue-700">{d.value} casos</span>
+                                        <li key={i} className="flex justify-between items-center">
+                                            <span className="font-medium text-text-secondary">{d.name}:</span>
+                                            <span className="font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">{d.value} casos</span>
                                         </li>
                                     ))}
                                     {incidenceData.length === 0 && <li className="text-gray-400 italic">Sin datos de incidencia</li>}
                                 </ul>
                             </div>
 
-                            <div className="h-64 w-full border border-dashed border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden">
-                                <BarChart width={400} height={240} data={incidenceData} layout="vertical" margin={{ left: 20, right: 30, top: 10, bottom: 10 }}>
-                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                                    <XAxis type="number" />
-                                    <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 11 }} />
-                                    <Tooltip />
-                                    <Bar dataKey="value" name="Casos" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={20} />
-                                </BarChart>
+                            <div className="h-64 w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={incidenceData} layout="vertical" margin={{ left: 10, right: 30, top: 10, bottom: 10 }}>
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" />
+                                        <XAxis type="number" hide />
+                                        <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 11, fill: '#64748B' }} axisLine={false} tickLine={false} />
+                                        <Tooltip cursor={{ fill: '#F1F5F9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                        <Bar dataKey="value" name="Casos" fill="#0D9488" radius={[0, 4, 4, 0]} barSize={24} />
+                                    </BarChart>
+                                </ResponsiveContainer>
                             </div>
                         </div>
                     </Card>
@@ -210,39 +216,38 @@ const EpidemiologyAnalytics = () => {
                     {/* Regional Map/Chart */}
                     <Card title="Distribución Geográfica de Casos">
                         <div className="space-y-4">
-                            {/* Text Summary Fallback */}
-                            <div className="bg-green-50 p-3 rounded border border-green-100">
+                            <div className="bg-gradient-to-r from-emerald-50 to-white p-3 rounded-lg border border-emerald-100/50">
                                 <ul className="text-xs space-y-1">
                                     {regionalData.map((d, i) => (
-                                        <li key={i} className="flex justify-between">
-                                            <span className="font-medium">{d.name}:</span>
-                                            <span className="font-bold text-green-700">{d.value} casos</span>
+                                        <li key={i} className="flex justify-between items-center">
+                                            <span className="font-medium text-text-secondary">{d.name}:</span>
+                                            <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">{d.value} casos</span>
                                         </li>
                                     ))}
                                     {regionalData.length === 0 && <li className="text-gray-400 italic">Sin datos regionales</li>}
                                 </ul>
                             </div>
 
-                            <div className="h-64 w-full border border-dashed border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden">
-                                <PieChart width={400} height={240}>
-                                    <Pie
-                                        data={regionalData}
-                                        cx="50%"
-                                        cy="50%"
-                                        labelLine={true}
-                                        label={({ name, value }) => `${name}: ${value}`}
-                                        outerRadius={70}
-                                        innerRadius={40}
-                                        paddingAngle={5}
-                                        fill="#10b981"
-                                        dataKey="value"
-                                    >
-                                        {regionalData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip />
-                                </PieChart>
+                            <div className="h-64 w-full flex items-center justify-center">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={regionalData}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={60}
+                                            outerRadius={80}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                        >
+                                            {regionalData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeWidth={0} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                        <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                                    </PieChart>
+                                </ResponsiveContainer>
                             </div>
                         </div>
                     </Card>
@@ -250,28 +255,17 @@ const EpidemiologyAnalytics = () => {
                     {/* Trends Chart */}
                     <Card title="Tendencia Temporal de Casos" className="lg:col-span-2">
                         <div className="space-y-4">
-                            {/* Text Summary Fallback */}
-                            <div className="bg-purple-50 p-3 rounded border border-purple-100">
-                                <div className="flex flex-wrap gap-4 text-xs">
-                                    {trendData.map((d, i) => (
-                                        <div key={i} className="flex gap-1">
-                                            <span className="font-medium">{d.name}:</span>
-                                            <span className="font-bold text-purple-700">{d.casos}</span>
-                                        </div>
-                                    ))}
-                                    {trendData.length === 0 && <div className="text-gray-400 italic">Sin datos de tendencia</div>}
-                                </div>
-                            </div>
-
-                            <div className="h-64 w-full border border-dashed border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden">
-                                <LineChart width={800} height={240} data={trendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                                    <YAxis tick={{ fontSize: 11 }} />
-                                    <Tooltip />
-                                    <Legend iconType="circle" />
-                                    <Line type="monotone" dataKey="casos" name="Nuevos Casos" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                                </LineChart>
+                            <div className="h-72 w-full mt-4">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={trendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                                        <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748B' }} axisLine={false} tickLine={false} dy={10} />
+                                        <YAxis tick={{ fontSize: 11, fill: '#64748B' }} axisLine={false} tickLine={false} />
+                                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                        <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
+                                        <Line type="monotone" dataKey="casos" name="Nuevos Casos" stroke="#8B5CF6" strokeWidth={3} dot={{ r: 4, fill: '#8B5CF6', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
+                                    </LineChart>
+                                </ResponsiveContainer>
                             </div>
                         </div>
                     </Card>
@@ -290,7 +284,7 @@ const EpidemiologyAnalytics = () => {
                         </Button>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[10px] text-gray-600">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-[10px] text-gray-600">
                         <div>Casos Totales: <strong>{cases.length}</strong></div>
                         <div>Casos Finalizados: <strong>{cases.filter(c => c.status === 'Finalizado').length}</strong></div>
                         <div>Datos Incidencia: <strong>{incidenceData.length} ítems</strong></div>
