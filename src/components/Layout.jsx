@@ -72,46 +72,55 @@ const Layout = ({ children }) => {
     const allNavItems = navCategories.flatMap(cat => cat.items);
 
     return (
-        <div className="flex h-screen w-full bg-slate-50 overflow-hidden">
-            {/* 1. SIDEBAR: Ahora es una columna real, no flota */}
+        /* 1. CONTENEDOR RAÍZ: Ocupa toda la pantalla y no permite scroll externo */
+        <div className="flex h-screen w-full bg-slate-50 overflow-hidden text-slate-900 font-sans">
+
+            {/* 2. SIDEBAR: Es una columna real de 64 unidades (256px) */}
             <aside className={`
-                fixed inset-y-0 left-0 z-[100] w-64 bg-white border-r border-slate-200 
-                flex flex-col h-[100vh] max-h-[100vh] overflow-hidden
-                transition-transform duration-300 ease-in-out
-                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-            `}>
-                {/* Mobile Overlay */}
+      ${isSidebarOpen ? 'fixed inset-0 z-[100]' : 'hidden lg:flex'} 
+      lg:relative lg:z-0 w-64 flex-shrink-0 flex-col bg-white border-r border-slate-200 h-full overflow-hidden
+      transition-transform duration-300 ease-in-out
+    `}>
+                {/* Overlay para móvil */}
                 {isSidebarOpen && (
-                    <div className="absolute inset-0 bg-black/50 lg:hidden" onClick={() => setIsSidebarOpen(false)} />
+                    <div className="absolute inset-0 bg-slate-900/50 lg:hidden" onClick={() => setIsSidebarOpen(false)} />
                 )}
 
-                {/* HEADER SIDEBAR (Fijo) */}
-                <div className="flex-shrink-0 h-16 flex items-center px-6 border-b border-slate-100 justify-between bg-white z-10">
+                {/* BLOQUE A: LOGO (Fijo arriba) */}
+                <div className="relative flex-shrink-0 h-16 flex items-center px-6 border-b border-slate-100 bg-white z-10">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center text-white">
                             <Microscope size={18} />
                         </div>
-                        <h1 className="font-bold text-lg text-slate-900">PathAI</h1>
+                        <h1 className="font-bold text-lg tracking-tight">PathAI</h1>
                     </div>
-                    <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2"><X size={20} /></button>
+                    <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden ml-auto p-2 text-slate-400"><X size={20} /></button>
                 </div>
 
-                {/* CUERPO NAVEGACIÓN (SCROLL REAL) */}
-                <nav className="flex-1 overflow-y-auto min-h-0 px-4 py-6 custom-scrollbar bg-white">
-                    <div className="flex flex-col gap-8 pb-60">
+                {/* BLOQUE B: NAVEGACIÓN (EL ÚNICO QUE SCROLLEA) */}
+                {/* flex-1 + min-h-0 obligan al scroll a aparecer aquí */}
+                <nav className="flex-1 overflow-y-auto min-h-0 bg-white custom-scrollbar">
+                    <div className="py-6 px-4 flex flex-col gap-8">
                         {navCategories.map((group) => {
-                            const visibleItems = group.items; // DEBUG: Quitar filter temporalmente
+                            const visibleItems = group.items.filter(item =>
+                                !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
+                            );
                             if (visibleItems.length === 0) return null;
                             return (
-                                <div key={group.category}>
-                                    <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">{group.category}</h3>
-                                    <ul className="list-none p-0 m-0 space-y-1 block" style={{ listStyleType: 'none !important' }}>
+                                <div key={group.category} className="flex flex-col">
+                                    <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+                                        {group.category}
+                                    </h3>
+                                    <ul className="list-none p-0 m-0 space-y-1">
                                         {visibleItems.map((item) => {
                                             const Icon = item.icon;
                                             return (
-                                                <li key={item.path} className="list-none before:hidden">
+                                                <li key={item.path} className="list-none p-0 m-0 before:hidden">
                                                     <NavLink to={item.path} onClick={() => setIsSidebarOpen(false)}
-                                                        className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${isActive ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}>
+                                                        className={({ isActive }) => `
+                            flex items-center gap-3 px-3 py-2 rounded-lg transition-all
+                            ${isActive ? 'bg-teal-50 text-teal-700 font-semibold shadow-sm' : 'text-slate-600 hover:bg-slate-50'}
+                          `}>
                                                         <Icon size={18} className="flex-shrink-0" />
                                                         <span className="text-sm">{item.label}</span>
                                                     </NavLink>
@@ -122,43 +131,50 @@ const Layout = ({ children }) => {
                                 </div>
                             );
                         })}
+                        {/* Espaciador final para que las últimas opciones suban */}
+                        <div className="h-20 flex-shrink-0" />
                     </div>
                 </nav>
 
-                {/* FOOTER SIDEBAR (Fijo abajo) */}
-                <div className="flex-shrink-0 p-4 border-t border-slate-100 bg-slate-50">
-                    <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:text-red-600 rounded-lg">
+                {/* BLOQUE C: FOOTER (Fijo abajo) */}
+                <div className="flex-shrink-0 p-4 border-t border-slate-100 bg-slate-50 z-10">
+                    <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:text-red-600 hover:bg-white rounded-lg transition-all border border-transparent hover:border-slate-200">
                         <LogOut size={18} />
                         <span className="font-semibold text-sm">Cerrar Sesión</span>
                     </button>
-                    <p className="mt-2 text-center text-[10px] text-slate-400">v2.5.0 • PathAI System</p>
+                    <p className="mt-3 text-center text-[10px] text-slate-400 font-mono italic">v2.5.0 • PathAI System</p>
                 </div>
             </aside>
 
-            {/* 2. CONTENIDO PRINCIPAL: Ocupa el resto del espacio */}
-            <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden lg:ml-64">
-                {/* Header del Main */}
-                <header className="flex-shrink-0 h-16 border-b bg-white flex items-center px-4 lg:px-8 justify-between">
-                    <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2"><Menu size={20} /></button>
-                    <h2 className="text-xl font-bold">{allNavItems.find(i => i.path === location.pathname)?.label || 'Dashboard'}</h2>
+            {/* 3. CONTENIDO PRINCIPAL: Ocupa todo el resto de la pantalla */}
+            <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+
+                {/* Header del Main (Fijo) */}
+                <header className="flex-shrink-0 h-16 border-b border-slate-200 bg-white flex items-center px-4 lg:px-8 justify-between z-20">
                     <div className="flex items-center gap-3">
-                        <div className="text-right hidden sm:block">
-                            <p className="text-sm font-semibold">{currentUser?.name}</p>
-                            <p className="text-xs text-slate-500">{userRoleName}</p>
+                        <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 text-slate-600"><Menu size={20} /></button>
+                        <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                            {allNavItems.find(i => i.path === location.pathname)?.label || 'Dashboard'}
+                        </h2>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="text-right hidden sm:block leading-tight">
+                            <p className="text-sm font-bold text-slate-900">{currentUser?.name}</p>
+                            <p className="text-[11px] text-slate-500 font-medium">{userRoleName}</p>
                         </div>
-                        <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center font-bold">
-                            {currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'US'}
+                        <div className="w-9 h-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold border border-teal-200 shadow-sm">
+                            {currentUser?.name?.substring(0, 2).toUpperCase() || 'US'}
                         </div>
                     </div>
                 </header>
 
-                {/* AREA DE CONTENIDO (CON SU PROPIO SCROLL) */}
-                <main className="flex-1 overflow-y-auto p-4 lg:p-8 bg-slate-50">
+                {/* ÁREA DE CONTENIDO (CON SU PROPIO SCROLL INDEPENDIENTE) */}
+                <div className="flex-1 overflow-y-auto bg-slate-50 p-4 lg:p-8 custom-scrollbar">
                     <div className="max-w-[1600px] mx-auto">
                         {children || <Outlet />}
                     </div>
-                </main>
-            </div>
+                </div>
+            </main>
         </div>
     );
 };
