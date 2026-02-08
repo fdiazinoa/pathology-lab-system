@@ -83,14 +83,14 @@ const Layout = ({ children }) => {
                 />
             )}
 
-            {/* Sidebar - STRICT FLEXBOX SCROLL FIX */}
+            {/* Sidebar - STRICT RECONSTRUCTION (3 LAYERS) */}
             <aside className={`
-                fixed inset-y-0 left-0 z-50 w-[260px] h-full bg-white border-r border-slate-200 shadow-xl lg:shadow-md transition-transform duration-300 ease-in-out
+                fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 shadow-xl lg:shadow-none transition-transform duration-300 ease-in-out
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:transform-none'}
                 flex flex-col overflow-hidden
             `}>
-                {/* 1. Header (Fixed Top) */}
-                <div className="p-6 flex items-center justify-between shrink-0 bg-white border-b border-slate-100">
+                {/* CAPA 1: Header (Logo) */}
+                <div className="flex-shrink-0 h-20 flex items-center px-6 border-b border-slate-50 bg-white">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 bg-teal-600 rounded-xl shadow-sm flex items-center justify-center text-white">
                             <Microscope size={20} strokeWidth={2} />
@@ -102,14 +102,14 @@ const Layout = ({ children }) => {
                     </div>
                     <button
                         onClick={() => setIsSidebarOpen(false)}
-                        className="lg:hidden p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+                        className="lg:hidden ml-auto p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
                     >
                         <X size={20} />
                     </button>
                 </div>
 
-                {/* 2. Body (Nav - SCROLLABLE) - min-h-0 is CRITICAL for flex scrolling */}
-                <nav className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent hover:scrollbar-thumb-slate-300 px-3 py-4 space-y-8 pb-6">
+                {/* CAPA 2: Motor de Scroll (Nav) - flex-1 min-h-0 is KEY */}
+                <nav className="flex-1 overflow-y-auto min-h-0 px-4 py-4 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
                     {navCategories.map((group) => {
                         const visibleItems = group.items.filter(item =>
                             !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
@@ -118,52 +118,55 @@ const Layout = ({ children }) => {
                         if (visibleItems.length === 0) return null;
 
                         return (
-                            <div key={group.category} className="space-y-1">
+                            <div key={group.category} className="mb-6 last:mb-0">
                                 <h3 className="px-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">
                                     {group.category}
                                 </h3>
-                                {visibleItems.map((item) => {
-                                    const Icon = item.icon;
-                                    const isActive = location.pathname === item.path;
-                                    return (
-                                        <NavLink
-                                            key={item.path}
-                                            to={item.path}
-                                            onClick={() => setIsSidebarOpen(false)}
-                                            className={({ isActive }) =>
-                                                `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive
-                                                    ? 'bg-teal-50 text-teal-700 font-medium shadow-sm'
-                                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                                                } `
-                                            }
-                                        >
-                                            <Icon size={18} strokeWidth={1.75} className={`transition-colors ${isActive ? 'text-teal-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
-                                            <span className="text-sm">{item.label}</span>
-                                        </NavLink>
-                                    );
-                                })}
+                                <ul className="space-y-1">
+                                    {visibleItems.map((item) => {
+                                        const Icon = item.icon;
+                                        const isActive = location.pathname === item.path;
+                                        return (
+                                            <li key={item.path}>
+                                                <NavLink
+                                                    to={item.path}
+                                                    onClick={() => setIsSidebarOpen(false)}
+                                                    className={({ isActive }) =>
+                                                        `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive
+                                                            ? 'bg-teal-50 text-teal-700 font-medium shadow-sm'
+                                                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                                        } `
+                                                    }
+                                                >
+                                                    <Icon size={18} strokeWidth={1.75} className={`transition-colors ${isActive ? 'text-teal-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                                                    <span className="text-sm">{item.label}</span>
+                                                </NavLink>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
                             </div>
                         );
                     })}
                 </nav>
 
-                {/* 3. Footer (Fixed Bottom) */}
-                <div className="p-4 border-t border-slate-200 shrink-0 bg-slate-50/50">
+                {/* CAPA 3: Footer (Logout) - flex-shrink-0 mt-auto */}
+                <div className="flex-shrink-0 mt-auto p-4 border-t border-slate-100 bg-white">
                     <button
                         onClick={logout}
-                        className="flex items-center gap-3 px-3 py-2 w-full text-slate-500 hover:text-red-600 transition-all rounded-lg hover:bg-red-50 group bg-white border border-slate-200 shadow-sm hover:shadow-md hover:border-red-100"
+                        className="flex items-center gap-3 px-3 py-2 w-full text-slate-500 hover:text-red-600 transition-all rounded-lg hover:bg-red-50 group bg-slate-50 border border-slate-100"
                     >
                         <LogOut size={18} strokeWidth={1.5} className="group-hover:stroke-red-600" />
                         <span className="text-sm font-medium">Cerrar Sesión</span>
                     </button>
-                    <div className="mt-3 text-[10px] text-center text-slate-400">
+                    <div className="mt-2 text-[10px] text-center text-slate-300">
                         v2.5.0 • PathAI System
                     </div>
                 </div>
             </aside>
 
             {/* Main Content */}
-            <main className="flex flex-col flex-1 h-full min-w-0 lg:pl-[260px] bg-slate-50 overflow-y-auto relative z-0 w-full transition-all duration-300">
+            <main className="flex flex-col flex-1 h-full min-w-0 lg:pl-64 bg-slate-50 overflow-y-auto relative z-0 w-full transition-all duration-300">
                 {isProductionMode ? (
                     <div className="bg-red-600 text-white px-4 py-1.5 text-center font-bold text-[10px] shadow-sm sticky top-0 z-50 flex items-center justify-center gap-2 uppercase tracking-widest">
                         <Dna size={12} />
