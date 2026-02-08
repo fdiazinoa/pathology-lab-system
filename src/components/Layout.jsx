@@ -96,7 +96,7 @@ const Layout = ({ children }) => {
                 </div>
 
                 {/* CUERPO NAVEGACIÓN (SCROLL REAL) */}
-                <nav className="flex-1 overflow-y-auto min-h-0 py-6 px-4 custom-scrollbar bg-white">
+                <nav className="flex-1 overflow-y-auto min-h-0 px-4 py-6 custom-scrollbar bg-white">
                     <div className="flex flex-col gap-8">
                         {navCategories.map((group) => {
                             const visibleItems = group.items.filter(item =>
