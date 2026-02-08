@@ -83,65 +83,61 @@ const Layout = ({ children }) => {
                 />
             )}
 
-            {/* Sidebar - STRICT FIXED LAYOUT & SCROLL */}
+            {/* Sidebar - RECONSTRUCCIÓN TÉCNICA TOTAL */}
             <aside className={`
-                fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 
-                flex flex-col h-screen max-h-screen overflow-hidden
+                fixed inset-y-0 left-0 z-[100] w-64 bg-white border-r border-slate-200 
+                flex flex-col h-screen overflow-hidden
                 transition-transform duration-300 ease-in-out
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             `}>
 
-                {/* Layer 1: Header (Logo) - flex-shrink-0 p-6 */}
-                <div className="flex-shrink-0 flex items-center p-6 border-b border-slate-100 justify-between">
+                {/* 1. HEADER: Altura fija, no se encoge */}
+                <div className="flex-shrink-0 h-20 flex items-center px-6 border-b border-slate-100 justify-between bg-white">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-teal-600 rounded-lg shadow-sm flex items-center justify-center text-white">
+                        <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center text-white">
                             <Microscope size={18} strokeWidth={2} />
                         </div>
-                        <div>
-                            <h1 className="font-bold text-lg text-slate-900 tracking-tight leading-none">PathAI</h1>
-                        </div>
+                        <h1 className="font-bold text-lg text-slate-900 tracking-tight">PathAI</h1>
                     </div>
-                    <button
-                        onClick={() => setIsSidebarOpen(false)}
-                        className="lg:hidden p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
-                    >
+                    <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 text-slate-400">
                         <X size={20} />
                     </button>
                 </div>
 
-                {/* Layer 2: Navigation - Scroll Engine (flex-1 min-h-0) */}
-                <nav className="flex-1 overflow-y-auto min-h-0 max-h-full py-6 px-4 custom-scrollbar">
-                    <div className="space-y-6">
+                {/* 2. NAVEGACIÓN: EL MOTOR DE SCROLL 
+                   flex-1 + min-h-0 es lo que obliga al navegador a crear el scroll aquí dentro.
+                */}
+                <nav className="flex-1 overflow-y-auto min-h-0 px-4 py-6 bg-white custom-scrollbar">
+                    <div className="flex flex-col gap-8">
                         {navCategories.map((group) => {
                             const visibleItems = group.items.filter(item =>
                                 !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
                             );
-
                             if (visibleItems.length === 0) return null;
 
                             return (
-                                <div key={group.category}>
-                                    <h3 className="px-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                                <div key={group.category} className="flex flex-col">
+                                    <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
                                         {group.category}
                                     </h3>
-                                    <ul className="space-y-1 list-none">
+                                    {/* list-none y p-0 para asegurar que no salgan puntos negros */}
+                                    <ul className="list-none p-0 m-0 space-y-1">
                                         {visibleItems.map((item) => {
                                             const Icon = item.icon;
-                                            const isActive = location.pathname === item.path;
                                             return (
-                                                <li key={item.path}>
+                                                <li key={item.path} className="list-none">
                                                     <NavLink
                                                         to={item.path}
                                                         onClick={() => setIsSidebarOpen(false)}
                                                         className={({ isActive }) =>
                                                             `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive
-                                                                ? 'bg-teal-50 text-teal-700 font-medium shadow-sm'
+                                                                ? 'bg-teal-50 text-teal-700 font-semibold shadow-sm'
                                                                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                                                            } `
+                                                            }`
                                                         }
                                                     >
-                                                        <Icon size={18} strokeWidth={1.75} className={`transition-colors ${isActive ? 'text-teal-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
-                                                        <span className="text-sm font-medium">{item.label}</span>
+                                                        <Icon size={18} className="flex-shrink-0" />
+                                                        <span className="text-sm">{item.label}</span>
                                                     </NavLink>
                                                 </li>
                                             );
@@ -151,22 +147,23 @@ const Layout = ({ children }) => {
                             );
                         })}
                     </div>
+                    {/* Espacio extra al final del scroll para que el último item no pegue con el footer */}
+                    <div className="h-10 flex-shrink-0"></div>
                 </nav>
 
-                {/* Layer 3: Footer (Logout) - Fixed Bottom */}
-                <div className="flex-shrink-0 p-4 border-t border-slate-100 bg-slate-50">
+                {/* 3. FOOTER: Logout siempre anclado abajo */}
+                <div className="flex-shrink-0 p-4 border-t border-slate-100 bg-slate-50 mt-auto">
                     <button
                         onClick={logout}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-white hover:text-red-600 hover:shadow-sm transition-all rounded-lg border border-transparent hover:border-slate-200 group"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-white hover:text-red-600 hover:shadow-sm transition-all rounded-lg border border-transparent hover:border-slate-200"
                     >
-                        <LogOut size={18} strokeWidth={1.5} className="group-hover:stroke-red-600" />
-                        <span className="font-medium text-sm">Cerrar Sesión</span>
+                        <LogOut size={18} />
+                        <span className="font-semibold text-sm">Cerrar Sesión</span>
                     </button>
                     <div className="mt-3 text-center">
                         <span className="text-[10px] text-slate-400 font-mono">v2.5.0 • PathAI System</span>
                     </div>
                 </div>
-
             </aside>
 
             {/* Main Content - Padded Left to avoid overlap */}
