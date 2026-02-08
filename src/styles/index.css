@@ -1,8 +1,18 @@
+/* 1. IMPORTACIÓN DE FUENTES (Vital para que se vea bien) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* 2. DIRECTIVAS DE TAILWIND (El motor de estilos) */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* 1. RESET DEL VIEWPORT */
+/* 3. VARIABLES GLOBALES (Para que funcionen los colores custom) */
+:root {
+  --primary: #0d9488;
+  --bg-app: #f8fafc;
+}
+
+/* 4. RESET DE LAYOUT (Fix del Sidebar) */
 html,
 body,
 #root {
@@ -11,28 +21,35 @@ body,
   margin: 0;
   padding: 0;
   overflow: hidden;
-  /* Vital: El scroll lo manejan los contenedores internos */
+  /* Mantiene el layout fijo */
+  font-family: 'Inter', sans-serif;
+  /* Recupera la fuente bonita */
+  background-color: var(--bg-app);
 }
 
-/* 2. ELIMINAR PUNTOS NEGROS (BULLETS) */
+/* 5. ELIMINAR PUNTOS NEGROS (Fix de los bullets) */
 ul,
 li {
   list-style: none !important;
-  margin: 0;
   padding: 0;
+  margin: 0;
 }
 
-/* 3. SCROLLBAR MODERNA */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+/* 6. SCROLLBARS ELEGANTES */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
