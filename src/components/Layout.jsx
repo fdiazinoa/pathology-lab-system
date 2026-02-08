@@ -85,9 +85,9 @@ const Layout = ({ children }) => {
 
             {/* Sidebar */}
             <aside className={`
-                fixed inset-y-0 left-0 z-50 w-[260px] h-full bg-white border-r border-slate-200 shadow-xl lg:shadow-md transform transition-transform duration-300 ease-in-out
+                fixed inset-y-0 left-0 z-50 w-[260px] bg-white border-r border-slate-200 shadow-xl lg:shadow-md transform transition-transform duration-300 ease-in-out
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-                flex flex-col overflow-hidden
+                overflow-y-auto
             `}>
                 <div className="p-6 flex items-center justify-between shrink-0 bg-white border-b border-slate-100">
                     <div className="flex items-center gap-3">
@@ -108,7 +108,7 @@ const Layout = ({ children }) => {
                     </button>
                 </div>
 
-                <div className="flex-1 min-h-0 overflow-y-auto">
+                <div className="">
                     <nav className="px-3 py-4 space-y-8">
                         {navCategories.map((group) => {
                             const visibleItems = group.items.filter(item =>
