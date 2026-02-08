@@ -85,7 +85,7 @@ const Layout = ({ children }) => {
 
             {/* Sidebar */}
             <aside className={`
-                fixed lg:static top-0 h-[100dvh] lg:h-full left-0 z-50 w-[260px] bg-white border-r border-slate-200 shadow-xl lg:shadow-sm transform transition-transform duration-300 ease-in-out
+                fixed lg:static top-0 h-[100dvh] lg:h-screen left-0 z-50 w-[260px] bg-white border-r border-slate-200 shadow-xl lg:shadow-sm transform transition-transform duration-300 ease-in-out
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
                 flex flex-col overflow-y-auto
             `}>
