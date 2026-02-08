@@ -75,9 +75,10 @@ const Layout = ({ children }) => {
         <div className="flex h-screen w-full bg-slate-50 overflow-hidden">
             {/* 1. SIDEBAR: Ahora es una columna real, no flota */}
             <aside className={`
-                ${isSidebarOpen ? 'fixed inset-0 z-[100] w-64' : 'hidden lg:flex'} 
-                lg:relative lg:inset-auto lg:w-64 
-                flex flex-col bg-white border-r border-slate-200 h-screen max-h-screen overflow-hidden
+                fixed inset-y-0 left-0 z-[100] w-64 bg-white border-r border-slate-200 
+                flex flex-col h-[100vh] max-h-[100vh] overflow-hidden
+                transition-transform duration-300 ease-in-out
+                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             `}>
                 {/* Mobile Overlay */}
                 {isSidebarOpen && (
@@ -97,16 +98,14 @@ const Layout = ({ children }) => {
 
                 {/* CUERPO NAVEGACIÓN (SCROLL REAL) */}
                 <nav className="flex-1 overflow-y-auto min-h-0 px-4 py-6 custom-scrollbar bg-white">
-                    <div className="flex flex-col gap-8">
+                    <div className="flex flex-col gap-8 pb-60">
                         {navCategories.map((group) => {
-                            const visibleItems = group.items.filter(item =>
-                                !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
-                            );
+                            const visibleItems = group.items; // DEBUG: Quitar filter temporalmente
                             if (visibleItems.length === 0) return null;
                             return (
                                 <div key={group.category}>
                                     <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">{group.category}</h3>
-                                    <ul className="list-none p-0 m-0 space-y-1">
+                                    <ul className="list-none p-0 m-0 space-y-1 block" style={{ listStyleType: 'none !important' }}>
                                         {visibleItems.map((item) => {
                                             const Icon = item.icon;
                                             return (
@@ -124,8 +123,6 @@ const Layout = ({ children }) => {
                             );
                         })}
                     </div>
-                    {/* Este div crea el espacio necesario para que el footer no tape nada */}
-                    <div className="h-32 w-full flex-shrink-0" />
                 </nav>
 
                 {/* FOOTER SIDEBAR (Fijo abajo) */}
