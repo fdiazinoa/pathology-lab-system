@@ -83,7 +83,7 @@ const Layout = ({ children }) => {
                 />
             )}
 
-            {/* Sidebar - STRICT SAAS STANDARD */}
+            {/* Sidebar - STRICT FIXED LAYOUT & SCROLL */}
             <aside className={`
                 fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 
                 flex flex-col h-screen overflow-hidden
@@ -91,8 +91,8 @@ const Layout = ({ children }) => {
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             `}>
 
-                {/* Layer 1: Header (Logo) - Fixed Height h-16 */}
-                <div className="flex-shrink-0 h-16 flex items-center px-6 border-b border-slate-100 justify-between">
+                {/* Layer 1: Header (Logo) - flex-shrink-0 p-6 */}
+                <div className="flex-shrink-0 flex items-center p-6 border-b border-slate-100 justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-teal-600 rounded-lg shadow-sm flex items-center justify-center text-white">
                             <Microscope size={18} strokeWidth={2} />
@@ -111,44 +111,46 @@ const Layout = ({ children }) => {
 
                 {/* Layer 2: Navigation - Scroll Engine (flex-1 min-h-0) */}
                 <nav className="flex-1 overflow-y-auto min-h-0 py-6 px-4 custom-scrollbar">
-                    {navCategories.map((group, index) => {
-                        const visibleItems = group.items.filter(item =>
-                            !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
-                        );
+                    <div className="space-y-6">
+                        {navCategories.map((group) => {
+                            const visibleItems = group.items.filter(item =>
+                                !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
+                            );
 
-                        if (visibleItems.length === 0) return null;
+                            if (visibleItems.length === 0) return null;
 
-                        return (
-                            <div key={group.category} className={index === 0 ? '' : 'mt-8'}>
-                                <h3 className="px-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                                    {group.category}
-                                </h3>
-                                <ul className="space-y-1 list-none">
-                                    {visibleItems.map((item) => {
-                                        const Icon = item.icon;
-                                        const isActive = location.pathname === item.path;
-                                        return (
-                                            <li key={item.path}>
-                                                <NavLink
-                                                    to={item.path}
-                                                    onClick={() => setIsSidebarOpen(false)}
-                                                    className={({ isActive }) =>
-                                                        `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive
-                                                            ? 'bg-teal-50 text-teal-700 font-medium shadow-sm'
-                                                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                                                        } `
-                                                    }
-                                                >
-                                                    <Icon size={18} strokeWidth={1.75} className={`transition-colors ${isActive ? 'text-teal-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
-                                                    <span className="text-sm font-medium">{item.label}</span>
-                                                </NavLink>
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                            </div>
-                        );
-                    })}
+                            return (
+                                <div key={group.category}>
+                                    <h3 className="px-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                                        {group.category}
+                                    </h3>
+                                    <ul className="space-y-1 list-none">
+                                        {visibleItems.map((item) => {
+                                            const Icon = item.icon;
+                                            const isActive = location.pathname === item.path;
+                                            return (
+                                                <li key={item.path}>
+                                                    <NavLink
+                                                        to={item.path}
+                                                        onClick={() => setIsSidebarOpen(false)}
+                                                        className={({ isActive }) =>
+                                                            `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive
+                                                                ? 'bg-teal-50 text-teal-700 font-medium shadow-sm'
+                                                                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                                            } `
+                                                        }
+                                                    >
+                                                        <Icon size={18} strokeWidth={1.75} className={`transition-colors ${isActive ? 'text-teal-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                                                        <span className="text-sm font-medium">{item.label}</span>
+                                                    </NavLink>
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </nav>
 
                 {/* Layer 3: Footer (Logout) - Fixed Bottom */}
