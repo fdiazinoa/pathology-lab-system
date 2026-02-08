@@ -111,12 +111,9 @@ const Layout = ({ children }) => {
                 <div className="flex-1 min-h-0 overflow-y-auto">
                     <nav className="px-3 py-4 space-y-8">
                         {navCategories.map((group) => {
-                            console.log('Processing group:', group.category);
-                            const visibleItems = group.items.filter(item => {
-                                const isAllowed = !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId));
-                                console.log(`  - ${item.label}: roleId=${currentUser?.roleId}, allowed=${item.allowedRoles}, visible=${isAllowed}`);
-                                return isAllowed;
-                            });
+                            const visibleItems = group.items.filter(item =>
+                                !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
+                            );
 
                             if (visibleItems.length === 0) return null;
 
@@ -132,7 +129,7 @@ const Layout = ({ children }) => {
                                             <NavLink
                                                 key={item.path}
                                                 to={item.path}
-                                                onClick={() => setIsSidebarOpen(false)} // Close on navigate
+                                                onClick={() => setIsSidebarOpen(false)}
                                                 className={({ isActive }) =>
                                                     `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive
                                                         ? 'bg-teal-50 text-teal-700 font-medium shadow-sm'
@@ -151,7 +148,7 @@ const Layout = ({ children }) => {
                     </nav>
 
                     {/* Logout button inside scroll area */}
-                    <div className="px-3 pb-32 pt-4">
+                    <div className="px-3 pb-96 pt-4">
                         <div className="border-t border-slate-200 pt-4">
                             <button
                                 onClick={logout}

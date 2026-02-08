@@ -1561,3 +1561,7 @@ select {
 .pb-40 {
   padding-bottom: 10rem;
 }
+
+.pb-96 {
+  padding-bottom: 24rem;
+}
