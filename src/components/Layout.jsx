@@ -77,7 +77,7 @@ const Layout = ({ children }) => {
             <aside className={`
                 ${isSidebarOpen ? 'fixed inset-0 z-[100] w-64' : 'hidden lg:flex'} 
                 lg:relative lg:inset-auto lg:w-64 
-                flex-col bg-white border-r border-slate-200 h-full overflow-hidden
+                flex flex-col bg-white border-r border-slate-200 h-screen max-h-screen overflow-hidden
             `}>
                 {/* Mobile Overlay */}
                 {isSidebarOpen && (
@@ -124,7 +124,8 @@ const Layout = ({ children }) => {
                             );
                         })}
                     </div>
-                    <div className="h-10"></div>
+                    {/* Espaciador de seguridad para el final del scroll */}
+                    <div className="h-20 w-full flex-shrink-0" />
                 </nav>
 
                 {/* FOOTER SIDEBAR (Fijo abajo) */}
