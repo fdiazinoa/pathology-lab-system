@@ -109,7 +109,7 @@ const Layout = ({ children }) => {
                 </div>
 
                 <div className="flex-1 min-h-0 overflow-y-auto">
-                    <nav className="px-3 py-4 space-y-8 pb-40">
+                    <nav className="px-3 py-4 space-y-8">
                         {navCategories.map((group) => {
                             console.log('Processing group:', group.category);
                             const visibleItems = group.items.filter(item => {
@@ -149,16 +149,19 @@ const Layout = ({ children }) => {
                             );
                         })}
                     </nav>
-                </div>
 
-                <div className="p-4 border-t border-slate-100 shrink-0 bg-white">
-                    <button
-                        onClick={logout}
-                        className="flex items-center gap-3 px-3 py-2 w-full text-slate-500 hover:text-red-600 transition-all rounded-lg hover:bg-red-50 group"
-                    >
-                        <LogOut size={18} strokeWidth={1.5} className="group-hover:stroke-red-600" />
-                        <span className="text-sm font-medium">Cerrar Sesión</span>
-                    </button>
+                    {/* Logout button inside scroll area */}
+                    <div className="px-3 pb-6 pt-4">
+                        <div className="border-t border-slate-200 pt-4">
+                            <button
+                                onClick={logout}
+                                className="flex items-center gap-3 px-3 py-2 w-full text-slate-500 hover:text-red-600 transition-all rounded-lg hover:bg-red-50 group"
+                            >
+                                <LogOut size={18} strokeWidth={1.5} className="group-hover:stroke-red-600" />
+                                <span className="text-sm font-medium">Cerrar Sesión</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </aside>
 
