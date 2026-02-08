@@ -1203,3 +1203,186 @@ select {
 .text-text-tertiary {
   color: var(--text-tertiary) !important;
 }
+
+/* --- Missing Tailwind Utilities (Manual Fix for Layout & Branding) --- */
+.grid-cols-\[260px_1fr\] {
+  grid-template-columns: 260px 1fr;
+}
+
+/* Teal / Primary Colors */
+.text-teal-600 {
+  color: #0d9488;
+}
+
+.text-teal-700 {
+  color: #0f766e;
+}
+
+.bg-teal-50 {
+  background-color: #f0fdfa;
+}
+
+.bg-teal-600 {
+  background-color: #0d9488;
+}
+
+.bg-teal-700 {
+  background-color: #0f766e;
+}
+
+.border-teal-100 {
+  border-color: #ccfbf1;
+}
+
+.border-teal-500 {
+  border-color: #14b8a6;
+}
+
+.ring-teal-500\/20 {
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
+}
+
+/* Slate Colors (Ensuring coverage if not mapped) */
+.bg-slate-50 {
+  background-color: #f8fafc;
+}
+
+.bg-slate-100 {
+  background-color: #f1f5f9;
+}
+
+.bg-slate-200 {
+  background-color: #e2e8f0;
+}
+
+.border-slate-100 {
+  border-color: #f1f5f9;
+}
+
+.border-slate-200 {
+  border-color: #e2e8f0;
+}
+
+.text-slate-900 {
+  color: #0f172a;
+}
+
+.text-slate-600 {
+  color: #475569;
+}
+
+.text-slate-500 {
+  color: #64748b;
+}
+
+.text-slate-400 {
+  color: #94a3b8;
+}
+
+/* Group Hover extensions */
+.group:hover .group-hover\:text-slate-600 {
+  color: #475569;
+}
+
+.group:hover .group-hover\:stroke-red-600 {
+  stroke: #dc2626;
+}
+
+/* Animations */
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: .5;
+  }
+}
+
+/* --- More Missing Utilities (Arbitrary Values & Opacity) --- */
+
+/* Text Sizes */
+.text-\[10px\] {
+  font-size: 10px;
+}
+
+.text-\[11px\] {
+  font-size: 11px;
+}
+
+/* Layout & Sizing */
+.max-w-\[1600px\] {
+  max-width: 1600px;
+}
+
+.min-w-0 {
+  min-width: 0;
+}
+
+.shrink-0 {
+  flex-shrink: 0;
+}
+
+.w-9 {
+  width: 2.25rem;
+}
+
+.h-9 {
+  height: 2.25rem;
+}
+
+/* Z-Index */
+.z-30 {
+  z-index: 30;
+}
+
+.z-40 {
+  z-index: 40;
+}
+
+.z-50 {
+  z-index: 50;
+}
+
+/* Backdrop Blur */
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.backdrop-blur-md {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Opacity Modifiers */
+.bg-white\/90 {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+.bg-white\/80 {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.border-slate-200\/50 {
+  border-color: rgba(226, 232, 240, 0.5);
+}
+
+/* Shadows & Rings with Opacity */
+.shadow-teal-700\/20 {
+  box-shadow: 0 10px 15px -3px rgba(15, 118, 110, 0.2), 0 4px 6px -2px rgba(15, 118, 110, 0.1);
+}
+
+.hover\:shadow-teal-700\/30:hover {
+  box-shadow: 0 10px 15px -3px rgba(15, 118, 110, 0.3), 0 4px 6px -2px rgba(15, 118, 110, 0.15);
+}
+
+.focus\:ring-teal-500\/20:focus {
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
+}
