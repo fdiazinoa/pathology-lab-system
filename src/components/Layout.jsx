@@ -109,7 +109,7 @@ const Layout = ({ children }) => {
                 </div>
 
                 <div className="flex-1 min-h-0 overflow-y-auto">
-                    <nav className="px-3 py-4 space-y-8 pb-6">
+                    <nav className="px-3 py-4 space-y-8 pb-40">
                         {navCategories.map((group) => {
                             console.log('Processing group:', group.category);
                             const visibleItems = group.items.filter(item => {
