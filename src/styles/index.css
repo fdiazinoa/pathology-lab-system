@@ -66,6 +66,15 @@
   padding: 0;
 }
 
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  /* Prevent body scroll, let React app handle it */
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-app);
