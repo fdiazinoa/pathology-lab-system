@@ -124,8 +124,8 @@ const Layout = ({ children }) => {
                             );
                         })}
                     </div>
-                    {/* Espaciador de seguridad para el final del scroll */}
-                    <div className="h-20 w-full flex-shrink-0" />
+                    {/* Este div crea el espacio necesario para que el footer no tape nada */}
+                    <div className="h-32 w-full flex-shrink-0" />
                 </nav>
 
                 {/* FOOTER SIDEBAR (Fijo abajo) */}
