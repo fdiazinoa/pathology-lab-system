@@ -73,7 +73,7 @@ const Layout = ({ children }) => {
     const allNavItems = navCategories.flatMap(cat => cat.items);
 
     return (
-        <div className="flex lg:grid lg:grid-cols-[260px_1fr] h-full w-full overflow-hidden bg-slate-50 font-sans text-slate-900 relative">
+        <div className="flex h-full w-full bg-slate-50 font-sans text-slate-900 relative">
 
             {/* Mobile Sidebar Overlay */}
             {isSidebarOpen && (
@@ -85,7 +85,7 @@ const Layout = ({ children }) => {
 
             {/* Sidebar */}
             <aside className={`
-                fixed lg:static top-0 h-full left-0 z-50 w-[260px] bg-white border-r border-slate-200 shadow-xl lg:shadow-sm transform transition-transform duration-300 ease-in-out
+                fixed inset-y-0 left-0 z-50 w-[260px] h-full bg-white border-r border-slate-200 shadow-xl lg:shadow-md transform transition-transform duration-300 ease-in-out
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
                 flex flex-col overflow-hidden
             `}>
@@ -163,7 +163,7 @@ const Layout = ({ children }) => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex flex-col flex-1 h-full min-w-0 bg-slate-50 overflow-y-auto relative z-0 w-full transition-all duration-300">
+            <main className="flex flex-col flex-1 h-full min-w-0 lg:pl-[260px] bg-slate-50 overflow-y-auto relative z-0 w-full transition-all duration-300">
                 {isProductionMode ? (
                     <div className="bg-red-600 text-white px-4 py-1.5 text-center font-bold text-[10px] shadow-sm sticky top-0 z-50 flex items-center justify-center gap-2 uppercase tracking-widest">
                         <Dna size={12} />
