@@ -151,7 +151,7 @@ const Layout = ({ children }) => {
                     </nav>
 
                     {/* Logout button inside scroll area */}
-                    <div className="px-3 pb-6 pt-4">
+                    <div className="px-3 pb-32 pt-4">
                         <div className="border-t border-slate-200 pt-4">
                             <button
                                 onClick={logout}
