@@ -7,6 +7,7 @@ import { useData } from '../services/DataContext';
 const Layout = ({ children }) => {
     const location = useLocation();
     const { logout, currentUser, roles, isProductionMode } = useData();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // Get user role name
     const userRoleName = roles.find(r => r.id === currentUser?.roleId)?.name || 'Usuario';
@@ -72,17 +73,39 @@ const Layout = ({ children }) => {
     const allNavItems = navCategories.flatMap(cat => cat.items);
 
     return (
-        <div className="grid grid-cols-[260px_1fr] h-screen w-full overflow-hidden bg-slate-50 font-sans text-slate-900">
+        <div className="flex lg:grid lg:grid-cols-[260px_1fr] h-screen w-full overflow-hidden bg-slate-50 font-sans text-slate-900 relative">
+
+            {/* Mobile Sidebar Overlay */}
+            {isSidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
-            <aside className="flex flex-col h-full bg-white border-r border-slate-200 shadow-sm z-30 overflow-y-auto">
-                <div className="p-6 flex items-center gap-3 shrink-0 sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-100">
-                    <div className="w-9 h-9 bg-teal-600 rounded-xl shadow-sm flex items-center justify-center text-white">
-                        <Microscope size={20} strokeWidth={2} />
+            <aside className={`
+                fixed lg:static inset-y-0 left-0 z-50 w-[260px] bg-white border-r border-slate-200 shadow-xl lg:shadow-sm transform transition-transform duration-300 ease-in-out
+                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+                flex flex-col h-full overflow-y-auto
+            `}>
+                <div className="p-6 flex items-center justify-between shrink-0 sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-100">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-teal-600 rounded-xl shadow-sm flex items-center justify-center text-white">
+                            <Microscope size={20} strokeWidth={2} />
+                        </div>
+                        <div>
+                            <h1 className="font-bold text-lg text-slate-900 tracking-tight leading-none">PathAI</h1>
+                            <p className="text-[10px] font-semibold text-teal-600 uppercase tracking-wider">Enterprise Lab</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="font-bold text-lg text-slate-900 tracking-tight leading-none">PathAI</h1>
-                        <p className="text-[10px] font-semibold text-teal-600 uppercase tracking-wider">Enterprise Lab</p>
-                    </div>
+                    {/* Close button for mobile */}
+                    <button
+                        onClick={() => setIsSidebarOpen(false)}
+                        className="lg:hidden p-1 text-slate-400 hover:text-slate-600 focus:outline-none"
+                    >
+                        <X size={20} />
+                    </button>
                 </div>
 
                 <nav className="flex-1 px-3 py-4 space-y-8">
@@ -105,6 +128,7 @@ const Layout = ({ children }) => {
                                         <NavLink
                                             key={item.path}
                                             to={item.path}
+                                            onClick={() => setIsSidebarOpen(false)} // Close on navigate
                                             className={({ isActive }) =>
                                                 `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive
                                                     ? 'bg-teal-50 text-teal-700 font-medium shadow-sm'
@@ -134,7 +158,7 @@ const Layout = ({ children }) => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex flex-col flex-1 h-full min-w-0 bg-slate-50 overflow-y-auto relative z-0">
+            <main className="flex flex-col flex-1 h-full min-w-0 bg-slate-50 overflow-y-auto relative z-0 w-full transition-all duration-300">
                 {isProductionMode ? (
                     <div className="bg-red-600 text-white px-4 py-1.5 text-center font-bold text-[10px] shadow-sm sticky top-0 z-50 flex items-center justify-center gap-2 uppercase tracking-widest">
                         <Dna size={12} />
@@ -147,20 +171,28 @@ const Layout = ({ children }) => {
                     </div>
                 )}
 
-                <header className="px-8 py-4 flex justify-between items-center shrink-0 sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/50">
+                <header className="px-4 lg:px-8 py-4 flex justify-between items-center shrink-0 sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/50">
                     <div className="flex items-center gap-3">
-                        <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                        {/* Mobile Menu Button */}
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            className="lg:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                        >
+                            <Menu size={20} />
+                        </button>
+
+                        <h2 className="text-xl font-bold text-slate-900 tracking-tight truncate max-w-[200px] sm:max-w-none">
                             {allNavItems.find(i => i.path === location.pathname)?.label || 'Pathology System'}
                         </h2>
                     </div>
-                    <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3 lg:gap-6">
+                        <div className="hidden sm:flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm animate-pulse"></span>
                             <span className="text-xs font-medium text-slate-500">Sistema Operativo</span>
                         </div>
-                        <div className="h-6 w-px bg-slate-200"></div>
+                        <div className="hidden sm:block h-6 w-px bg-slate-200"></div>
                         <div className="flex items-center gap-3 pl-2">
-                            <div className="text-right">
+                            <div className="text-right hidden sm:block">
                                 <p className="text-sm font-semibold text-slate-900 leading-tight">{currentUser?.name || 'Usuario'}</p>
                                 <p className="text-xs text-slate-500 font-medium">{userRoleName}</p>
                             </div>
@@ -171,7 +203,7 @@ const Layout = ({ children }) => {
                     </div>
                 </header>
 
-                <div className="flex-1 p-8 max-w-[1600px] mx-auto w-full">
+                <div className="flex-1 p-4 lg:p-8 max-w-[1600px] mx-auto w-full">
                     {children || <Outlet />}
                 </div>
             </main>

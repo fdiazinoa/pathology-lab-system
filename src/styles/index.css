@@ -1386,3 +1386,153 @@ select {
 .focus\:ring-teal-500\/20:focus {
   box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
 }
+
+/* --- Responsive Utilities (Tablet/Mobile) --- */
+
+/* Grid & Layout */
+.lg\:grid {
+  display: none;
+}
+
+/* Default hidden on mobile, overridden by query */
+.lg\:hidden {
+  display: none;
+}
+
+.lg\:block {
+  display: block;
+}
+
+.lg\:flex {
+  display: flex;
+}
+
+/* Sidebar Positioning */
+.lg\:static {
+  position: static;
+}
+
+.fixed {
+  position: fixed;
+}
+
+.inset-y-0 {
+  top: 0;
+  bottom: 0;
+}
+
+.left-0 {
+  left: 0;
+}
+
+.inset-0 {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+/* Translations */
+.transform {
+  transform: var(--tw-transform);
+}
+
+.transition-transform {
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+.translate-x-0 {
+  --tw-translate-x: 0px;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y));
+}
+
+.-translate-x-full {
+  --tw-translate-x: -100%;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y));
+}
+
+.lg\:translate-x-0 {
+  --tw-translate-x: 0px;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y));
+}
+
+/* Grid Columns Responsive */
+.lg\:grid-cols-\[260px_1fr\] {
+  grid-template-columns: 260px 1fr;
+}
+
+@media (min-width: 768px) {
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  .sm\:block {
+    display: block;
+  }
+
+  .sm\:flex {
+    display: flex;
+  }
+
+  .sm\:max-w-none {
+    max-width: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lg\:grid {
+    display: grid;
+  }
+
+  .lg\:hidden {
+    display: none;
+  }
+
+  .lg\:block {
+    display: block;
+  }
+
+  .lg\:flex {
+    display: flex;
+  }
+
+  .lg\:static {
+    position: static;
+  }
+
+  .lg\:translate-x-0 {
+    transform: none;
+  }
+
+  .lg\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .lg\:grid-cols-\[260px_1fr\] {
+    grid-template-columns: 260px 1fr;
+  }
+
+  /* Reset overrides */
+  .fixed.lg\:static {
+    position: static;
+  }
+
+  .lg\:shadow-sm {
+    box-shadow: var(--shadow-sm);
+  }
+
+  .lg\:p-8 {
+    padding: 2rem;
+  }
+
+  .lg\:px-8 {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
