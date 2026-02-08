@@ -92,16 +92,9 @@ const Layout = ({ children }) => {
             <nav className="flex-1 overflow-y-auto min-h-0 p-4 custom-scrollbar pb-32">
                 <div className="flex flex-col gap-6">
                     {navCategories.map((group) => {
-
-                        // CAMBIO CRÍTICO: Comentamos el filtro de roles temporalmente para DEBUG.
-                        // Esto forzará a que se muestren TODAS las opciones.
-                        const visibleItems = group.items;
-
-                        /* Lógica original (comentada):
-                        const visibleItems = group.items.filter(item => 
+                        const visibleItems = group.items.filter(item =>
                             !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
                         );
-                        */
 
                         if (visibleItems.length === 0) return null;
 
