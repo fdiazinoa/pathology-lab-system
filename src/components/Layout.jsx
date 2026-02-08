@@ -108,7 +108,7 @@ const Layout = ({ children }) => {
                     </button>
                 </div>
 
-                <div className="flex-1 min-h-0 overflow-y-auto">
+                <div className="min-h-0 overflow-y-auto" style={{ height: 'calc(100% - 90px)' }}>
                     <nav className="px-3 py-4 space-y-8">
                         {navCategories.map((group) => {
                             const visibleItems = group.items.filter(item =>
