@@ -83,12 +83,13 @@ const Layout = ({ children }) => {
                 />
             )}
 
-            {/* Sidebar - FIXED & FLEX COLUMN */}
+            {/* Sidebar - FIXED & FLEX COLUMN (STRICT REFACTOR) */}
             <aside className={`
-                fixed top-0 left-0 z-50 w-[260px] h-[100dvh] bg-white border-r border-slate-200 shadow-xl lg:shadow-md transform transition-transform duration-300 ease-in-out
-                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+                fixed inset-y-0 left-0 z-50 w-[260px] bg-white border-r border-slate-200 shadow-xl lg:shadow-md transition-transform duration-300 ease-in-out
+                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:transform-none'}
                 flex flex-col overflow-hidden
             `}>
+                {/* 1. Header (Fixed Top) */}
                 <div className="p-6 flex items-center justify-between shrink-0 bg-white border-b border-slate-100">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 bg-teal-600 rounded-xl shadow-sm flex items-center justify-center text-white">
@@ -107,9 +108,9 @@ const Layout = ({ children }) => {
                     </button>
                 </div>
 
-                {/* SCROLLABLE CONTENT AREA */}
+                {/* 2. Body (Scrollable Middle) */}
                 <div className="flex-1 min-h-0 overflow-y-auto">
-                    <nav className="px-3 py-4 space-y-8">
+                    <nav className="px-3 py-4 space-y-8 pb-10">
                         {navCategories.map((group) => {
                             const visibleItems = group.items.filter(item =>
                                 !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
@@ -146,19 +147,17 @@ const Layout = ({ children }) => {
                             );
                         })}
                     </nav>
+                </div>
 
-                    {/* Logout button inside scroll area */}
-                    <div className="px-3 pb-40 pt-4">
-                        <div className="border-t border-slate-200 pt-4">
-                            <button
-                                onClick={logout}
-                                className="flex items-center gap-3 px-3 py-2 w-full text-slate-500 hover:text-red-600 transition-all rounded-lg hover:bg-red-50 group"
-                            >
-                                <LogOut size={18} strokeWidth={1.5} className="group-hover:stroke-red-600" />
-                                <span className="text-sm font-medium">Cerrar Sesión</span>
-                            </button>
-                        </div>
-                    </div>
+                {/* 3. Footer (Fixed Bottom) */}
+                <div className="p-4 border-t border-slate-200 shrink-0 bg-white">
+                    <button
+                        onClick={logout}
+                        className="flex items-center gap-3 px-3 py-2 w-full text-slate-500 hover:text-red-600 transition-all rounded-lg hover:bg-red-50 group"
+                    >
+                        <LogOut size={18} strokeWidth={1.5} className="group-hover:stroke-red-600" />
+                        <span className="text-sm font-medium">Cerrar Sesión</span>
+                    </button>
                 </div>
             </aside>
 
