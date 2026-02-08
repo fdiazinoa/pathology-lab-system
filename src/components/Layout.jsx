@@ -85,9 +85,9 @@ const Layout = ({ children }) => {
 
             {/* Sidebar */}
             <aside className={`
-                fixed lg:static top-0 h-[100dvh] left-0 z-50 w-[260px] bg-white border-r border-slate-200 shadow-xl lg:shadow-sm transform transition-transform duration-300 ease-in-out
+                fixed lg:static top-0 h-full left-0 z-50 w-[260px] bg-white border-r border-slate-200 shadow-xl lg:shadow-sm transform transition-transform duration-300 ease-in-out
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-                flex flex-col
+                flex flex-col overflow-hidden
             `}>
                 <div className="p-6 flex items-center justify-between shrink-0 bg-white border-b border-slate-100">
                     <div className="flex items-center gap-3">
@@ -148,7 +148,7 @@ const Layout = ({ children }) => {
                     </nav>
 
                     {/* Logout button inside scroll area */}
-                    <div className="px-3 pb-96 pt-4">
+                    <div className="px-3 pb-32 pt-4">
                         <div className="border-t border-slate-200 pt-4">
                             <button
                                 onClick={logout}
