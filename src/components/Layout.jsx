@@ -87,9 +87,9 @@ const Layout = ({ children }) => {
             <aside className={`
                 fixed lg:static top-0 h-[100dvh] lg:h-screen left-0 z-50 w-[260px] bg-white border-r border-slate-200 shadow-xl lg:shadow-sm transform transition-transform duration-300 ease-in-out
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-                flex flex-col overflow-y-auto
+                flex flex-col
             `}>
-                <div className="p-6 flex items-center justify-between shrink-0 sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-100">
+                <div className="p-6 flex items-center justify-between shrink-0 bg-white border-b border-slate-100">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 bg-teal-600 rounded-xl shadow-sm flex items-center justify-center text-white">
                             <Microscope size={20} strokeWidth={2} />
@@ -108,45 +108,47 @@ const Layout = ({ children }) => {
                     </button>
                 </div>
 
-                <nav className="flex-1 px-3 py-4 space-y-8 pb-32">
-                    {navCategories.map((group) => {
-                        const visibleItems = group.items.filter(item =>
-                            !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
-                        );
+                <div className="flex-1 overflow-y-auto">
+                    <nav className="px-3 py-4 space-y-8 pb-6">
+                        {navCategories.map((group) => {
+                            const visibleItems = group.items.filter(item =>
+                                !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
+                            );
 
-                        if (visibleItems.length === 0) return null;
+                            if (visibleItems.length === 0) return null;
 
-                        return (
-                            <div key={group.category} className="space-y-1">
-                                <h3 className="px-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                                    {group.category}
-                                </h3>
-                                {visibleItems.map((item) => {
-                                    const Icon = item.icon;
-                                    const isActive = location.pathname === item.path;
-                                    return (
-                                        <NavLink
-                                            key={item.path}
-                                            to={item.path}
-                                            onClick={() => setIsSidebarOpen(false)} // Close on navigate
-                                            className={({ isActive }) =>
-                                                `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive
-                                                    ? 'bg-teal-50 text-teal-700 font-medium shadow-sm'
-                                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                                                } `
-                                            }
-                                        >
-                                            <Icon size={18} strokeWidth={1.75} className={`transition-colors ${isActive ? 'text-teal-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
-                                            <span className="text-sm">{item.label}</span>
-                                        </NavLink>
-                                    );
-                                })}
-                            </div>
-                        );
-                    })}
-                </nav>
+                            return (
+                                <div key={group.category} className="space-y-1">
+                                    <h3 className="px-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                                        {group.category}
+                                    </h3>
+                                    {visibleItems.map((item) => {
+                                        const Icon = item.icon;
+                                        const isActive = location.pathname === item.path;
+                                        return (
+                                            <NavLink
+                                                key={item.path}
+                                                to={item.path}
+                                                onClick={() => setIsSidebarOpen(false)} // Close on navigate
+                                                className={({ isActive }) =>
+                                                    `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive
+                                                        ? 'bg-teal-50 text-teal-700 font-medium shadow-sm'
+                                                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                                    } `
+                                                }
+                                            >
+                                                <Icon size={18} strokeWidth={1.75} className={`transition-colors ${isActive ? 'text-teal-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                                                <span className="text-sm">{item.label}</span>
+                                            </NavLink>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })}
+                    </nav>
+                </div>
 
-                <div className="p-4 border-t border-slate-100 shrink-0 sticky bottom-0 bg-white/90 backdrop-blur-md z-40">
+                <div className="p-4 border-t border-slate-100 shrink-0 bg-white">
                     <button
                         onClick={logout}
                         className="flex items-center gap-3 px-3 py-2 w-full text-slate-500 hover:text-red-600 transition-all rounded-lg hover:bg-red-50 group"
