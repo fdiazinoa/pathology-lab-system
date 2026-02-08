@@ -111,9 +111,12 @@ const Layout = ({ children }) => {
                 <div className="flex-1 min-h-0 overflow-y-auto">
                     <nav className="px-3 py-4 space-y-8 pb-6">
                         {navCategories.map((group) => {
-                            const visibleItems = group.items.filter(item =>
-                                !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
-                            );
+                            console.log('Processing group:', group.category);
+                            const visibleItems = group.items.filter(item => {
+                                const isAllowed = !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId));
+                                console.log(`  - ${item.label}: roleId=${currentUser?.roleId}, allowed=${item.allowedRoles}, visible=${isAllowed}`);
+                                return isAllowed;
+                            });
 
                             if (visibleItems.length === 0) return null;
 
