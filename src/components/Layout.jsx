@@ -73,17 +73,17 @@ const Layout = ({ children }) => {
     const allNavItems = navCategories.flatMap(cat => cat.items);
 
     return (
-        <div className="flex h-full w-full bg-slate-50 font-sans text-slate-900 relative">
+        <div className="flex min-h-screen w-full bg-slate-50 font-sans text-slate-900 relative">
 
             {/* Mobile Sidebar Overlay */}
             {isSidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"
+                    className="fixed inset-0 bg-black/50 z-50 lg:hidden backdrop-blur-sm transition-opacity"
                     onClick={() => setIsSidebarOpen(false)}
                 />
             )}
 
-            {/* Sidebar - STRICT "BULLETPROOF" FLEXBOX STRUCTURE */}
+            {/* Sidebar - STRICT SAAS STANDARD */}
             <aside className={`
                 fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 
                 flex flex-col h-screen overflow-hidden
@@ -91,15 +91,14 @@ const Layout = ({ children }) => {
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             `}>
 
-                {/* CAPA 1: HEADER (Logo) - No se mueve */}
-                <div className="flex-shrink-0 h-20 flex items-center px-6 border-b border-slate-100 justify-between">
+                {/* Layer 1: Header (Logo) - Fixed Height h-16 */}
+                <div className="flex-shrink-0 h-16 flex items-center px-6 border-b border-slate-100 justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-teal-600 rounded-xl shadow-sm flex items-center justify-center text-white">
-                            <Microscope size={20} strokeWidth={2} />
+                        <div className="w-8 h-8 bg-teal-600 rounded-lg shadow-sm flex items-center justify-center text-white">
+                            <Microscope size={18} strokeWidth={2} />
                         </div>
                         <div>
                             <h1 className="font-bold text-lg text-slate-900 tracking-tight leading-none">PathAI</h1>
-                            <p className="text-[10px] font-semibold text-teal-600 uppercase tracking-wider">Enterprise Lab</p>
                         </div>
                     </div>
                     <button
@@ -110,57 +109,53 @@ const Layout = ({ children }) => {
                     </button>
                 </div>
 
-                {/* CAPA 2: EL ÁREA DE SCROLL (Navegación) */}
-                {/* flex-1: ocupa todo el espacio. min-h-0: Obligatorio para que funcione el scroll en flex. */}
-                <nav className="flex-1 overflow-y-auto min-h-0 py-4 custom-scrollbar">
-                    <div className="px-4 space-y-6">
-                        {navCategories.map((group) => {
-                            const visibleItems = group.items.filter(item =>
-                                !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
-                            );
+                {/* Layer 2: Navigation - Scroll Engine (flex-1 min-h-0) */}
+                <nav className="flex-1 overflow-y-auto min-h-0 py-6 px-4 custom-scrollbar">
+                    {navCategories.map((group, index) => {
+                        const visibleItems = group.items.filter(item =>
+                            !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
+                        );
 
-                            if (visibleItems.length === 0) return null;
+                        if (visibleItems.length === 0) return null;
 
-                            return (
-                                <div key={group.category}>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-2">
-                                        {group.category}
-                                    </p>
-                                    <div className="space-y-1">
-                                        {visibleItems.map((item) => {
-                                            const Icon = item.icon;
-                                            const isActive = location.pathname === item.path;
-                                            return (
+                        return (
+                            <div key={group.category} className={index === 0 ? '' : 'mt-8'}>
+                                <h3 className="px-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                                    {group.category}
+                                </h3>
+                                <ul className="space-y-1 list-none">
+                                    {visibleItems.map((item) => {
+                                        const Icon = item.icon;
+                                        const isActive = location.pathname === item.path;
+                                        return (
+                                            <li key={item.path}>
                                                 <NavLink
-                                                    key={item.path}
                                                     to={item.path}
                                                     onClick={() => setIsSidebarOpen(false)}
                                                     className={({ isActive }) =>
-                                                        `w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive
+                                                        `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive
                                                             ? 'bg-teal-50 text-teal-700 font-medium shadow-sm'
                                                             : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                                                         } `
                                                     }
                                                 >
                                                     <Icon size={18} strokeWidth={1.75} className={`transition-colors ${isActive ? 'text-teal-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
-                                                    <span className="text-sm">{item.label}</span>
+                                                    <span className="text-sm font-medium">{item.label}</span>
                                                 </NavLink>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                    {/* Espaciador final para que lo último no quede pegado al footer */}
-                    <div className="h-10"></div>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            </div>
+                        );
+                    })}
                 </nav>
 
-                {/* CAPA 3: FOOTER (Logout) - Siempre visible abajo */}
+                {/* Layer 3: Footer (Logout) - Fixed Bottom */}
                 <div className="flex-shrink-0 p-4 border-t border-slate-100 bg-slate-50">
                     <button
                         onClick={logout}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-white hover:text-red-600 hover:shadow-sm transition-all rounded-xl border border-transparent hover:border-slate-200 group"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-white hover:text-red-600 hover:shadow-sm transition-all rounded-lg border border-transparent hover:border-slate-200 group"
                     >
                         <LogOut size={18} strokeWidth={1.5} className="group-hover:stroke-red-600" />
                         <span className="font-medium text-sm">Cerrar Sesión</span>
@@ -172,51 +167,54 @@ const Layout = ({ children }) => {
 
             </aside>
 
-            {/* Main Content */}
-            <main className="flex flex-col flex-1 h-full min-w-0 lg:pl-64 bg-slate-50 overflow-y-auto relative z-0 w-full transition-all duration-300">
-                {isProductionMode ? (
-                    <div className="bg-red-600 text-white px-4 py-1.5 text-center font-bold text-[10px] shadow-sm sticky top-0 z-50 flex items-center justify-center gap-2 uppercase tracking-widest">
-                        <Dna size={12} />
-                        🧬 MODO PRODUCCIÓN – Operación Crítica
-                    </div>
-                ) : (
-                    <div className="bg-indigo-50 text-indigo-700 border-b border-indigo-100 px-4 py-1.5 text-center font-bold text-[10px] sticky top-0 z-50 flex items-center justify-center gap-2 uppercase tracking-widest backdrop-blur-sm">
-                        <FlaskConical size={12} />
-                        🧪 MODO DEMO – Simulador
-                    </div>
-                )}
+            {/* Main Content - Padded Left to avoid overlap */}
+            <main className="flex-1 min-w-0 lg:pl-64 flex flex-col min-h-screen transition-all duration-300">
 
-                <header className="px-4 lg:px-8 py-4 flex justify-between items-center shrink-0 sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/50">
-                    <div className="flex items-center gap-3">
-                        {/* Mobile Menu Button */}
-                        <button
-                            onClick={() => setIsSidebarOpen(true)}
-                            className="lg:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-                        >
-                            <Menu size={20} />
-                        </button>
+                {/* Fixed Header within Main Content */}
+                <div className="sticky top-0 z-40 w-full">
+                    {isProductionMode ? (
+                        <div className="bg-red-600 text-white px-4 py-1.5 text-center font-bold text-[10px] shadow-sm flex items-center justify-center gap-2 uppercase tracking-widest">
+                            <Dna size={12} />
+                            🧬 MODO PRODUCCIÓN – Operación Crítica
+                        </div>
+                    ) : (
+                        <div className="bg-indigo-50 text-indigo-700 border-b border-indigo-100 px-4 py-1.5 text-center font-bold text-[10px] flex items-center justify-center gap-2 uppercase tracking-widest backdrop-blur-sm">
+                            <FlaskConical size={12} />
+                            🧪 MODO DEMO – Simulador
+                        </div>
+                    )}
 
-                        <h2 className="text-xl font-bold text-slate-900 tracking-tight truncate max-w-[200px] sm:max-w-none">
-                            {allNavItems.find(i => i.path === location.pathname)?.label || 'Pathology System'}
-                        </h2>
-                    </div>
-                    <div className="flex items-center gap-3 lg:gap-6">
-                        <div className="hidden sm:flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm animate-pulse"></span>
-                            <span className="text-xs font-medium text-slate-500">Sistema Operativo</span>
+                    <header className="px-4 lg:px-8 py-4 flex justify-between items-center bg-white/80 backdrop-blur-md border-b border-slate-200/50">
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setIsSidebarOpen(true)}
+                                className="lg:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                            >
+                                <Menu size={20} />
+                            </button>
+
+                            <h2 className="text-xl font-bold text-slate-900 tracking-tight truncate max-w-[200px] sm:max-w-none">
+                                {allNavItems.find(i => i.path === location.pathname)?.label || 'Pathology System'}
+                            </h2>
                         </div>
-                        <div className="hidden sm:block h-6 w-px bg-slate-200"></div>
-                        <div className="flex items-center gap-3 pl-2">
-                            <div className="text-right hidden sm:block">
-                                <p className="text-sm font-semibold text-slate-900 leading-tight">{currentUser?.name || 'Usuario'}</p>
-                                <p className="text-xs text-slate-500 font-medium">{userRoleName}</p>
+                        <div className="flex items-center gap-3 lg:gap-6">
+                            <div className="hidden sm:flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm animate-pulse"></span>
+                                <span className="text-xs font-medium text-slate-500">Sistema Operativo</span>
                             </div>
-                            <div className="w-9 h-9 rounded-full bg-slate-100 border border-white shadow-sm flex items-center justify-center text-teal-700 font-bold">
-                                {currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'US'}
+                            <div className="hidden sm:block h-6 w-px bg-slate-200"></div>
+                            <div className="flex items-center gap-3 pl-2">
+                                <div className="text-right hidden sm:block">
+                                    <p className="text-sm font-semibold text-slate-900 leading-tight">{currentUser?.name || 'Usuario'}</p>
+                                    <p className="text-xs text-slate-500 font-medium">{userRoleName}</p>
+                                </div>
+                                <div className="w-9 h-9 rounded-full bg-slate-100 border border-white shadow-sm flex items-center justify-center text-teal-700 font-bold">
+                                    {currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'US'}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </header>
+                    </header>
+                </div>
 
                 <div className="flex-1 p-4 lg:p-8 max-w-[1600px] mx-auto w-full">
                     {children || <Outlet />}
