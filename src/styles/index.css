@@ -1553,3 +1553,7 @@ select {
 .pb-20 {
   padding-bottom: 5rem;
 }
+
+.min-h-0 {
+  min-height: 0;
+}
