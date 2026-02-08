@@ -83,14 +83,16 @@ const Layout = ({ children }) => {
                 />
             )}
 
-            {/* Sidebar - STRICT RECONSTRUCTION (3 LAYERS) */}
+            {/* Sidebar - STRICT "BULLETPROOF" FLEXBOX STRUCTURE */}
             <aside className={`
-                fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 shadow-xl lg:shadow-none transition-transform duration-300 ease-in-out
-                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:transform-none'}
-                flex flex-col overflow-hidden
+                fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 
+                flex flex-col h-screen overflow-hidden
+                transition-transform duration-300 ease-in-out
+                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             `}>
-                {/* CAPA 1: Header (Logo) */}
-                <div className="flex-shrink-0 h-20 flex items-center px-6 border-b border-slate-50 bg-white">
+
+                {/* CAPA 1: HEADER (Logo) - No se mueve */}
+                <div className="flex-shrink-0 h-20 flex items-center px-6 border-b border-slate-100 justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 bg-teal-600 rounded-xl shadow-sm flex items-center justify-center text-white">
                             <Microscope size={20} strokeWidth={2} />
@@ -102,37 +104,39 @@ const Layout = ({ children }) => {
                     </div>
                     <button
                         onClick={() => setIsSidebarOpen(false)}
-                        className="lg:hidden ml-auto p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+                        className="lg:hidden p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
                     >
                         <X size={20} />
                     </button>
                 </div>
 
-                {/* CAPA 2: Motor de Scroll (Nav) - flex-1 min-h-0 is KEY */}
-                <nav className="flex-1 overflow-y-auto min-h-0 px-4 py-4 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-                    {navCategories.map((group) => {
-                        const visibleItems = group.items.filter(item =>
-                            !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
-                        );
+                {/* CAPA 2: EL ÁREA DE SCROLL (Navegación) */}
+                {/* flex-1: ocupa todo el espacio. min-h-0: Obligatorio para que funcione el scroll en flex. */}
+                <nav className="flex-1 overflow-y-auto min-h-0 py-4 custom-scrollbar">
+                    <div className="px-4 space-y-6">
+                        {navCategories.map((group) => {
+                            const visibleItems = group.items.filter(item =>
+                                !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
+                            );
 
-                        if (visibleItems.length === 0) return null;
+                            if (visibleItems.length === 0) return null;
 
-                        return (
-                            <div key={group.category} className="mb-6 last:mb-0">
-                                <h3 className="px-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                                    {group.category}
-                                </h3>
-                                <ul className="space-y-1">
-                                    {visibleItems.map((item) => {
-                                        const Icon = item.icon;
-                                        const isActive = location.pathname === item.path;
-                                        return (
-                                            <li key={item.path}>
+                            return (
+                                <div key={group.category}>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-2">
+                                        {group.category}
+                                    </p>
+                                    <div className="space-y-1">
+                                        {visibleItems.map((item) => {
+                                            const Icon = item.icon;
+                                            const isActive = location.pathname === item.path;
+                                            return (
                                                 <NavLink
+                                                    key={item.path}
                                                     to={item.path}
                                                     onClick={() => setIsSidebarOpen(false)}
                                                     className={({ isActive }) =>
-                                                        `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive
+                                                        `w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive
                                                             ? 'bg-teal-50 text-teal-700 font-medium shadow-sm'
                                                             : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                                                         } `
@@ -141,28 +145,31 @@ const Layout = ({ children }) => {
                                                     <Icon size={18} strokeWidth={1.75} className={`transition-colors ${isActive ? 'text-teal-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
                                                     <span className="text-sm">{item.label}</span>
                                                 </NavLink>
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                            </div>
-                        );
-                    })}
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    {/* Espaciador final para que lo último no quede pegado al footer */}
+                    <div className="h-10"></div>
                 </nav>
 
-                {/* CAPA 3: Footer (Logout) - flex-shrink-0 mt-auto */}
-                <div className="flex-shrink-0 mt-auto p-4 border-t border-slate-100 bg-white">
+                {/* CAPA 3: FOOTER (Logout) - Siempre visible abajo */}
+                <div className="flex-shrink-0 p-4 border-t border-slate-100 bg-slate-50">
                     <button
                         onClick={logout}
-                        className="flex items-center gap-3 px-3 py-2 w-full text-slate-500 hover:text-red-600 transition-all rounded-lg hover:bg-red-50 group bg-slate-50 border border-slate-100"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-white hover:text-red-600 hover:shadow-sm transition-all rounded-xl border border-transparent hover:border-slate-200 group"
                     >
                         <LogOut size={18} strokeWidth={1.5} className="group-hover:stroke-red-600" />
-                        <span className="text-sm font-medium">Cerrar Sesión</span>
+                        <span className="font-medium text-sm">Cerrar Sesión</span>
                     </button>
-                    <div className="mt-2 text-[10px] text-center text-slate-300">
-                        v2.5.0 • PathAI System
+                    <div className="mt-3 text-center">
+                        <span className="text-[10px] text-slate-400 font-mono">v2.5.0 • PathAI System</span>
                     </div>
                 </div>
+
             </aside>
 
             {/* Main Content */}
