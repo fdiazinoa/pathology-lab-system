@@ -73,7 +73,7 @@ const Layout = ({ children }) => {
     const allNavItems = navCategories.flatMap(cat => cat.items);
 
     return (
-        <div className="flex lg:grid lg:grid-cols-[260px_1fr] h-screen w-full overflow-hidden bg-slate-50 font-sans text-slate-900 relative">
+        <div className="flex lg:grid lg:grid-cols-[260px_1fr] h-[100dvh] w-full overflow-hidden bg-slate-50 font-sans text-slate-900 relative">
 
             {/* Mobile Sidebar Overlay */}
             {isSidebarOpen && (
@@ -108,7 +108,7 @@ const Layout = ({ children }) => {
                     </button>
                 </div>
 
-                <nav className="flex-1 px-3 py-4 space-y-8">
+                <nav className="flex-1 px-3 py-4 space-y-8 pb-32">
                     {navCategories.map((group) => {
                         const visibleItems = group.items.filter(item =>
                             !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))

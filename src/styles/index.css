@@ -1536,3 +1536,20 @@ select {
     padding-right: 2rem;
   }
 }
+
+/* --- New Utilities for Tablet/iPad Fixes --- */
+.h-\[100dvh\] {
+  height: 100dvh;
+}
+
+.pb-32 {
+  padding-bottom: 8rem;
+}
+
+.pb-24 {
+  padding-bottom: 6rem;
+}
+
+.pb-20 {
+  padding-bottom: 5rem;
+}
