@@ -88,12 +88,21 @@ const Layout = ({ children }) => {
             </div>
 
             {/* B. SCROLL AREA (Flexible) */}
-            <nav className="flex-1 overflow-y-auto min-h-0 p-4 custom-scrollbar">
+            {/* Cambio: Agregamos pb-32 (padding bottom gigante) para asegurar que nada quede tapado por el footer */}
+            <nav className="flex-1 overflow-y-auto min-h-0 p-4 custom-scrollbar pb-32">
                 <div className="flex flex-col gap-6">
                     {navCategories.map((group) => {
-                        const visibleItems = group.items.filter(item =>
+
+                        // CAMBIO CRÍTICO: Comentamos el filtro de roles temporalmente para DEBUG.
+                        // Esto forzará a que se muestren TODAS las opciones.
+                        const visibleItems = group.items;
+
+                        /* Lógica original (comentada):
+                        const visibleItems = group.items.filter(item => 
                             !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
                         );
+                        */
+
                         if (visibleItems.length === 0) return null;
 
                         return (
@@ -121,8 +130,9 @@ const Layout = ({ children }) => {
                             </div>
                         );
                     })}
-                    {/* Espaciador final de seguridad */}
-                    <div className="h-24 flex-shrink-0" />
+
+                    {/* Espaciador de seguridad extra al final de todo */}
+                    <div className="h-20 w-full bg-transparent flex-shrink-0" />
                 </div>
             </nav>
 
