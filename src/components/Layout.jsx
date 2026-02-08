@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Users, FileText, Settings, LogOut, Menu, X, Bell, Search, Plus, Activity, TrendingUp, Globe, Map, Presentation, Shield, Server, Stethoscope, DollarSign, FilePlus, Inbox, Truck, Package, Microscope, History, ShieldCheck, ShieldAlert, FlaskConical, Dna, BarChart3, BookOpen, Building } from 'lucide-react';
@@ -73,69 +72,47 @@ const Layout = ({ children }) => {
     const allNavItems = navCategories.flatMap(cat => cat.items);
 
     return (
-        <div className="flex min-h-screen w-full bg-slate-50 font-sans text-slate-900 relative">
-
-            {/* Mobile Sidebar Overlay */}
-            {isSidebarOpen && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-50 lg:hidden backdrop-blur-sm transition-opacity"
-                    onClick={() => setIsSidebarOpen(false)}
-                />
-            )}
-
-            {/* Sidebar - RECONSTRUCCIÓN TÉCNICA TOTAL */}
+        <div className="flex h-screen w-full bg-slate-50 overflow-hidden">
+            {/* 1. SIDEBAR: Ahora es una columna real, no flota */}
             <aside className={`
-                fixed inset-y-0 left-0 z-[100] w-64 bg-white border-r border-slate-200 
-                flex flex-col h-screen overflow-hidden
-                transition-transform duration-300 ease-in-out
-                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+                ${isSidebarOpen ? 'fixed inset-0 z-[100] w-64' : 'hidden lg:flex'} 
+                lg:relative lg:inset-auto lg:w-64 
+                flex-col bg-white border-r border-slate-200 h-full overflow-hidden
             `}>
+                {/* Mobile Overlay */}
+                {isSidebarOpen && (
+                    <div className="absolute inset-0 bg-black/50 lg:hidden" onClick={() => setIsSidebarOpen(false)} />
+                )}
 
-                {/* 1. HEADER: Altura fija, no se encoge */}
-                <div className="flex-shrink-0 h-20 flex items-center px-6 border-b border-slate-100 justify-between bg-white">
+                {/* HEADER SIDEBAR (Fijo) */}
+                <div className="flex-shrink-0 h-16 flex items-center px-6 border-b border-slate-100 justify-between bg-white z-10">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center text-white">
-                            <Microscope size={18} strokeWidth={2} />
+                            <Microscope size={18} />
                         </div>
-                        <h1 className="font-bold text-lg text-slate-900 tracking-tight">PathAI</h1>
+                        <h1 className="font-bold text-lg text-slate-900">PathAI</h1>
                     </div>
-                    <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 text-slate-400">
-                        <X size={20} />
-                    </button>
+                    <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2"><X size={20} /></button>
                 </div>
 
-                {/* 2. NAVEGACIÓN: EL MOTOR DE SCROLL 
-                   flex-1 + min-h-0 es lo que obliga al navegador a crear el scroll aquí dentro.
-                */}
-                <nav className="flex-1 overflow-y-auto min-h-0 px-4 py-6 bg-white custom-scrollbar">
+                {/* CUERPO NAVEGACIÓN (SCROLL REAL) */}
+                <nav className="flex-1 overflow-y-auto min-h-0 py-6 px-4 custom-scrollbar bg-white">
                     <div className="flex flex-col gap-8">
                         {navCategories.map((group) => {
                             const visibleItems = group.items.filter(item =>
                                 !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
                             );
                             if (visibleItems.length === 0) return null;
-
                             return (
-                                <div key={group.category} className="flex flex-col">
-                                    <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
-                                        {group.category}
-                                    </h3>
-                                    {/* list-none y p-0 para asegurar que no salgan puntos negros */}
+                                <div key={group.category}>
+                                    <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">{group.category}</h3>
                                     <ul className="list-none p-0 m-0 space-y-1">
                                         {visibleItems.map((item) => {
                                             const Icon = item.icon;
                                             return (
-                                                <li key={item.path} className="list-none">
-                                                    <NavLink
-                                                        to={item.path}
-                                                        onClick={() => setIsSidebarOpen(false)}
-                                                        className={({ isActive }) =>
-                                                            `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive
-                                                                ? 'bg-teal-50 text-teal-700 font-semibold shadow-sm'
-                                                                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                                                            }`
-                                                        }
-                                                    >
+                                                <li key={item.path} className="list-none before:hidden">
+                                                    <NavLink to={item.path} onClick={() => setIsSidebarOpen(false)}
+                                                        className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${isActive ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}>
                                                         <Icon size={18} className="flex-shrink-0" />
                                                         <span className="text-sm">{item.label}</span>
                                                     </NavLink>
@@ -147,81 +124,45 @@ const Layout = ({ children }) => {
                             );
                         })}
                     </div>
-                    {/* Espacio extra al final del scroll para que el último item no pegue con el footer */}
-                    <div className="h-10 flex-shrink-0"></div>
+                    <div className="h-10"></div>
                 </nav>
 
-                {/* 3. FOOTER: Logout siempre anclado abajo */}
-                <div className="flex-shrink-0 p-4 border-t border-slate-100 bg-slate-50 mt-auto">
-                    <button
-                        onClick={logout}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-white hover:text-red-600 hover:shadow-sm transition-all rounded-lg border border-transparent hover:border-slate-200"
-                    >
+                {/* FOOTER SIDEBAR (Fijo abajo) */}
+                <div className="flex-shrink-0 p-4 border-t border-slate-100 bg-slate-50">
+                    <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:text-red-600 rounded-lg">
                         <LogOut size={18} />
                         <span className="font-semibold text-sm">Cerrar Sesión</span>
                     </button>
-                    <div className="mt-3 text-center">
-                        <span className="text-[10px] text-slate-400 font-mono">v2.5.0 • PathAI System</span>
-                    </div>
+                    <p className="mt-2 text-center text-[10px] text-slate-400">v2.5.0 • PathAI System</p>
                 </div>
             </aside>
 
-            {/* Main Content - Padded Left to avoid overlap */}
-            <main className="flex-1 flex flex-col h-screen overflow-hidden lg:ml-64 lg:pl-0 transition-all duration-300">
-
-                {/* Fixed Header within Main Content */}
-                <div className="sticky top-0 z-40 w-full">
-                    {isProductionMode ? (
-                        <div className="bg-red-600 text-white px-4 py-1.5 text-center font-bold text-[10px] shadow-sm flex items-center justify-center gap-2 uppercase tracking-widest">
-                            <Dna size={12} />
-                            🧬 MODO PRODUCCIÓN – Operación Crítica
+            {/* 2. CONTENIDO PRINCIPAL: Ocupa el resto del espacio */}
+            <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+                {/* Header del Main */}
+                <header className="flex-shrink-0 h-16 border-b bg-white flex items-center px-4 lg:px-8 justify-between">
+                    <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2"><Menu size={20} /></button>
+                    <h2 className="text-xl font-bold">{allNavItems.find(i => i.path === location.pathname)?.label || 'Dashboard'}</h2>
+                    <div className="flex items-center gap-3">
+                        <div className="text-right hidden sm:block">
+                            <p className="text-sm font-semibold">{currentUser?.name}</p>
+                            <p className="text-xs text-slate-500">{userRoleName}</p>
                         </div>
-                    ) : (
-                        <div className="bg-indigo-50 text-indigo-700 border-b border-indigo-100 px-4 py-1.5 text-center font-bold text-[10px] flex items-center justify-center gap-2 uppercase tracking-widest backdrop-blur-sm">
-                            <FlaskConical size={12} />
-                            🧪 MODO DEMO – Simulador
+                        <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center font-bold">
+                            {currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'US'}
                         </div>
-                    )}
+                    </div>
+                </header>
 
-                    <header className="px-4 lg:px-8 py-4 flex justify-between items-center bg-white/80 backdrop-blur-md border-b border-slate-200/50">
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={() => setIsSidebarOpen(true)}
-                                className="lg:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-                            >
-                                <Menu size={20} />
-                            </button>
-
-                            <h2 className="text-xl font-bold text-slate-900 tracking-tight truncate max-w-[200px] sm:max-w-none">
-                                {allNavItems.find(i => i.path === location.pathname)?.label || 'Pathology System'}
-                            </h2>
-                        </div>
-                        <div className="flex items-center gap-3 lg:gap-6">
-                            <div className="hidden sm:flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm animate-pulse"></span>
-                                <span className="text-xs font-medium text-slate-500">Sistema Operativo</span>
-                            </div>
-                            <div className="hidden sm:block h-6 w-px bg-slate-200"></div>
-                            <div className="flex items-center gap-3 pl-2">
-                                <div className="text-right hidden sm:block">
-                                    <p className="text-sm font-semibold text-slate-900 leading-tight">{currentUser?.name || 'Usuario'}</p>
-                                    <p className="text-xs text-slate-500 font-medium">{userRoleName}</p>
-                                </div>
-                                <div className="w-9 h-9 rounded-full bg-slate-100 border border-white shadow-sm flex items-center justify-center text-teal-700 font-bold">
-                                    {currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'US'}
-                                </div>
-                            </div>
-                        </div>
-                    </header>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-4 lg:p-8">
-                    {children || <Outlet />}
-                </div>
-            </main>
+                {/* AREA DE CONTENIDO (CON SU PROPIO SCROLL) */}
+                <main className="flex-1 overflow-y-auto p-4 lg:p-8 bg-slate-50">
+                    <div className="max-w-[1600px] mx-auto">
+                        {children || <Outlet />}
+                    </div>
+                </main>
+            </div>
         </div>
     );
 };
-
 
 export default Layout;
