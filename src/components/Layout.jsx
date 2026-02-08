@@ -73,7 +73,7 @@ const Layout = ({ children }) => {
     const allNavItems = navCategories.flatMap(cat => cat.items);
 
     return (
-        <div className="flex lg:grid lg:grid-cols-[260px_1fr] h-[100dvh] lg:h-screen w-full overflow-hidden bg-slate-50 font-sans text-slate-900 relative">
+        <div className="flex lg:grid lg:grid-cols-[260px_1fr] h-full w-full overflow-hidden bg-slate-50 font-sans text-slate-900 relative">
 
             {/* Mobile Sidebar Overlay */}
             {isSidebarOpen && (
