@@ -73,7 +73,7 @@ const Layout = ({ children }) => {
     const allNavItems = navCategories.flatMap(cat => cat.items);
 
     return (
-        <div className="flex lg:grid lg:grid-cols-[260px_1fr] h-[100dvh] w-full overflow-hidden bg-slate-50 font-sans text-slate-900 relative">
+        <div className="flex lg:grid lg:grid-cols-[260px_1fr] h-[100dvh] lg:h-screen w-full overflow-hidden bg-slate-50 font-sans text-slate-900 relative">
 
             {/* Mobile Sidebar Overlay */}
             {isSidebarOpen && (
@@ -85,7 +85,7 @@ const Layout = ({ children }) => {
 
             {/* Sidebar */}
             <aside className={`
-                fixed lg:static top-0 h-[100dvh] left-0 z-50 w-[260px] bg-white border-r border-slate-200 shadow-xl lg:shadow-sm transform transition-transform duration-300 ease-in-out
+                fixed lg:static top-0 h-[100dvh] lg:h-full left-0 z-50 w-[260px] bg-white border-r border-slate-200 shadow-xl lg:shadow-sm transform transition-transform duration-300 ease-in-out
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
                 flex flex-col overflow-y-auto
             `}>
