@@ -66,18 +66,17 @@
   padding: 0;
 }
 
-#root {
-  height: 100%;
-}
-
-
 html,
 body {
-  height: 100%;
+  height: 100vh;
   margin: 0;
   padding: 0;
   overflow: hidden;
-  /* Prevent body scroll, let React app handle it */
+  /* Esto es correcto solo si los hijos manejan su scroll */
+}
+
+#root {
+  height: 100vh;
 }
 
 body {

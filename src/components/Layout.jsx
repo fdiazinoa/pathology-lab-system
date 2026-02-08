@@ -86,7 +86,7 @@ const Layout = ({ children }) => {
             {/* Sidebar - STRICT FIXED LAYOUT & SCROLL */}
             <aside className={`
                 fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 
-                flex flex-col h-screen overflow-hidden
+                flex flex-col h-screen max-h-screen overflow-hidden
                 transition-transform duration-300 ease-in-out
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             `}>
@@ -110,7 +110,7 @@ const Layout = ({ children }) => {
                 </div>
 
                 {/* Layer 2: Navigation - Scroll Engine (flex-1 min-h-0) */}
-                <nav className="flex-1 overflow-y-auto min-h-0 py-6 px-4 custom-scrollbar">
+                <nav className="flex-1 overflow-y-auto min-h-0 max-h-full py-6 px-4 custom-scrollbar">
                     <div className="space-y-6">
                         {navCategories.map((group) => {
                             const visibleItems = group.items.filter(item =>
@@ -170,7 +170,7 @@ const Layout = ({ children }) => {
             </aside>
 
             {/* Main Content - Padded Left to avoid overlap */}
-            <main className="flex-1 min-w-0 lg:pl-64 flex flex-col min-h-screen transition-all duration-300">
+            <main className="flex-1 flex flex-col h-screen overflow-hidden lg:ml-64 lg:pl-0 transition-all duration-300">
 
                 {/* Fixed Header within Main Content */}
                 <div className="sticky top-0 z-40 w-full">
@@ -218,7 +218,7 @@ const Layout = ({ children }) => {
                     </header>
                 </div>
 
-                <div className="flex-1 p-4 lg:p-8 max-w-[1600px] mx-auto w-full">
+                <div className="flex-1 overflow-y-auto p-4 lg:p-8">
                     {children || <Outlet />}
                 </div>
             </main>
