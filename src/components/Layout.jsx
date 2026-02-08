@@ -83,13 +83,13 @@ const Layout = ({ children }) => {
                 />
             )}
 
-            {/* Sidebar - STRICT STICKY FOOTER LAYOUT */}
+            {/* Sidebar - STRICT FLEXBOX SCROLL FIX */}
             <aside className={`
-                fixed inset-y-0 left-0 z-50 w-[260px] bg-white border-r border-slate-200 shadow-xl lg:shadow-md transition-transform duration-300 ease-in-out
+                fixed inset-y-0 left-0 z-50 w-[260px] h-full bg-white border-r border-slate-200 shadow-xl lg:shadow-md transition-transform duration-300 ease-in-out
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:transform-none'}
-                flex flex-col
+                flex flex-col overflow-hidden
             `}>
-                {/* BLOCK 1: Header (Fixed Top) */}
+                {/* 1. Header (Fixed Top) */}
                 <div className="p-6 flex items-center justify-between shrink-0 bg-white border-b border-slate-100">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 bg-teal-600 rounded-xl shadow-sm flex items-center justify-center text-white">
@@ -108,48 +108,46 @@ const Layout = ({ children }) => {
                     </button>
                 </div>
 
-                {/* BLOCK 2: Navigation Body (Scrollable Middle) */}
-                <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent hover:scrollbar-thumb-slate-300">
-                    <nav className="px-3 py-4 space-y-8 pb-6">
-                        {navCategories.map((group) => {
-                            const visibleItems = group.items.filter(item =>
-                                !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
-                            );
+                {/* 2. Body (Nav - SCROLLABLE) - min-h-0 is CRITICAL for flex scrolling */}
+                <nav className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent hover:scrollbar-thumb-slate-300 px-3 py-4 space-y-8 pb-6">
+                    {navCategories.map((group) => {
+                        const visibleItems = group.items.filter(item =>
+                            !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
+                        );
 
-                            if (visibleItems.length === 0) return null;
+                        if (visibleItems.length === 0) return null;
 
-                            return (
-                                <div key={group.category} className="space-y-1">
-                                    <h3 className="px-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                                        {group.category}
-                                    </h3>
-                                    {visibleItems.map((item) => {
-                                        const Icon = item.icon;
-                                        const isActive = location.pathname === item.path;
-                                        return (
-                                            <NavLink
-                                                key={item.path}
-                                                to={item.path}
-                                                onClick={() => setIsSidebarOpen(false)}
-                                                className={({ isActive }) =>
-                                                    `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive
-                                                        ? 'bg-teal-50 text-teal-700 font-medium shadow-sm'
-                                                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                                                    } `
-                                                }
-                                            >
-                                                <Icon size={18} strokeWidth={1.75} className={`transition-colors ${isActive ? 'text-teal-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
-                                                <span className="text-sm">{item.label}</span>
-                                            </NavLink>
-                                        );
-                                    })}
-                                </div>
-                            );
-                        })}
-                    </nav>
-                </div>
+                        return (
+                            <div key={group.category} className="space-y-1">
+                                <h3 className="px-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                                    {group.category}
+                                </h3>
+                                {visibleItems.map((item) => {
+                                    const Icon = item.icon;
+                                    const isActive = location.pathname === item.path;
+                                    return (
+                                        <NavLink
+                                            key={item.path}
+                                            to={item.path}
+                                            onClick={() => setIsSidebarOpen(false)}
+                                            className={({ isActive }) =>
+                                                `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive
+                                                    ? 'bg-teal-50 text-teal-700 font-medium shadow-sm'
+                                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                                } `
+                                            }
+                                        >
+                                            <Icon size={18} strokeWidth={1.75} className={`transition-colors ${isActive ? 'text-teal-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                                            <span className="text-sm">{item.label}</span>
+                                        </NavLink>
+                                    );
+                                })}
+                            </div>
+                        );
+                    })}
+                </nav>
 
-                {/* BLOCK 3: Footer (Fixed Bottom / Sticky) */}
+                {/* 3. Footer (Fixed Bottom) */}
                 <div className="p-4 border-t border-slate-200 shrink-0 bg-slate-50/50">
                     <button
                         onClick={logout}
