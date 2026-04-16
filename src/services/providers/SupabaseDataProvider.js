@@ -172,12 +172,77 @@ class SupabaseDataProvider extends DataProvider {
         return data;
     }
 
-    // --- Settings ---
+    // --- Settings & Lab Info ---
     async getSettings() {
-        return {
-            labName: 'Laboratorio de Patología',
-            aiEnabled: true
-        };
+        try {
+            const { data, error } = await supabase
+                .from('lab_info')
+                .select('*')
+                .limit(1)
+                .maybeSingle();
+
+            if (error) throw error;
+            
+            if (!data) {
+                return {
+                    labName: 'Laboratorio de Patología',
+                    address: '',
+                    phone: '',
+                    email: '',
+                    logo_url: '',
+                    aiEnabled: true
+                };
+            }
+
+            return {
+                labName: data.name,
+                address: data.address,
+                phone: data.phone,
+                email: data.email,
+                logo_url: data.logo_url,
+                ...data.settings
+            };
+        } catch (error) {
+            console.error("Error fetching settings:", error);
+            return { labName: 'Laboratorio de Patología', aiEnabled: true };
+        }
+    }
+
+    async updateSettings(newSettings) {
+        try {
+            // Check if record exists
+            const { data: existing } = await supabase.from('lab_info').select('id').limit(1).maybeSingle();
+
+            const payload = {
+                name: newSettings.labName,
+                address: newSettings.address,
+                phone: newSettings.phone,
+                email: newSettings.email,
+                logo_url: newSettings.logo_url,
+                settings: {
+                    aiEnabled: newSettings.aiEnabled,
+                    enableLabWorkflow: newSettings.enableLabWorkflow,
+                    requireStepQR: newSettings.requireStepQR
+                }
+            };
+
+            if (existing) {
+                const { error } = await supabase
+                    .from('lab_info')
+                    .update(payload)
+                    .eq('id', existing.id);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase
+                    .from('lab_info')
+                    .insert([payload]);
+                if (error) throw error;
+            }
+            return true;
+        } catch (error) {
+            console.error("Error updating settings:", error);
+            throw error;
+        }
     }
 
     async getConfigHistory() { return []; }

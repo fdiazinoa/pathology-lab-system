@@ -721,11 +721,11 @@ const Settings = () => {
             {
                 activeTab === 'general' && (
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {isProductionMode && (
+                        {isProductionMode && activeTab === 'infrastructure' && (
                             <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-md flex items-center gap-2 mb-4">
                                 <ShieldAlert size={20} />
                                 <div>
-                                    <strong>Configuración Bloqueada:</strong> La configuración de infraestructura no se puede modificar mientras el sistema está en Modo Producción.
+                                    <strong>Configuración Bloqueada:</strong> La configuración de infraestructura crítica no se puede modificar mientras el sistema está en Modo Producción.
                                 </div>
                             </div>
                         )}
@@ -747,7 +747,7 @@ const Settings = () => {
                                             accept="image/*"
                                             onChange={handleLogoChange}
                                             className="absolute inset-0 opacity-0 cursor-pointer"
-                                            disabled={isProductionMode}
+                                            disabled={false}
                                         />
                                     </div>
                                     <p className="text-xs text-text-secondary text-center max-w-[150px]">
@@ -763,7 +763,7 @@ const Settings = () => {
                                         onChange={e => setFormData({ ...formData, labName: e.target.value })}
                                         icon={<Building size={18} />}
                                         required
-                                        disabled={isProductionMode}
+                                        disabled={false}
                                     />
                                     <Input
                                         label="Dirección"
@@ -771,7 +771,7 @@ const Settings = () => {
                                         onChange={e => setFormData({ ...formData, address: e.target.value })}
                                         icon={<MapPin size={18} />}
                                         required
-                                        disabled={isProductionMode}
+                                        disabled={false}
                                     />
                                     <Input
                                         label="Teléfono de Contacto"

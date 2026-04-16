@@ -243,6 +243,29 @@ CREATE POLICY "Only admins can view audit logs" ON public.audit_logs FOR SELECT 
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
 
+
+-- ====================================================================================
+-- IDENTITY & LABORATORY INFORMATION
+-- ====================================================================================
+
+CREATE TABLE IF NOT EXISTS public.lab_info (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT,
+    address TEXT,
+    phone TEXT,
+    email TEXT,
+    logo_url TEXT,
+    settings JSONB DEFAULT '{}'::jsonb,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RLS for lab_info
+ALTER TABLE public.lab_info ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public profiles are viewable by everyone" ON public.lab_info FOR SELECT USING (true);
+CREATE POLICY "Lab info editable by admins" ON public.lab_info FOR ALL USING (
+    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND (profiles.role = 'administrador' OR profiles.role = 'admin'))
+);
+
 -- ====================================================================================
 -- FIN DEL SCRIPT
 -- ====================================================================================
