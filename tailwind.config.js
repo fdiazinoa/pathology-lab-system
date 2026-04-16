@@ -7,6 +7,16 @@ export default {
     theme: {
         extend: {
             colors: {
+                primary: {
+                    DEFAULT: '#0d9488', // From --primary in index.css
+                    hover: '#0f766e',
+                },
+                text: {
+                    main: '#1e293b',
+                    secondary: '#64748b',
+                },
+                border: '#e2e8f0',
+                danger: '#ef4444',
                 teal: {
                     50: '#f0fdfa',
                     100: '#ccfbf1',

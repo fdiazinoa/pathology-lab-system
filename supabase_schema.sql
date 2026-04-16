@@ -1,195 +1,248 @@
--- Pathology Lab System - Supabase/PostgreSQL Schema (Optimized)
--- This script creates the necessary tables, relations, and indices for the system.
+-- ====================================================================================
+-- Pathology-Lab-System: Schema de Producción para Supabase (PostgreSQL)
+-- Arquitecto de Base de Datos: Senior DB Architect & Backend Developer
+-- Fecha: 2026-04-16
+-- Descripción: Migración de mock data a infraestructura relacional optimizada.
+-- ====================================================================================
 
--- 1. Roles Table
-CREATE TABLE IF NOT EXISTS roles (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    permissions JSONB NOT NULL DEFAULT '{}'
+-- 1. EXTENSIONES
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- 2. ENUMS Y TIPOS PERSONALIZADOS
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'case_status') THEN
+        CREATE TYPE case_status AS ENUM ('Borrador', 'En Proceso', 'Pendiente de Revisión', 'Finalizado', 'Cancelado');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'case_stage') THEN
+        CREATE TYPE case_stage AS ENUM ('recepcion', 'macroscopia', 'procesamiento', 'microtomia', 'tincion', 'escaneo', 'microscopia', 'finalizado');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_type') THEN
+        CREATE TYPE payment_type AS ENUM ('Privado', 'Asegurado', 'Institucional');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'biological_sex') THEN
+        CREATE TYPE biological_sex AS ENUM ('M', 'F', 'Intersex', 'Otro');
+    END IF;
+END $$;
+
+-- 3. TABLAS
+
+-- 3.1. PROFILES (Extensión de Auth User)
+CREATE TABLE IF NOT EXISTS public.profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    full_name TEXT NOT NULL,
+    role TEXT DEFAULT 'technician' CHECK (role IN ('admin', 'pathologist', 'technician', 'viewer')),
+    avatar_url TEXT,
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 2. Users Table
-CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    password_hash TEXT, -- For local auth
-    role_id TEXT REFERENCES roles(id),
-    status TEXT DEFAULT 'Active',
-    last_login TIMESTAMP WITH TIME ZONE,
-    avatar TEXT,
-    auth_provider TEXT DEFAULT 'local',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- 3.2. ARS (Proveedores de Seguro)
+CREATE TABLE IF NOT EXISTS public.ars_providers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL UNIQUE,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. Patients Table
-CREATE TABLE IF NOT EXISTS patients (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    age INTEGER,
-    sex CHAR(1),
+-- 3.3. PATIENTS
+CREATE TABLE IF NOT EXISTS public.patients (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    full_name TEXT NOT NULL,
+    birth_date DATE, -- Sustituye 'age' por dato real
+    identification_number TEXT UNIQUE, -- Cédula/DNI
+    sex biological_sex NOT NULL,
     city TEXT,
     region TEXT,
-    history TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    medical_history TEXT,
+    contact_phone TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. Doctors Table (Catalog)
-CREATE TABLE IF NOT EXISTS doctors (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    license TEXT,
-    email TEXT
-);
-
--- 5. Exams Table (Catalog)
-CREATE TABLE IF NOT EXISTS exams (
-    id TEXT PRIMARY KEY,
-    code TEXT,
-    name TEXT NOT NULL,
-    price_private DECIMAL(10, 2)
-);
-
--- 6. Cases Table
-CREATE TABLE IF NOT EXISTS cases (
-    id TEXT PRIMARY KEY,
-    patient_id TEXT REFERENCES patients(id) ON DELETE CASCADE,
-    doctor_id TEXT REFERENCES doctors(id) ON DELETE SET NULL,
-    exam_id TEXT REFERENCES exams(id) ON DELETE SET NULL,
-    patient_name TEXT, -- Denormalized for quick list view
-    type TEXT NOT NULL,
-    organ TEXT,
-    status TEXT DEFAULT 'Borrador',
-    stage TEXT DEFAULT 'Recepción',
-    clinical_data TEXT,
-    macroscopy TEXT,
-    microscopy TEXT,
-    ihc TEXT,
+-- 3.4. CASES (Main Order Table)
+CREATE TABLE IF NOT EXISTS public.cases (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    case_number TEXT UNIQUE NOT NULL, -- Ej: C-2023-001
+    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    type TEXT NOT NULL, -- Biopsia, Citología, etc.
+    organ TEXT NOT NULL,
+    status case_status DEFAULT 'Borrador',
+    current_stage case_stage DEFAULT 'recepcion',
     diagnosis TEXT,
-    payment_type TEXT,
-    ars_name TEXT,
-    cost DECIMAL(10, 2),
-    technician_time INTEGER DEFAULT 0,
-    pathologist_time INTEGER DEFAULT 0,
-    contribute_to_ai BOOLEAN DEFAULT TRUE,
-    ai_classification JSONB DEFAULT NULL,
-    quantitative_results JSONB DEFAULT '{}',
-    quality_control JSONB DEFAULT NULL,
-    interconsultation JSONB DEFAULT NULL,
-    tracking JSONB DEFAULT '{}',
-    microscopy_structured JSONB DEFAULT '{}',
-    second_look JSONB DEFAULT '{"active": false}',
-    images JSONB DEFAULT '[]',
-    audit_logs JSONB DEFAULT '[]',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    payment_method payment_type DEFAULT 'Privado',
+    ars_id UUID REFERENCES public.ars_providers(id) ON DELETE SET NULL,
+    total_cost DECIMAL(12, 2) DEFAULT 0.00,
+    technician_time_mins INTEGER DEFAULT 0,
+    pathologist_time_mins INTEGER DEFAULT 0,
+    pathologist_id UUID REFERENCES public.profiles(id),
+    metadata JSONB DEFAULT '{}'::jsonb, -- Para campos variables extra
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 7. Global Cases Table (Collaboration)
-CREATE TABLE IF NOT EXISTS global_cases (
-    id TEXT PRIMARY KEY,
-    diagnosis TEXT,
-    organ TEXT,
+-- 3.5. CASE_TRACKING_DETAILS
+-- Almacena los detalles de cada fase (macroscopia, escaneo, etc)
+CREATE TABLE IF NOT EXISTS public.case_tracking (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    case_id UUID NOT NULL REFERENCES public.cases(id) ON DELETE CASCADE,
+    stage case_stage NOT NULL,
+    completed_at TIMESTAMPTZ DEFAULT NOW(),
+    performed_by UUID REFERENCES public.profiles(id),
+    station_id TEXT,
+    images_urls TEXT[], -- Array de rutas en Storage
+    wsi_url TEXT, -- Whole Slide Image URL
+    data JSONB DEFAULT '{}'::jsonb, -- Datos específicos (ej: cassetteId, program)
+    notes TEXT
+);
+
+-- 3.6. GLOBAL_CASES (Feed de la comunidad)
+CREATE TABLE IF NOT EXISTS public.global_cases (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    author_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    diagnosis TEXT NOT NULL,
+    organ TEXT NOT NULL,
     institution TEXT,
     country TEXT,
     description TEXT,
-    image_url TEXT,
-    likes INTEGER DEFAULT 0,
-    comments INTEGER DEFAULT 0,
-    date DATE DEFAULT CURRENT_DATE,
-    original_case_id TEXT REFERENCES cases(id) ON DELETE SET NULL
+    image_url TEXT, -- Ruta Storage
+    likes_count INTEGER DEFAULT 0,
+    comments_count INTEGER DEFAULT 0,
+    is_public BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 8. Audit Logs Table (Detailed tracking)
-CREATE TABLE IF NOT EXISTS audit_logs (
-    id BIGSERIAL PRIMARY KEY,
-    case_id TEXT REFERENCES cases(id) ON DELETE CASCADE,
-    user_name TEXT,
-    action TEXT NOT NULL,
-    details TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- 3.7. AUDIT_LOGS
+CREATE TABLE IF NOT EXISTS public.audit_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    table_name TEXT NOT NULL,
+    record_id UUID NOT NULL,
+    operation TEXT NOT NULL, -- INSERT, UPDATE, DELETE
+    old_data JSONB,
+    new_data JSONB,
+    changed_by UUID REFERENCES auth.users(id),
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 9. Deliveries Table (Logistics)
-CREATE TABLE IF NOT EXISTS deliveries (
-    id TEXT PRIMARY KEY,
-    case_id TEXT REFERENCES cases(id) ON DELETE CASCADE,
-    status TEXT DEFAULT 'Pendiente',
-    driver TEXT,
-    timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- 4. INDICES (Optimización B-Tree)
+CREATE INDEX idx_patients_full_name ON public.patients USING btree (full_name);
+CREATE INDEX idx_patients_identification ON public.patients USING btree (identification_number);
+CREATE INDEX idx_cases_patient_id ON public.cases USING btree (patient_id);
+CREATE INDEX idx_cases_status ON public.cases USING btree (status);
+CREATE INDEX idx_cases_stage ON public.cases USING btree (current_stage);
+CREATE INDEX idx_cases_created_at ON public.cases USING btree (created_at DESC);
+CREATE INDEX idx_case_tracking_case_id ON public.case_tracking USING btree (case_id);
+CREATE INDEX idx_global_cases_diagnosis ON public.global_cases USING gin (to_tsvector('spanish', diagnosis)); -- Optimización búsqueda texto
+
+-- 5. TRIGGERS Y FUNCIONES
+
+-- 5.1. Handle Updated At
+CREATE OR REPLACE FUNCTION handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_update_profiles BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
+CREATE TRIGGER trigger_update_patients BEFORE UPDATE ON public.patients FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
+CREATE TRIGGER trigger_update_cases BEFORE UPDATE ON public.cases FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
+
+-- 5.2. Auditoría Genérica
+CREATE OR REPLACE FUNCTION audit_log_changes()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF (TG_OP = 'UPDATE') THEN
+        INSERT INTO public.audit_logs(table_name, record_id, operation, old_data, new_data, changed_by)
+        VALUES (TG_TABLE_NAME, OLD.id, TG_OP, to_jsonb(OLD), to_jsonb(NEW), auth.uid());
+        RETURN NEW;
+    ELSIF (TG_OP = 'DELETE') THEN
+        INSERT INTO public.audit_logs(table_name, record_id, operation, old_data, changed_by)
+        VALUES (TG_TABLE_NAME, OLD.id, TG_OP, to_jsonb(OLD), auth.uid());
+        RETURN OLD;
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_audit_cases AFTER UPDATE OR DELETE ON public.cases FOR EACH ROW EXECUTE FUNCTION audit_log_changes();
+
+-- 6. LÓGICA DE NEGOCIO (RPC)
+
+-- 6.1. Calcular Resumen de Facturación por Período
+CREATE OR REPLACE FUNCTION get_billing_summary(start_date DATE, end_date DATE)
+RETURNS TABLE (
+    total_revenue DECIMAL,
+    case_count BIGINT,
+    avg_cost_per_case DECIMAL
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        COALESCE(SUM(total_cost), 0) as total_revenue,
+        COUNT(id) as case_count,
+        COALESCE(AVG(total_cost), 0) as avg_cost_per_case
+    FROM public.cases
+    WHERE created_at::DATE BETWEEN start_date AND end_date;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 6.2. Transicionar Etapa de Caso con Validación
+CREATE OR REPLACE FUNCTION transition_case_stage(p_case_id UUID, p_new_stage case_stage)
+RETURNS VOID AS $$
+BEGIN
+    -- Validación simple: no retroceder de 'finalizado' sin permisos
+    IF EXISTS (SELECT 1 FROM public.cases WHERE id = p_case_id AND current_stage = 'finalizado') THEN
+        RAISE EXCEPTION 'No se puede modificar un caso finalizado.';
+    END IF;
+
+    UPDATE public.cases
+    SET current_stage = p_new_stage,
+        status = CASE 
+            WHEN p_new_stage = 'finalizado' THEN 'Finalizado'::case_status 
+            ELSE 'En Proceso'::case_status 
+        END
+    WHERE id = p_case_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 7. SEGURIDAD (RLS - Row Level Security)
+
+-- 7.1. Habilitar RLS
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.patients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.cases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.case_tracking ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.global_cases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+
+-- 7.2. POLÍTICAS
+
+-- Profiles: Usuarios pueden ver todos los perfiles de staff, pero editar solo el suyo.
+CREATE POLICY "Public profiles are viewable by authenticated" ON public.profiles FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+
+-- Patients: Solo personal autenticado puede ver/editar pacientes.
+CREATE POLICY "Staff can manage patients" ON public.patients FOR ALL USING (auth.role() = 'authenticated');
+
+-- Cases: RLS granular por rol (ejemplo)
+CREATE POLICY "Staff can view all cases" ON public.cases FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Technicians and Pathologists can insert cases" ON public.cases FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "System admins can delete cases" ON public.cases FOR DELETE USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
 
--- 10. Catalogs
-CREATE TABLE IF NOT EXISTS insurers (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    tariff TEXT
+-- Global Cases: Lectura anónima o autenticada si is_public = true.
+CREATE POLICY "Public cases are viewable by everyone" ON public.global_cases FOR SELECT USING (is_public = true);
+CREATE POLICY "Users can create and manage their own global cases" ON public.global_cases FOR ALL USING (auth.uid() = author_id);
+
+-- Audit Logs: Solo admins.
+CREATE POLICY "Only admins can view audit logs" ON public.audit_logs FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
 
-CREATE TABLE IF NOT EXISTS organs (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS equipment (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    type TEXT,
-    status TEXT DEFAULT 'Online'
-);
-
--- 11. Settings Table
-CREATE TABLE IF NOT EXISTS settings (
-    id TEXT PRIMARY KEY DEFAULT 'default',
-    lab_name TEXT,
-    address TEXT,
-    phone TEXT,
-    email TEXT,
-    logo TEXT,
-    openai_api_key TEXT,
-    ai_enabled BOOLEAN DEFAULT TRUE,
-    enable_lab_workflow BOOLEAN DEFAULT TRUE,
-    enable_microphone BOOLEAN DEFAULT FALSE,
-    require_internal_qr_scan BOOLEAN DEFAULT FALSE,
-    print_images_in_report BOOLEAN DEFAULT TRUE,
-    paper_size TEXT DEFAULT 'Letter',
-    printer_config JSONB DEFAULT '{}',
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- --- INDICES FOR OPTIMIZATION ---
-
--- 1. B-Tree Indices (Standard filters and ordering)
-CREATE INDEX IF NOT EXISTS idx_cases_patient_id ON cases(patient_id);
-CREATE INDEX IF NOT EXISTS idx_cases_doctor_id ON cases(doctor_id);
-CREATE INDEX IF NOT EXISTS idx_cases_exam_id ON cases(exam_id);
-CREATE INDEX IF NOT EXISTS idx_cases_status ON cases(status);
-CREATE INDEX IF NOT EXISTS idx_cases_organ ON cases(organ);
-CREATE INDEX IF NOT EXISTS idx_cases_type ON cases(type);
-CREATE INDEX IF NOT EXISTS idx_cases_created_at ON cases(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_cases_updated_at ON cases(updated_at DESC);
-
-CREATE INDEX IF NOT EXISTS idx_patients_name ON patients(name);
-CREATE INDEX IF NOT EXISTS idx_patients_created_at ON patients(created_at DESC);
-
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-CREATE INDEX IF NOT EXISTS idx_users_role_id ON users(role_id);
-
-CREATE INDEX IF NOT EXISTS idx_audit_logs_case_id ON audit_logs(case_id);
-CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC);
-
-CREATE INDEX IF NOT EXISTS idx_deliveries_case_id ON deliveries(case_id);
-
-CREATE INDEX IF NOT EXISTS idx_global_cases_original_case_id ON global_cases(original_case_id);
-
--- 2. JSONB Indices (GIN for efficient internal key/value searches)
-CREATE INDEX IF NOT EXISTS idx_cases_tracking_gin ON cases USING gin(tracking);
-CREATE INDEX IF NOT EXISTS idx_cases_ai_classification_gin ON cases USING gin(ai_classification);
-CREATE INDEX IF NOT EXISTS idx_roles_permissions_gin ON roles USING gin(permissions);
-
--- 3. Full-Text Search Indices (GIN with tsvector)
--- Optimized for clinical searches in Spanish
-CREATE INDEX IF NOT EXISTS idx_cases_diagnosis_fts ON cases USING gin(to_tsvector('spanish', diagnosis));
-CREATE INDEX IF NOT EXISTS idx_cases_clinical_data_fts ON cases USING gin(to_tsvector('spanish', clinical_data));
-CREATE INDEX IF NOT EXISTS idx_cases_microscopy_fts ON cases USING gin(to_tsvector('spanish', microscopy));
-CREATE INDEX IF NOT EXISTS idx_patients_history_fts ON patients USING gin(to_tsvector('spanish', history));
+-- ====================================================================================
+-- FIN DEL SCRIPT
+-- ====================================================================================

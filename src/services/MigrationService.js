@@ -4,6 +4,7 @@ class MigrationService {
     constructor(targetProvider) {
         this.sourceProvider = new DemoDataProvider();
         this.targetProvider = targetProvider;
+        this.patientIdMap = new Map(); // Maps old ID to new ID
     }
 
     async getMigrationSummary() {
@@ -34,10 +35,10 @@ class MigrationService {
                 const patients = await this.sourceProvider.getPatients();
                 for (const patient of patients) {
                     try {
-                        // Check if exists (simple check by ID)
-                        // In real prod, we might check by national ID or name
-                        // For now, we assume targetProvider.addPatient handles duplicates or we catch error
-                        await this.targetProvider.addPatient(patient);
+                        const originalId = patient.id;
+                        const newPatient = await this.targetProvider.addPatient(patient);
+                        // Store the mapping for cases
+                        this.patientIdMap.set(originalId, newPatient.id);
                         report.stats.patients++;
                     } catch (e) {
                         report.errors.push(`Error migrando paciente ${patient.id}: ${e.message}`);
@@ -65,8 +66,14 @@ class MigrationService {
                 const cases = await this.sourceProvider.getCases();
                 for (const c of cases) {
                     try {
-                        // Ensure patient exists if we are enforcing FKs (ProductionDataProvider might enforce)
-                        // If we migrated patients, they should be there.
+                        // Remap patientId if we migrated patients
+                        if (this.patientIdMap.has(c.patientId)) {
+                            c.patientId = this.patientIdMap.get(c.patientId);
+                        } else if (options.patients) {
+                            // If we were supposed to migrate patients but don't have a map, this case might fail FK
+                            console.warn(`Case ${c.id} reference patient ${c.patientId} not found in migration map.`);
+                        }
+
                         await this.targetProvider.addCase(c);
                         report.stats.cases++;
                     } catch (e) {

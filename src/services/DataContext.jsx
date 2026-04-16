@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import DemoDataProvider from './providers/DemoDataProvider';
 import ProductionDataProvider from './providers/ProductionDataProvider';
+import SupabaseDataProvider from './providers/SupabaseDataProvider';
 import BackupService from './BackupService';
 import TelemetryService from './TelemetryService';
 
@@ -23,7 +24,10 @@ export const DataProvider = ({ children }) => {
 
         let provider;
         console.log("Initializing DataProvider. Mode:", mode);
-        if (mode === 'PROD') {
+        if (mode === 'SUPABASE') {
+            provider = new SupabaseDataProvider();
+            setIsProductionMode(true);
+        } else if (mode === 'PROD') {
             provider = new ProductionDataProvider();
             setIsProductionMode(true);
         } else {

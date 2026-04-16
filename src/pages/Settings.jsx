@@ -315,8 +315,8 @@ const Settings = () => {
         setLoading(false);
     };
 
-    const handleModeSwitch = () => {
-        const targetMode = isProductionMode ? 'DEMO' : 'PROD';
+    const handleModeSwitch = (mode) => {
+        const targetMode = mode || (isProductionMode ? 'DEMO' : 'SUPABASE');
         switchSystemMode(targetMode);
         setShowModeModal(false);
     };
@@ -622,15 +622,20 @@ const Settings = () => {
                                             : 'El sistema está en modo seguro de demostración. Los datos son simulados y se guardan localmente en su navegador.'}
                                     </p>
                                 </div>
-                                <button
-                                    onClick={() => setShowModeModal(true)}
-                                    className={`px-4 py-2 rounded-md font-medium text-white shadow-sm transition-colors ${isProductionMode
-                                        ? 'bg-green-600 hover:bg-green-700'
-                                        : 'bg-red-600 hover:bg-red-700'
-                                        }`}
-                                >
-                                    {isProductionMode ? 'Cambiar a Modo Demo' : 'Activar Modo Producción'}
-                                </button>
+                                    <div className="flex flex-col gap-2">
+                                        <button
+                                            onClick={() => {
+                                                if (isProductionMode) handleModeSwitch('DEMO');
+                                                else setShowModeModal(true);
+                                            }}
+                                            className={`px-4 py-2 rounded-md font-medium text-white shadow-sm transition-colors ${isProductionMode
+                                                ? 'bg-green-600 hover:bg-green-700'
+                                                : 'bg-red-600 hover:bg-red-700'
+                                                }`}
+                                        >
+                                            {isProductionMode ? 'Cambiar a Modo Demo' : 'Activar Modo Producción'}
+                                        </button>
+                                    </div>
                             </div>
                         </div>
                     </div>
@@ -687,16 +692,26 @@ const Settings = () => {
                                 >
                                     Cancelar
                                 </button>
-                                <button
-                                    onClick={handleModeSwitch}
-                                    disabled={!isProductionMode && confirmText !== 'CONFIRMAR'}
-                                    className={`px-4 py-2 rounded-md font-medium text-white shadow-sm ${(!isProductionMode && confirmText !== 'CONFIRMAR')
-                                        ? 'bg-gray-400 cursor-not-allowed'
-                                        : 'bg-red-600 hover:bg-red-700'
-                                        }`}
-                                >
-                                    Confirmar Cambio
-                                </button>
+                                    <button
+                                        onClick={() => handleModeSwitch('PROD')}
+                                        disabled={confirmText !== 'CONFIRMAR' && confirmText !== 'PROD'}
+                                        className={`px-4 py-2 rounded-md font-medium text-white shadow-sm ${confirmText !== 'CONFIRMAR' && confirmText !== 'PROD'
+                                            ? 'bg-gray-400 cursor-not-allowed'
+                                            : 'bg-orange-600 hover:bg-orange-700'
+                                            }`}
+                                    >
+                                        Activar Modo PROD (Simulado)
+                                    </button>
+                                    <button
+                                        onClick={() => handleModeSwitch('SUPABASE')}
+                                        disabled={confirmText !== 'CONFIRMAR'}
+                                        className={`px-4 py-2 rounded-md font-medium text-white shadow-sm ${confirmText !== 'CONFIRMAR'
+                                            ? 'bg-gray-400 cursor-not-allowed'
+                                            : 'bg-red-600 hover:bg-red-700'
+                                            }`}
+                                    >
+                                        Activar Modo SUPABASE (Real)
+                                    </button>
                             </div>
                         </div>
                     </div>
