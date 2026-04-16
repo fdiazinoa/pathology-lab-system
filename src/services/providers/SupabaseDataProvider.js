@@ -174,13 +174,26 @@ class SupabaseDataProvider extends DataProvider {
 
     // --- Settings ---
     async getSettings() {
-        // Podríamos tener una tabla 'settings' o usar metadatos de usuario/organización
-        // Por simplicidad, retornamos defaults si no hay tabla implementada
         return {
             labName: 'Laboratorio de Patología',
             aiEnabled: true
         };
     }
+
+    async getConfigHistory() { return []; }
+    async getConnectionConfig() { return null; }
+
+    // --- Logistics ---
+    async getDeliveries() { return []; }
+
+    // --- Catalogs ---
+    async getOrgans() { return []; }
+    async getDoctors() { return []; }
+    async getEquipment() { return []; }
+    async getRoles() { return []; }
+    async getUsers() { return []; }
+    async getExams() { return []; }
+    async getCenters() { return []; }
 }
 
 export default SupabaseDataProvider;
