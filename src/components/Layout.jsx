@@ -163,7 +163,8 @@ const Layout = ({ children }) => {
             {/* 3. CONTENIDO PRINCIPAL (Columna Derecha) */}
             <main className="flex flex-col h-full min-w-0 overflow-hidden relative">
 
-                {/* Environment Banner */}
+                {/* Environment Banner hidden as per user request */}
+                {/* 
                 {isProductionMode ? (
                     <div className="bg-red-600 text-white px-4 py-1.5 text-center font-bold text-[10px] shadow-sm flex items-center justify-center gap-2 uppercase tracking-widest">
                         <Dna size={12} />
@@ -175,6 +176,7 @@ const Layout = ({ children }) => {
                         🧪 MODO DEMO – Simulador
                     </div>
                 )}
+                */}
 
                 {/* Header del Main */}
                 <header className="h-16 flex-shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 z-10 transition-colors">
