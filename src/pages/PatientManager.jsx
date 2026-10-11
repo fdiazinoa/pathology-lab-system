@@ -10,9 +10,8 @@ import { useData } from '../services/DataContext';
 
 const PatientManager = () => {
     const navigate = useNavigate();
-    const { patients, addPatient, insurers, exams, loading } = useData();
-    const [selectedExamId, setSelectedExamId] = useState('');
-    const caseUrl = (patientId) => `/cases/new?${new URLSearchParams({ patientId, ...(selectedExamId ? { examId: selectedExamId } : {}) })}`;
+    const { patients, addPatient, insurers, loading } = useData();
+    const caseUrl = (patientId) => `/cases/new?${new URLSearchParams({ patientId })}`;
     const [searchTerm, setSearchTerm] = useState('');
     const [showForm, setShowForm] = useState(false);
     const [showNoResults, setShowNoResults] = useState(false);
@@ -170,13 +169,6 @@ const PatientManager = () => {
             )}
 
             <Card>
-                <div className="mb-4 flex flex-col gap-1.5">
-                    <label htmlFor="patient-case-exam" className="text-sm font-medium text-text-main">Tipo de caso / Examen a realizar</label>
-                    <select id="patient-case-exam" className="w-full rounded-md border border-border bg-white px-3 py-2 text-sm" value={selectedExamId} onChange={e => setSelectedExamId(e.target.value)}>
-                        <option value="">Seleccionar al completar el caso...</option>
-                        {exams.map(ex => <option key={ex.id} value={ex.id}>{ex.code} - {ex.name}</option>)}
-                    </select>
-                </div>
                 <form onSubmit={handleSearch} className="mb-6 flex flex-col sm:flex-row gap-3">
                     <Input
                         className="flex-1"

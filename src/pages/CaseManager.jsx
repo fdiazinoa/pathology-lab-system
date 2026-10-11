@@ -207,22 +207,15 @@ const CaseManager = () => {
     });
 
     const initializedPatient = useRef(null);
-    const initializedExam = useRef(null);
     const requestedPatientId = searchParams.get('patientId');
-    const requestedExamId = searchParams.get('examId');
     useEffect(() => {
         if (id) return;
         const patient = patients.find(p => p.id === requestedPatientId);
-        const exam = exams.find(ex => ex.id === requestedExamId);
         if (patient && initializedPatient.current !== requestedPatientId) {
             initializedPatient.current = requestedPatientId;
             setFormData(prev => ({ ...prev, patientId: patient.id }));
         }
-        if (exam && initializedExam.current !== requestedExamId) {
-            initializedExam.current = requestedExamId;
-            setFormData(prev => ({ ...prev, examId: exam.id, type: exam.name, price: exam.pricePrivate || exam.price_private || 0 }));
-        }
-    }, [id, requestedPatientId, requestedExamId, patients, exams]);
+    }, [id, requestedPatientId, patients]);
 
     const hasLoggedView = useRef(false);
 
