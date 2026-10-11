@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Search, User } from 'lucide-react';
 import Card from '../components/Card';
 import Button from '../components/Button';
@@ -9,7 +9,10 @@ import { matchesPatientSearch, normalizePatientDocument } from '../services/pati
 import { useData } from '../services/DataContext';
 
 const PatientManager = () => {
-    const { patients, addPatient, insurers, loading } = useData();
+    const navigate = useNavigate();
+    const { patients, addPatient, insurers, exams, loading } = useData();
+    const [selectedExamId, setSelectedExamId] = useState('');
+    const caseUrl = (patientId) => `/cases/new?${new URLSearchParams({ patientId, ...(selectedExamId ? { examId: selectedExamId } : {}) })}`;
     const [searchTerm, setSearchTerm] = useState('');
     const [showForm, setShowForm] = useState(false);
     const [showNoResults, setShowNoResults] = useState(false);
@@ -20,6 +23,7 @@ const PatientManager = () => {
     const handleCreatePatient = async (e) => {
         e.preventDefault();
         if (saving) return;
+        const continueToCase = e.nativeEvent.submitter?.value === 'create-case';
         setFormError('');
 
         const age = parseInt(newPatient.age);
@@ -52,7 +56,12 @@ const PatientManager = () => {
         };
         setSaving(true);
         try {
-            await addPatient(patient);
+            const savedPatient = await addPatient(patient);
+            if (!savedPatient?.id) throw new Error('Patient was not saved');
+            if (continueToCase) {
+                navigate(caseUrl(savedPatient.id));
+                return;
+            }
             setShowForm(false);
             setSearchTerm('');
             setNewPatient({ name: '', age: '', sex: 'F', history: '', cedula: '', arsName: '', policyNumber: '' });
@@ -150,9 +159,10 @@ const PatientManager = () => {
                             value={newPatient.history}
                             onChange={e => setNewPatient({ ...newPatient, history: e.target.value })}
                         />
-                        <div className="flex justify-end gap-2">
+                        <div className="flex flex-wrap justify-end gap-2">
                             <Button type="button" variant="ghost" disabled={saving} onClick={() => setShowForm(false)}>Cancelar</Button>
                             <Button type="submit" isLoading={saving}>Guardar Paciente</Button>
+                            <Button type="submit" value="create-case" isLoading={saving}>Guardar y crear caso</Button>
                         </div>
                         {formError && <p role="alert" className="text-sm text-danger">{formError}</p>}
                     </form>
@@ -160,6 +170,13 @@ const PatientManager = () => {
             )}
 
             <Card>
+                <div className="mb-4 flex flex-col gap-1.5">
+                    <label htmlFor="patient-case-exam" className="text-sm font-medium text-text-main">Tipo de caso / Examen a realizar</label>
+                    <select id="patient-case-exam" className="w-full rounded-md border border-border bg-white px-3 py-2 text-sm" value={selectedExamId} onChange={e => setSelectedExamId(e.target.value)}>
+                        <option value="">Seleccionar al completar el caso...</option>
+                        {exams.map(ex => <option key={ex.id} value={ex.id}>{ex.code} - {ex.name}</option>)}
+                    </select>
+                </div>
                 <form onSubmit={handleSearch} className="mb-6 flex flex-col sm:flex-row gap-3">
                     <Input
                         className="flex-1"
@@ -179,7 +196,8 @@ const PatientManager = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredPatients.map(p => (
-                        <Link key={p.id} to={`/patients/${p.id}`} className="block group">
+                        <div key={p.id} className="flex flex-col gap-2">
+                        <Link to={`/patients/${p.id}`} className="block group flex-1">
                             <div className="p-4 border border-border rounded-lg group-hover:border-primary transition-colors bg-white flex items-start gap-4 h-full shadow-sm group-hover:shadow-md">
                                 <div className="w-10 h-10 bg-primary-light rounded-full flex items-center justify-center text-primary shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
                                     <User size={20} />
@@ -192,6 +210,8 @@ const PatientManager = () => {
                                 </div>
                             </div>
                         </Link>
+                        <Link to={caseUrl(p.id)} className="inline-flex justify-center items-center rounded-md bg-primary text-white px-4 py-2 text-sm font-medium hover:bg-primary-hover">Crear caso</Link>
+                        </div>
                     ))}
                 </div>
             </Card>

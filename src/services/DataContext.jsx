@@ -214,6 +214,7 @@ export const DataProvider = ({ children }) => {
         if (!dataProvider) return;
         const result = await dataProvider.addPatient(patient);
         setPatients(prev => [result, ...prev]);
+        return result;
     }, [dataProvider]);
 
     const updatePatient = useCallback(async (patient) => {
