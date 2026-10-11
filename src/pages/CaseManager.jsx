@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
     Search, Plus, FileText, Settings, Users, Activity,
     ChevronRight, Calendar, Clock, AlertCircle, CheckCircle,
@@ -26,6 +26,7 @@ import ConsistencyAlerts from '../components/ConsistencyAlerts';
 const CaseManager = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+    const [searchParams] = useSearchParams();
     const { patients, addCase, updateCase, deleteCase, getCase, cases, insurers, organs, doctors, settings, updateCaseInterconsultation, exams, currentUser, roles, isProductionMode, logUsageEvent } = useData();
     const currentCase = id ? cases.find(c => c.id === id) : null;
 
@@ -204,6 +205,24 @@ const CaseManager = () => {
         title: '',
         message: ''
     });
+
+    const initializedPatient = useRef(null);
+    const initializedExam = useRef(null);
+    const requestedPatientId = searchParams.get('patientId');
+    const requestedExamId = searchParams.get('examId');
+    useEffect(() => {
+        if (id) return;
+        const patient = patients.find(p => p.id === requestedPatientId);
+        const exam = exams.find(ex => ex.id === requestedExamId);
+        if (patient && initializedPatient.current !== requestedPatientId) {
+            initializedPatient.current = requestedPatientId;
+            setFormData(prev => ({ ...prev, patientId: patient.id }));
+        }
+        if (exam && initializedExam.current !== requestedExamId) {
+            initializedExam.current = requestedExamId;
+            setFormData(prev => ({ ...prev, examId: exam.id, type: exam.name, price: exam.pricePrivate || exam.price_private || 0 }));
+        }
+    }, [id, requestedPatientId, requestedExamId, patients, exams]);
 
     const hasLoggedView = useRef(false);
 
@@ -611,7 +630,7 @@ const CaseManager = () => {
         const caseData = {
             ...existingCase, // Merge existing data first
             id: caseId,
-            patientName: selectedPatient ? selectedPatient.name : 'Desconocido',
+            patientName: selectedPatient ? (selectedPatient.name || selectedPatient.full_name) : 'Desconocido',
             age: selectedPatient ? selectedPatient.age : '?',
             sex: selectedPatient ? selectedPatient.sex : '?',
             status: 'Finalizado',
@@ -858,7 +877,7 @@ const CaseManager = () => {
                                 >
                                     <option value="">Seleccionar Paciente...</option>
                                     {patients.map(p => (
-                                        <option key={p.id} value={p.id}>{p.name} ({p.id})</option>
+                                        <option key={p.id} value={p.id}>{p.name || p.full_name} ({p.id})</option>
                                     ))}
                                     {/* Fallback for preserved patient if not in list */}
                                     {formData.patientId && !patients.find(p => p.id === formData.patientId) && (
