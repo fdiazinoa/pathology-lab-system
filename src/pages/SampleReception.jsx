@@ -7,10 +7,12 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import Modal from '../components/Modal';
 import { useData } from '../services/DataContext';
+import { getReceptionCenters } from '../services/receptionCenters';
 
 const SampleReception = () => {
     const navigate = useNavigate();
-    const { patients, doctors, centers: originCenters, insurers, addCase, addPatient, currentUser, addAuditLog } = useData();
+    const { patients, doctors, centers: configuredCenters, insurers, addCase, addPatient, currentUser, addAuditLog } = useData();
+    const originCenters = getReceptionCenters(configuredCenters);
     const [loading, setLoading] = useState(false);
     const searchRef = useRef(null);
 
