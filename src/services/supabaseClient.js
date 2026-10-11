@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // These environment variables will be provided by your Supabase project
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Fail-safe initialization to avoid crashing the whole app if env vars are missing
 let supabase;
