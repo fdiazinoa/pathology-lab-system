@@ -1,4 +1,5 @@
 import DataProvider from './DataProvider';
+import { readLocalExams, saveLocalExam, deleteLocalExam } from '../localExamCatalog';
 
 class ProductionDataProvider extends DataProvider {
     constructor() {
@@ -308,15 +309,11 @@ class ProductionDataProvider extends DataProvider {
     }
 
     async getExams() {
-        return [
-            { id: '1', code: '88305', name: 'Biopsia Nivel IV', pricePrivate: 2500 },
-            { id: '2', code: '88307', name: 'Biopsia Nivel V', pricePrivate: 4500 },
-            { id: '3', code: '88112', name: 'Citología Líquida', pricePrivate: 1200 },
-            { id: '4', code: '88342', name: 'Inmunohistoquímica', pricePrivate: 3000 },
-            // Add generic Biopsia if needed
-            { id: '5', code: 'GEN', name: 'Biopsia', pricePrivate: 3500 }
-        ];
+        return readLocalExams('prod_exams');
     }
+    async addExam(e) { return saveLocalExam('prod_exams', e); }
+    async updateExam(e) { return saveLocalExam('prod_exams', e, true); }
+    async deleteExam(id) { return deleteLocalExam('prod_exams', id); }
 }
 
 export default ProductionDataProvider;

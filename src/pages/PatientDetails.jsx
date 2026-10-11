@@ -12,7 +12,9 @@ const PatientDetails = () => {
     const [isEditing, setIsEditing] = useState(false);
 
     const patient = patients.find(p => p.id === id);
-    const patientCases = cases.filter(c => c.patientId === id);
+    const patientCases = cases.filter(c => (c.patientId || c.patient_id) === id);
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState('');
 
     // Form State
     const [formData, setFormData] = useState({});
@@ -27,7 +29,8 @@ const PatientDetails = () => {
     }
 
     const handleEditClick = () => {
-        setFormData({ ...patient });
+        setSaveError('');
+        setFormData({ ...patient, name: patient.name || patient.full_name || '', cedula: patient.cedula || patient.identification_number || '', history: patient.history || patient.medical_history || '' });
         setIsEditing(true);
     };
 
@@ -36,9 +39,18 @@ const PatientDetails = () => {
         setFormData({});
     };
 
-    const handleSaveClick = () => {
-        updatePatient(formData);
-        setIsEditing(false);
+    const handleSaveClick = async () => {
+        if (saving) return;
+        setSaving(true);
+        setSaveError('');
+        try {
+            await updatePatient({ ...formData, full_name: formData.name, identification_number: formData.cedula, medical_history: formData.history });
+            setIsEditing(false);
+        } catch (error) {
+            setSaveError('No se pudo guardar la ficha. Intente nuevamente.');
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleChange = (e) => {
@@ -71,16 +83,17 @@ const PatientDetails = () => {
                         </Button>
                     ) : (
                         <div className="flex gap-2">
-                            <Button onClick={handleCancelClick} variant="ghost" className="text-danger">
+                            <Button onClick={handleCancelClick} disabled={saving} variant="ghost" className="text-danger">
                                 <X size={18} className="mr-2" /> Cancelar
                             </Button>
-                            <Button onClick={handleSaveClick}>
+                            <Button onClick={handleSaveClick} isLoading={saving}>
                                 <Save size={18} className="mr-2" /> Guardar Cambios
                             </Button>
                         </div>
                     )}
                 </div>
             </div>
+            {saveError && <p role="alert" className="text-danger">{saveError}</p>}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Patient Info Sidebar */}
@@ -92,9 +105,9 @@ const PatientDetails = () => {
                             </div>
                             {!isEditing ? (
                                 <>
-                                    <h2 className="text-xl font-bold text-text-main">{patient.name}</h2>
+                                    <h2 className="text-xl font-bold text-text-main">{patient.name || patient.full_name}</h2>
                                     <p className="text-sm text-text-secondary">ID: {patient.id}</p>
-                                    <p className="text-sm font-medium text-primary mt-1">{patient.cedula || 'Sin Documento'}</p>
+                                    <p className="text-sm font-medium text-primary mt-1">{patient.cedula || patient.identification_number || 'Sin Documento'}</p>
                                 </>
                             ) : (
                                 <div className="w-full space-y-2">
@@ -124,7 +137,7 @@ const PatientDetails = () => {
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-text-secondary">Registrado</span>
-                                        <span className="font-medium">{patient.createdAt}</span>
+                                        <span className="font-medium">{patient.createdAt || patient.created_at || '-'}</span>
                                     </div>
                                 </>
                             ) : (
@@ -154,7 +167,7 @@ const PatientDetails = () => {
                     <Card title="Antecedentes Clínicos">
                         {!isEditing ? (
                             <p className="text-sm text-text-main leading-relaxed">
-                                {patient.history || "No se han registrado antecedentes."}
+                                {patient.history || patient.medical_history || "No se han registrado antecedentes."}
                             </p>
                         ) : (
                             <textarea
@@ -212,7 +225,7 @@ const PatientDetails = () => {
                         ) : (
                             <div className="text-center py-10 text-text-secondary">
                                 <p>Este paciente no tiene exámenes registrados.</p>
-                                <Link to="/cases/new">
+                                <Link to={`/cases/new?${new URLSearchParams({ patientId: patient.id })}`}>
                                     <Button variant="ghost" className="mt-2 text-primary">
                                         + Crear Nuevo Caso
                                     </Button>

@@ -2,7 +2,7 @@ import React from 'react';
 import { X, AlertTriangle } from 'lucide-react';
 import Button from './Button';
 
-const Modal = ({ isOpen, onClose, title, children, type = 'default', onConfirm, confirmText = 'Confirmar', cancelText = 'Cancelar' }) => {
+const Modal = ({ isOpen, onClose, title, children, type = 'default', onConfirm, confirmText = 'Confirmar', cancelText = 'Cancelar', showFooter = true }) => {
     if (!isOpen) return null;
 
     const isWarning = type === 'warning';
@@ -24,7 +24,7 @@ const Modal = ({ isOpen, onClose, title, children, type = 'default', onConfirm, 
                     {children}
                 </div>
 
-                <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3 border-t border-border">
+                {showFooter && <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3 border-t border-border">
                     <Button variant="ghost" onClick={onClose}>
                         {cancelText}
                     </Button>
@@ -34,7 +34,7 @@ const Modal = ({ isOpen, onClose, title, children, type = 'default', onConfirm, 
                     >
                         {confirmText}
                     </Button>
-                </div>
+                </div>}
             </div>
         </div>
     );
