@@ -78,6 +78,9 @@ export const SetupProvider = ({ children }) => {
     };
 
     const finishSetup = async () => {
+        if (config.mode === 'DEMO' && ['PROD', 'SUPABASE'].includes(localStorage.getItem('app_system_mode'))) {
+            throw new Error('El modo Demo no está disponible mientras Producción está activa.');
+        }
         try {
             // 1. Save Connection Config (Database & Storage)
             // We map PROD to STANDARD complexity by default, DEMO is ignored by DataContext but we save it anyway

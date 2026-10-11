@@ -301,6 +301,7 @@ const Settings = () => {
     };
 
     const handleResetDemo = () => {
+        if (isProductionMode) return;
         if (window.confirm('¿Está seguro de reiniciar los datos de prueba? Esta acción eliminará todos los cambios realizados en el modo Demo y restaurará el estado inicial.')) {
             resetDemoData();
         }
@@ -316,7 +317,8 @@ const Settings = () => {
     };
 
     const handleModeSwitch = (mode) => {
-        const targetMode = mode || (isProductionMode ? 'DEMO' : 'SUPABASE');
+        const targetMode = mode || 'SUPABASE';
+        if (isProductionMode && targetMode === 'DEMO') return;
         switchSystemMode(targetMode);
         setShowModeModal(false);
     };
@@ -622,20 +624,11 @@ const Settings = () => {
                                             : 'El sistema está en modo seguro de demostración. Los datos son simulados y se guardan localmente en su navegador.'}
                                     </p>
                                 </div>
-                                    <div className="flex flex-col gap-2">
-                                        <button
-                                            onClick={() => {
-                                                if (isProductionMode) handleModeSwitch('DEMO');
-                                                else setShowModeModal(true);
-                                            }}
-                                            className={`px-4 py-2 rounded-md font-medium text-white shadow-sm transition-colors ${isProductionMode
-                                                ? 'bg-green-600 hover:bg-green-700'
-                                                : 'bg-red-600 hover:bg-red-700'
-                                                }`}
-                                        >
-                                            {isProductionMode ? 'Cambiar a Modo Demo' : 'Activar Modo Producción'}
-                                        </button>
-                                    </div>
+                                    {!isProductionMode && (
+                                        <Button onClick={() => setShowModeModal(true)}>
+                                            Activar Modo Producción
+                                        </Button>
+                                    )}
                             </div>
                         </div>
                     </div>
@@ -644,7 +637,7 @@ const Settings = () => {
 
             {/* --- MODE SWITCH CONFIRMATION MODAL --- */}
             {
-                showModeModal && (
+                showModeModal && !isProductionMode && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                         <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
                             <div className="flex items-center gap-3 mb-4 text-red-600">

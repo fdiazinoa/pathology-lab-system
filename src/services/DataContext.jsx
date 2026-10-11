@@ -129,6 +129,7 @@ export const DataProvider = ({ children }) => {
 
     const switchSystemMode = useCallback(async (newMode) => {
         if (!dataProvider) return;
+        if (newMode === 'DEMO' && (isProductionMode || ['PROD', 'SUPABASE'].includes(localStorage.getItem('app_system_mode')))) return;
 
         const userRole = roles.find(r => r.id === currentUser?.roleId)?.name || 'Sistema';
         const logEntry = {
