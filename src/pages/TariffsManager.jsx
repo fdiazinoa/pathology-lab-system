@@ -11,6 +11,8 @@ const TariffsManager = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingExam, setEditingExam] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState('');
     const [formData, setFormData] = useState({
         code: '',
         name: '',
@@ -20,9 +22,10 @@ const TariffsManager = () => {
     });
 
     const handleOpenModal = (exam = null) => {
+        setSaveError('');
         if (exam) {
             setEditingExam(exam);
-            setFormData({ ...exam });
+            setFormData({ ...exam, description: exam.description || '', pricePrivate: exam.pricePrivate ?? exam.price_private ?? '', priceInsurance: exam.priceInsurance ?? exam.price_insurance ?? '' });
         } else {
             setEditingExam(null);
             setFormData({
@@ -36,29 +39,41 @@ const TariffsManager = () => {
         setIsModalOpen(true);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        if (saving) return;
+        setSaveError('');
         const dataToSave = {
             ...formData,
             pricePrivate: Number(formData.pricePrivate),
             priceInsurance: Number(formData.priceInsurance)
         };
 
-        if (editingExam) {
-            updateExam(dataToSave);
-        } else {
-            addExam(dataToSave);
+        if ([formData.pricePrivate, formData.priceInsurance].some(value => String(value ?? '').trim() === '') ||
+            ![dataToSave.pricePrivate, dataToSave.priceInsurance].every(price => Number.isFinite(price) && price >= 0)) {
+            setSaveError('Ingrese precios válidos mayores o iguales a cero.');
+            return;
         }
-        setIsModalOpen(false);
+        setSaving(true);
+        try {
+            if (editingExam) await updateExam(dataToSave);
+            else await addExam(dataToSave);
+            setIsModalOpen(false);
+        } catch (error) {
+            setSaveError(error.message || 'No se pudo guardar la tarifa. Intente nuevamente.');
+        } finally {
+            setSaving(false);
+        }
     };
 
     const filteredExams = exams.filter(e =>
-        e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.code.toLowerCase().includes(searchTerm.toLowerCase())
+        (e.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (e.code || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(amount);
+        if (amount === null || amount === undefined || amount === '' || !Number.isFinite(Number(amount))) return 'Sin configurar';
+        return new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(Number(amount));
     };
 
     return (
@@ -112,10 +127,10 @@ const TariffsManager = () => {
                                         </div>
                                     </td>
                                     <td className="p-4 text-right font-medium text-text-main">
-                                        {formatCurrency(exam.pricePrivate)}
+                                        {formatCurrency(exam.pricePrivate ?? exam.price_private)}
                                     </td>
                                     <td className="p-4 text-right font-medium text-text-main">
-                                        {formatCurrency(exam.priceInsurance)}
+                                        {formatCurrency(exam.priceInsurance ?? exam.price_insurance)}
                                     </td>
                                     <td className="p-4 text-right">
                                         <div className="flex justify-end gap-2">
@@ -146,8 +161,9 @@ const TariffsManager = () => {
 
             <Modal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={() => { if (!saving) setIsModalOpen(false); }}
                 title={editingExam ? "Editar Examen" : "Nuevo Examen"}
+                showFooter={false}
             >
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-3 gap-4">
@@ -185,6 +201,8 @@ const TariffsManager = () => {
                             </h4>
                             <Input
                                 type="number"
+                                aria-label="Precio privado"
+                                step="0.01"
                                 value={formData.pricePrivate}
                                 onChange={e => setFormData({ ...formData, pricePrivate: e.target.value })}
                                 required
@@ -198,6 +216,8 @@ const TariffsManager = () => {
                             </h4>
                             <Input
                                 type="number"
+                                aria-label="Precio asegurado"
+                                step="0.01"
                                 value={formData.priceInsurance}
                                 onChange={e => setFormData({ ...formData, priceInsurance: e.target.value })}
                                 required
@@ -208,13 +228,14 @@ const TariffsManager = () => {
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4">
-                        <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+                        <Button type="button" variant="secondary" disabled={saving} onClick={() => setIsModalOpen(false)}>
                             Cancelar
                         </Button>
-                        <Button type="submit">
+                        <Button type="submit" isLoading={saving}>
                             {editingExam ? 'Guardar Cambios' : 'Crear Examen'}
                         </Button>
                     </div>
+                    {saveError && <p role="alert" className="text-sm text-danger">{saveError}</p>}
                 </form>
             </Modal>
         </div>

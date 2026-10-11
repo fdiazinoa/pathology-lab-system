@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import PatientManager from './pages/PatientManager';
+import PatientDetails from './pages/PatientDetails';
 import CaseManager from './pages/CaseManager';
 import ReportView from './pages/ReportView';
 import MicroscopyModule from './pages/MicroscopyModule';
@@ -47,12 +48,14 @@ import Summary from './pages/setup/steps/Summary';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
-    const { currentUser } = useData();
+    const { currentUser, loading } = useData();
     const isSetupCompleted = localStorage.getItem('setupCompleted') === 'true';
 
     if (!isSetupCompleted) {
         return <Navigate to="/setup/welcome" replace />;
     }
+
+    if (loading) return <div className="p-10 text-center" role="status">Cargando...</div>;
 
     if (!currentUser) {
         return <Navigate to="/login" replace />;
@@ -105,6 +108,13 @@ const AppRoutes = () => {
                 <ProtectedRoute allowedRoles={['1', '2', '3']}>
                     <Layout>
                         <PatientManager />
+                    </Layout>
+                </ProtectedRoute>
+            } />
+            <Route path="/patients/:id" element={
+                <ProtectedRoute allowedRoles={['1', '2', '3']}>
+                    <Layout>
+                        <PatientDetails />
                     </Layout>
                 </ProtectedRoute>
             } />

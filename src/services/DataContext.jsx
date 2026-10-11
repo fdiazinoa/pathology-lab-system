@@ -385,8 +385,8 @@ export const DataProvider = ({ children }) => {
     const updateEquipment = useCallback(async (e) => { if (dataProvider) { await dataProvider.updateEquipment(e); setEquipment(prev => prev.map(x => x.id === e.id ? e : x)); } }, [dataProvider]);
     const deleteEquipment = useCallback(async (id) => { if (dataProvider) { await dataProvider.deleteEquipment(id); setEquipment(prev => prev.filter(x => x.id !== id)); } }, [dataProvider]);
 
-    const addExam = useCallback(async (e) => { if (dataProvider) { await dataProvider.addExam(e); setExams(prev => [...prev, e]); } }, [dataProvider]);
-    const updateExam = useCallback(async (e) => { if (dataProvider) { await dataProvider.updateExam(e); setExams(prev => prev.map(x => x.id === e.id ? e : x)); } }, [dataProvider]);
+    const addExam = useCallback(async (e) => { if (!dataProvider) throw new Error('Proveedor no disponible'); const saved = await dataProvider.addExam(e); setExams(prev => [...prev, saved]); return saved; }, [dataProvider]);
+    const updateExam = useCallback(async (e) => { if (!dataProvider) throw new Error('Proveedor no disponible'); const saved = await dataProvider.updateExam(e); setExams(prev => prev.map(x => x.id === saved.id ? saved : x)); return saved; }, [dataProvider]);
     const deleteExam = useCallback(async (id) => { if (dataProvider) { await dataProvider.deleteExam(id); setExams(prev => prev.filter(x => x.id !== id)); } }, [dataProvider]);
 
     // --- Centers Actions ---

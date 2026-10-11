@@ -1,4 +1,5 @@
 import DataProvider from './DataProvider';
+import { readLocalExams, saveLocalExam, deleteLocalExam } from '../localExamCatalog';
 import { MOCK_PATIENTS, MOCK_CASES, MOCK_GLOBAL_CASES } from '../mockData';
 import { jwtDecode } from "jwt-decode";
 
@@ -412,13 +413,7 @@ class DemoDataProvider extends DataProvider {
     }
 
     async getExams() {
-        return [
-            { id: '1', code: '88305', name: 'Biopsia Nivel IV', pricePrivate: 2500 },
-            { id: '2', code: '88307', name: 'Biopsia Nivel V', pricePrivate: 4500 },
-            { id: '3', code: '88112', name: 'Citología Líquida', pricePrivate: 1200 },
-            { id: '4', code: '88342', name: 'Inmunohistoquímica', pricePrivate: 3000 },
-            { id: '5', code: 'GEN', name: 'Biopsia', pricePrivate: 3500 }
-        ];
+        return readLocalExams('app_exams');
     }
 
     // Stub methods for catalog mutations (in demo these might just be in-memory or ignored if not critical)
@@ -438,9 +433,9 @@ class DemoDataProvider extends DataProvider {
     async updateEquipment(e) { return e; }
     async deleteEquipment(id) { return true; }
 
-    async addExam(e) { return e; }
-    async updateExam(e) { return e; }
-    async deleteExam(id) { return true; }
+    async addExam(e) { return saveLocalExam('app_exams', e); }
+    async updateExam(e) { return saveLocalExam('app_exams', e, true); }
+    async deleteExam(id) { return deleteLocalExam('app_exams', id); }
 }
 
 export default DemoDataProvider;
