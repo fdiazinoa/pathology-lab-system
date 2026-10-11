@@ -9,11 +9,12 @@ import { MOCK_CASES } from '../services/mockData';
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
 const EpidemiologyAnalytics = () => {
-    const { cases, patients, organs, setCases, settings } = useData();
+    const { cases, patients, organs, setCases, settings, isProductionMode, loading } = useData();
     const [showDebug, setShowDebug] = React.useState(false);
     const [renderError, setRenderError] = React.useState(null);
 
     const handleResetData = () => {
+        if (isProductionMode || loading) return;
         if (window.confirm("¿Deseas cargar los datos de prueba para visualizar las estadísticas?")) {
             setCases(MOCK_CASES);
         }
@@ -156,7 +157,7 @@ const EpidemiologyAnalytics = () => {
                                     <h3 className="font-bold text-lg text-text-main">{alert.title}</h3>
                                     <p className="text-sm text-text-secondary mt-1">{alert.message}</p>
                                 </div>
-                                {cases.length === 0 && (
+                                {!isProductionMode && !loading && cases.length === 0 && (
                                     <Button size="sm" variant="outline" onClick={handleResetData}>
                                         <Database size={16} className="mr-2" />
                                         Cargar Datos Demo
@@ -177,10 +178,10 @@ const EpidemiologyAnalytics = () => {
                     <p className="text-text-secondary max-w-md mb-6">
                         Para visualizar las estadísticas epidemiológicas, es necesario tener casos registrados en el sistema.
                     </p>
-                    <Button onClick={handleResetData}>
+                    {!isProductionMode && !loading && <Button onClick={handleResetData}>
                         <Database size={20} className="mr-2" />
                         Cargar Casos de Prueba
-                    </Button>
+                    </Button>}
                 </Card>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
