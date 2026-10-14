@@ -10,6 +10,10 @@ class DataProvider {
     }
 
     // --- Authentication & Users ---
+    get supportsGoogleProfileLogin() { return false; }
+    async loginWithGoogleProfile() {
+        return { success: false, message: 'El acceso con Google no está configurado en este modo. Use su correo y contraseña registrados.' };
+    }
     async login(email, password) { throw new Error("Method 'login' must be implemented."); }
     async loginWithGoogle(credentialResponse) { throw new Error("Method 'loginWithGoogle' must be implemented."); }
     async logout() { throw new Error("Method 'logout' must be implemented."); }
