@@ -16,3 +16,9 @@ Proyecto: sxpowmwgxorkjnartswe. Al revisar el 14 de octubre de 2026, Google esta
 El retorno autorizado cambia ese navegador a SUPABASE; no mezcla una identidad cloud con pacientes Demo/locales. La autorización de datos también debe aplicarse en las políticas RLS de las tablas clínicas. El control del frontend por sí solo no sustituye esas políticas.
 
 Fuentes: https://supabase.com/docs/guides/auth/social-login/auth-google y https://supabase.com/docs/reference/javascript/auth-signup
+
+## Tabla de autorización inicializada
+
+La migración `authorized_profiles` crea `public.profiles` con RLS, lectura solo del perfil propio y sin permisos de INSERT/UPDATE/DELETE para clientes autenticados. El rol no tiene valor predeterminado y `is_active` comienza en false. El alta de un perfil y la aprobación se realizan por una conexión administrativa confiable; el frontend no puede autoasignarse roles. La autorización inicial de la cuenta confirmada se realizó separadamente, sin datos específicos de usuarios en la migración.
+
+La inicialización clínica continúa pendiente. No ejecutar sin revisión las políticas antiguas de `supabase_schema.sql`: permiten actualizar el propio rol y conceden acceso clínico por autenticación sin comprobar perfiles autorizados. La migración de perfiles no instala esas políticas ni crea tablas clínicas.
