@@ -35,7 +35,7 @@ const Login = () => {
     const googleLogin = useGoogleLogin({
         scope: "email profile openid",
         onSuccess: async (tokenResponse) => {
-            console.log("Google Login Success:", tokenResponse);
+
 
             try {
                 const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -47,7 +47,7 @@ const Login = () => {
                 }
 
                 const userInfo = await userInfoResponse.json();
-                console.log("Google User Info:", userInfo);
+
 
                 const result = await loginWithGoogleProfile(userInfo);
                 if (result.success) {

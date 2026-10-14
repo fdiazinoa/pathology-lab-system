@@ -64,25 +64,8 @@ class DemoDataProvider extends DataProvider {
         try {
             if (!credentialResponse.credential) return { success: false, message: 'No credentials' };
             const decoded = jwtDecode(credentialResponse.credential);
-            const { email, name, picture, sub } = decoded;
-
-            let users = await this.getUsers();
-            let user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-
-            if (!user) {
-                user = {
-                    id: `google_${sub}`,
-                    name: name,
-                    email: email,
-                    roleId: '2',
-                    status: 'Active',
-                    lastLogin: new Date().toISOString(),
-                    avatar: picture,
-                    authProvider: 'google'
-                };
-                // In demo, we don't persist new google users to the main list automatically unless we want to
-                // For now, just return the user session
-            }
+            const user = await this.findAuthorizedUser(decoded.email);
+            if (!user) return { success: false, message: 'Usuario no registrado o inactivo. Solicite acceso al administrador.' };
             localStorage.setItem('app_user', JSON.stringify(user));
             return { success: true, user };
         } catch (e) {
@@ -94,23 +77,8 @@ class DemoDataProvider extends DataProvider {
     async loginWithGoogleProfile(profile) {
         await this._delay(500);
         try {
-            const { email, name, picture, sub } = profile;
-
-            let users = await this.getUsers();
-            let user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-
-            if (!user) {
-                user = {
-                    id: `google_${sub}`,
-                    name: name,
-                    email: email,
-                    roleId: '2', // Default to Pathologist for demo
-                    status: 'Active',
-                    lastLogin: new Date().toISOString(),
-                    avatar: picture,
-                    authProvider: 'google'
-                };
-            }
+            const user = await this.findAuthorizedUser(profile.email);
+            if (!user) return { success: false, message: 'Usuario no registrado o inactivo. Solicite acceso al administrador.' };
             localStorage.setItem('app_user', JSON.stringify(user));
             return { success: true, user };
         } catch (e) {
@@ -124,12 +92,21 @@ class DemoDataProvider extends DataProvider {
         return true;
     }
 
+    async findAuthorizedUser(email) {
+        if (typeof email !== 'string' || !email.trim()) return null;
+        const users = await this.getUsers();
+        return users.find(user => user.email?.toLowerCase() === email.trim().toLowerCase() && user.status === 'Active') || null;
+    }
+
     async getCurrentUser() {
         try {
             const saved = localStorage.getItem('app_user');
-            return saved ? JSON.parse(saved) : null;
+            if (!saved) return null;
+            const user = await this.findAuthorizedUser(JSON.parse(saved).email);
+            if (!user) localStorage.removeItem('app_user');
+            return user;
         } catch (e) {
-            console.error("Error parsing app_user", e);
+            localStorage.removeItem('app_user');
             return null;
         }
     }
