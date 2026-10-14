@@ -228,7 +228,7 @@ const SampleReception = () => {
                                 required
                             >
                                 <option value="">Seleccionar Doctor...</option>
-                                {doctors.map(d => (
+                                {doctors.filter(doctor => doctor.is_active !== false).map(d => (
                                     <option key={d.id} value={d.id}>{d.name}</option>
                                 ))}
                             </select>

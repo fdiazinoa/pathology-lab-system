@@ -967,7 +967,7 @@ const CaseManager = () => {
                                     required
                                 >
                                     <option value="">Seleccionar Doctor...</option>
-                                    {doctors && doctors.map(doc => (
+                                    {doctors && doctors.filter(doctor => doctor.is_active !== false).map(doc => (
                                         <option key={doc.id} value={doc.id}>{doc.name}</option>
                                     ))}
                                     {/* Fallback for preserved doctor if not in list */}
