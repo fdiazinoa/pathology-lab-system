@@ -1,3 +1,4 @@
+import { defaultRoles } from '../permissions';
 import DataProvider from './DataProvider';
 import { readLocalExams, saveLocalExam, deleteLocalExam } from '../localExamCatalog';
 import { MOCK_PATIENTS, MOCK_CASES, MOCK_GLOBAL_CASES } from '../mockData';
@@ -114,6 +115,8 @@ class DemoDataProvider extends DataProvider {
     }
 
     async getUsers() {
+        const saved = localStorage.getItem('app_users');
+        if (saved) return JSON.parse(saved);
         // Mock users list
         return [
             { id: '1', name: 'Admin User', email: 'admin@lab.com', roleId: '1', status: 'Active', lastLogin: '2023-12-01 08:00' },
@@ -122,14 +125,50 @@ class DemoDataProvider extends DataProvider {
             { id: '4', name: 'Carlos Mensajero', email: 'carlos.mensajero@lab.com', roleId: '4', status: 'Active', lastLogin: '2023-12-01 10:00' }
         ];
     }
+    async addUser(user) {
+        const users = await this.getUsers();
+        if (users.some(u => u.email.toLowerCase() === user.email.toLowerCase())) throw new Error('Ya existe un usuario con ese correo.');
+        const saved = { ...user, id: crypto.randomUUID() };
+        localStorage.setItem('app_users', JSON.stringify([...users, saved]));
+        return saved;
+    }
+    async updateUser(user) {
+        const users = await this.getUsers();
+        const old = users.find(u => u.id === user.id);
+        if (!old) throw new Error('Usuario no encontrado.');
+        if (old.roleId === '1' && (user.roleId !== '1' || user.status !== 'Active') && !users.some(u => u.id !== user.id && u.roleId === '1' && u.status === 'Active')) throw new Error('Debe conservar al menos un administrador activo.');
+        localStorage.setItem('app_users', JSON.stringify(users.map(u => u.id === user.id ? user : u)));
+        const session = JSON.parse(localStorage.getItem('app_user') || 'null');
+        if (session?.id === user.id) localStorage.setItem('app_user', JSON.stringify(user));
+        return user;
+    }
+    async deleteUser(id) {
+        const user = (await this.getUsers()).find(u => u.id === id);
+        if (!user) throw new Error('Usuario no encontrado.');
+        await this.updateUser({ ...user, status: 'Inactive' });
+        return true;
+    }
+
 
     async getRoles() {
-        return [
-            { id: '1', name: 'Administrador', permissions: { dashboard: { read: true, write: true, delete: true }, patients: { read: true, write: true, delete: true }, cases: { read: true, write: true, delete: true }, reports: { read: true, write: true, delete: true }, settings: { read: true, write: true, delete: true }, security: { read: true, write: true, delete: true }, financials: { read: true, write: true, delete: true } } },
-            { id: '2', name: 'Patólogo', permissions: { dashboard: { read: true }, patients: { read: true }, cases: { read: true, write: true }, reports: { read: true, write: true }, settings: { read: true }, security: { read: false }, financials: { read: false } } },
-            { id: '3', name: 'Técnico', permissions: { dashboard: { read: true }, patients: { read: true, write: true }, cases: { read: true, write: true }, reports: { read: false }, settings: { read: false }, security: { read: false }, financials: { read: false } } },
-            { id: '4', name: 'Repartidor', permissions: { dashboard: { read: true }, logistics: { read: true, write: true } } }
-        ];
+        const saved = localStorage.getItem('app_roles');
+        return saved ? JSON.parse(saved) : defaultRoles();
+    }
+
+    async addRole(role) {
+        const saved = { ...role, id: crypto.randomUUID() };
+        localStorage.setItem('app_roles', JSON.stringify([...(await this.getRoles()), saved]));
+        return saved;
+    }
+    async updateRole(role) {
+        if (role.id === '1') throw new Error('El administrador del sistema está protegido.');
+        localStorage.setItem('app_roles', JSON.stringify((await this.getRoles()).map(r => r.id === role.id ? role : r)));
+        return role;
+    }
+    async deleteRole(id) {
+        if (['1','2','3','4'].includes(id)) throw new Error('No puede eliminar un rol del sistema.');
+        if ((await this.getUsers()).some(u => u.roleId === id)) throw new Error('El rol tiene usuarios asignados.');
+        localStorage.setItem('app_roles', JSON.stringify((await this.getRoles()).filter(r => r.id !== id)));
     }
 
     // --- Patients ---

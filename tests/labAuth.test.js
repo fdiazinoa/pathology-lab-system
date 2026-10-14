@@ -44,3 +44,10 @@ test('registration submits identity only and clears an automatically issued sess
     await auth.google();
     assert.deepEqual(calls[2], { provider: 'google', options: { redirectTo: 'https://lab.example/auth/callback' } });
 });
+
+test('custom roles come from the verified profile and system administrators stay protected', async () => {
+    const custom = await fixture({ profile: { role: 'pathologist', permission_role_id: 'custom-role', full_name: 'Ana' } }).auth.authorizedUser();
+    assert.equal(custom.roleId, 'custom-role');
+    const admin = await fixture({ profile: { role: 'admin', permission_role_id: 'custom-role' } }).auth.authorizedUser();
+    assert.equal(admin.roleId, '1');
+});
