@@ -4,6 +4,7 @@ import { Printer, Edit, ArrowLeft, Download, Check, FileSignature, Lock, QrCode,
 import Button from '../components/Button';
 import { useData } from '../services/DataContext';
 import { QRCodeCanvas } from 'qrcode.react';
+import { DETAIL_LABELS } from '../services/structuredResultTemplates';
 
 const ReportView = () => {
     const { id } = useParams();
@@ -11,6 +12,7 @@ const ReportView = () => {
     const [isReleasing, setIsReleasing] = useState(false);
 
     const caseData = getCase(id);
+    const studyGroup = settings?.resultTemplateExamGroups?.[String(caseData?.examId)] || caseData?.resultDetails?._template?.group;
     const assignedDoctor = caseData && doctors ? doctors.find(d => d.id === caseData.doctorId) : null;
 
     if (!caseData) {
@@ -178,16 +180,20 @@ const ReportView = () => {
                         <p className="text-text-main leading-relaxed">{caseData.clinicalData || "No referidos."}</p>
                     </section>
 
-                    <section>
+                    {(!['C', 'L', 'HPV'].includes(studyGroup) || caseData.macroscopy) && <section>
                         <h4 className="font-bold text-primary uppercase text-sm tracking-wider mb-2">Muestra Recibida (Macroscopía)</h4>
-                        <p className="text-text-main leading-relaxed">{caseData.macroscopy || "Sin descripción macroscópica."}</p>
-                    </section>
+                        <p className="text-text-main leading-relaxed whitespace-pre-wrap">{caseData.macroscopy || "Sin descripción macroscópica."}</p>
+                    </section>}
 
-                    <section>
-                        <h4 className="font-bold text-primary uppercase text-sm tracking-wider mb-2">Descripción Microscópica</h4>
-                        <p className="text-text-main leading-relaxed">{caseData.microscopy || "Sin descripción microscópica."}</p>
-                    </section>
+                    {(studyGroup !== 'HPV' || caseData.microscopy) && <section>
+                        <h4 className="font-bold text-primary uppercase text-sm tracking-wider mb-2">{['C', 'L', 'CT'].includes(studyGroup) ? 'Descripción Citológica' : 'Descripción Microscópica'}</h4>
+                        <p className="text-text-main leading-relaxed whitespace-pre-wrap">{caseData.microscopy || "Sin descripción microscópica."}</p>
+                    </section>}
 
+                    {Object.entries(DETAIL_LABELS).filter(([key]) => key !== 'comments' && caseData.resultDetails?.[key]?.trim()).map(([key, label]) => (
+                        <section key={key}><h4 className="font-bold text-primary uppercase text-sm tracking-wider mb-2">{label}</h4>
+                            <p className="text-text-main leading-relaxed whitespace-pre-wrap">{caseData.resultDetails[key]}</p></section>
+                    ))}
                     {caseData.ihc && (
                         <section>
                             <h4 className="font-bold text-primary uppercase text-sm tracking-wider mb-2">Inmunohistoquímica</h4>
@@ -231,6 +237,10 @@ const ReportView = () => {
                             {caseData.diagnosis}
                         </div>
                     </section>
+                    {caseData.resultDetails?.comments?.trim() && <section>
+                        <h4 className="font-bold text-primary uppercase text-sm tracking-wider mb-2">Comentarios / recomendaciones</h4>
+                        <p className="text-text-main leading-relaxed whitespace-pre-wrap">{caseData.resultDetails.comments}</p>
+                    </section>}
                 </div>
 
                 {/* Footer */}
