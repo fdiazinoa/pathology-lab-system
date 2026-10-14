@@ -1305,7 +1305,7 @@ const CaseManager = () => {
                             examName={formData.type}
                             catalog={settings?.resultTemplates || []}
                             groupsByExam={settings?.resultTemplateExamGroups || {}}
-                            canManage={!!userRole?.permissions?.settings?.write}
+                            canManage={!!userRole?.permissions?.settings?.write || (isProductionMode && currentUser?.roleId === '1')}
                             onSave={updateSettings}
                             onInsert={(field, text) => setFormData(prev => ({ ...prev, [field]: appendTemplate(prev[field], text) }))}
                         />
