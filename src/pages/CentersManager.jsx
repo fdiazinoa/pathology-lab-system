@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Edit2, Building, Save, X, MapPin, Phone } from 'lucide-react';
+import { Plus, Trash2, Edit2, Building, Save, X, MapPin, Search } from 'lucide-react';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -7,6 +7,13 @@ import { useData } from '../services/DataContext';
 
 const CentersManager = () => {
     const { centers, addCenter, updateCenter, deleteCenter } = useData();
+    const [search, setSearch] = useState('');
+    const normalize = (value) => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    const terms = normalize(search).split(/\s+/).filter(Boolean);
+    const filteredCenters = centers.filter(center => {
+        const text = normalize([center.id, center.name, center.address, center.phone, center.main_route].join(' '));
+        return terms.every(term => text.includes(term));
+    });
     const [isEditing, setIsEditing] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState({ name: '', address: '', phone: '', location: '' });
@@ -117,72 +124,75 @@ const CentersManager = () => {
                 </Card>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {centers.map((center) => (
-                    <div key={center.id} className="bg-white p-5 rounded-lg border border-border shadow-sm hover:border-primary transition-colors group relative">
-                        <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center shrink-0">
-                                <Building size={24} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <h3 className="font-bold text-text-main text-lg truncate" title={center.name}>{center.name}</h3>
-
-                                <div className="mt-2 space-y-1">
-                                    {center.address && (
-                                        <div className="flex items-start gap-2 text-sm text-text-secondary">
-                                            <MapPin size={14} className="mt-0.5 shrink-0" />
-                                            <span className="line-clamp-2">{center.address}</span>
-                                        </div>
-                                    )}
-                                    {center.phone && (
-                                        <div className="flex items-center gap-2 text-sm text-text-secondary">
-                                            <Phone size={14} className="shrink-0" />
-                                            <span>{center.phone}</span>
-                                        </div>
-                                    )}
-                                    {center.location && (
-                                        <a
-                                            href={center.location}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline mt-1"
-                                        >
-                                            <MapPin size={12} />
-                                            Ver en Mapa
-                                        </a>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 backdrop-blur-sm rounded-md">
-                            <button
-                                onClick={() => handleEdit(center)}
-                                className="p-2 text-text-secondary hover:text-primary hover:bg-blue-50 rounded-md transition-colors"
-                                title="Editar"
-                            >
-                                <Edit2 size={16} />
-                            </button>
-                            <button
-                                onClick={() => handleDelete(center.id)}
-                                className="p-2 text-text-secondary hover:text-danger hover:bg-red-50 rounded-md transition-colors"
-                                title="Eliminar"
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        </div>
+            <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+                    <div className="relative w-full sm:max-w-lg">
+                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" aria-hidden="true" />
+                        <input
+                            type="search"
+                            aria-label="Buscar centros"
+                            placeholder="Buscar por nombre, código, dirección, teléfono o ruta..."
+                            value={search}
+                            onChange={event => setSearch(event.target.value)}
+                            className="w-full rounded-lg border border-border bg-white pl-10 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        />
                     </div>
-                ))}
-
-                {centers.length === 0 && (
-                    <div className="col-span-full py-12 text-center text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
-                        <Building size={48} className="mx-auto mb-4 opacity-50" />
-                        <p>No hay centros registrados.</p>
-                        <Button variant="ghost" onClick={() => setShowForm(true)} className="mt-2">
-                            Crear el primero
-                        </Button>
-                    </div>
-                )}
+                    <p className="text-sm text-text-secondary whitespace-nowrap" role="status">
+                        {filteredCenters.length} de {centers.length} centros
+                    </p>
+                </div>
+                <div className="overflow-auto max-h-[70vh] rounded-lg border border-border bg-white shadow-sm">
+                    <table className="w-full min-w-[900px] text-sm text-left">
+                        <caption className="sr-only">Listado de centros de origen</caption>
+                        <thead className="sticky top-0 z-10 bg-gray-50 text-text-secondary">
+                            <tr>
+                                {['Código', 'Centro', 'Dirección', 'Teléfono', 'Ruta', 'Acciones'].map(title => (
+                                    <th key={title} scope="col" className="px-4 py-3 font-semibold border-b border-border">{title}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                            {filteredCenters.map(center => (
+                                <tr key={center.id} className="hover:bg-gray-50">
+                                    <td className="px-4 py-3 text-text-secondary whitespace-nowrap">{center.id}</td>
+                                    <th scope="row" className="px-4 py-3 font-semibold text-text-main">{center.name}</th>
+                                    <td className="px-4 py-3 text-text-secondary max-w-xs">{center.address || '—'}</td>
+                                    <td className="px-4 py-3 text-text-secondary whitespace-nowrap">{center.phone || '—'}</td>
+                                    <td className="px-4 py-3 text-text-secondary whitespace-nowrap">{center.main_route || '—'}</td>
+                                    <td className="px-4 py-3">
+                                        <div className="flex items-center gap-1">
+                                            {center.location && <a href={center.location} target="_blank" rel="noopener noreferrer"
+                                                aria-label={`Ver ${center.name} en el mapa`} title="Ver en mapa"
+                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-md">
+                                                <MapPin size={16} />
+                                            </a>}
+                                            <button onClick={() => handleEdit(center)} aria-label={`Editar ${center.name}`} title="Editar"
+                                                className="p-2 text-text-secondary hover:text-primary hover:bg-blue-50 rounded-md">
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button onClick={() => handleDelete(center.id)} aria-label={`Eliminar ${center.name}`} title="Eliminar"
+                                                className="p-2 text-text-secondary hover:text-danger hover:bg-red-50 rounded-md">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                            {filteredCenters.length === 0 && (
+                                <tr><td colSpan={6} className="py-12 text-center text-text-secondary">
+                                    {centers.length === 0 ? <>
+                                        <Building size={32} className="mx-auto mb-3 opacity-50" />
+                                        <p>No hay centros registrados.</p>
+                                        <Button variant="ghost" onClick={() => setShowForm(true)} className="mt-2">Crear el primero</Button>
+                                    </> : <>
+                                        <p>No se encontraron centros con esos datos.</p>
+                                        <Button variant="ghost" onClick={() => setSearch('')} className="mt-2">Limpiar búsqueda</Button>
+                                    </>}
+                                </td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

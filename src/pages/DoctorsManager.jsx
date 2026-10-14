@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Edit2, Save, X, Stethoscope } from 'lucide-react';
+import { Plus, Trash2, Edit2, Save, X, Stethoscope, Search } from 'lucide-react';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import Card from '../components/Card';
@@ -7,7 +7,17 @@ import SignaturePad from '../components/SignaturePad';
 import { useData } from '../services/DataContext';
 
 const DoctorsManager = () => {
-    const { doctors, addDoctor, updateDoctor, deleteDoctor } = useData();
+    const { centers, doctors, addDoctor, updateDoctor, deleteDoctor } = useData();
+    const [showForm, setShowForm] = useState(false);
+    const [search, setSearch] = useState('');
+    const centerNames = new Map(centers.map(center => [center.id, center.name]));
+    const centerLabel = (doctor) => centerNames.get(doctor.center_id) || doctor.source_center_id || '—';
+    const normalize = (value) => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    const terms = normalize(search).split(/\s+/).filter(Boolean);
+    const filteredDoctors = doctors.filter(doctor => {
+        const text = normalize([doctor.id, doctor.lis_id, doctor.name, doctor.specialty, centerLabel(doctor), doctor.center_id, doctor.source_center_id, doctor.source_status, doctor.license, doctor.email, doctor.mobile, doctor.phone].join(' '));
+        return terms.every(term => text.includes(term));
+    });
     const [isEditing, setIsEditing] = useState(false);
     const [currentDoctor, setCurrentDoctor] = useState(null);
     const [formData, setFormData] = useState({
@@ -18,6 +28,7 @@ const DoctorsManager = () => {
     });
 
     const handleEdit = (doctor) => {
+        setShowForm(true);
         setIsEditing(true);
         setCurrentDoctor(doctor);
         setFormData({
@@ -49,24 +60,28 @@ const DoctorsManager = () => {
     };
 
     const resetForm = () => {
+        setShowForm(false);
         setIsEditing(false);
         setCurrentDoctor(null);
         setFormData({ name: '', license: '', email: '', signatureUrl: '' });
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6 pb-20">
-            <div className="flex items-center gap-4 mb-6">
-                <Stethoscope size={32} className="text-primary" />
-                <div>
+        <div className="space-y-6 pb-20">
+            <div className="flex items-center justify-between gap-4 mb-6">
+                <div className="flex items-center gap-4">
+                    <Stethoscope size={32} className="text-primary shrink-0" />
+                    <div>
                     <h1 className="text-2xl font-bold text-text-main">Gestión de Doctores</h1>
                     <p className="text-text-secondary">Administra el maestro de médicos del laboratorio.</p>
+                    </div>
                 </div>
+                {!showForm && <Button onClick={() => setShowForm(true)}><Plus size={18} className="mr-2" />Nuevo Doctor</Button>}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-6">
                 {/* Form */}
-                <div className="md:col-span-1">
+                {showForm && <div className="max-w-2xl">
                     <Card title={isEditing ? 'Editar Doctor' : 'Nuevo Doctor'}>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <Input
@@ -113,48 +128,59 @@ const DoctorsManager = () => {
                                     <Save size={16} className="mr-2" />
                                     {isEditing ? 'Actualizar' : 'Guardar'}
                                 </Button>
-                                {isEditing && (
-                                    <Button type="button" variant="secondary" onClick={resetForm}>
+                                {showForm && (
+                                    <Button type="button" variant="secondary" onClick={resetForm} aria-label="Cancelar edición">
                                         <X size={16} />
                                     </Button>
                                 )}
                             </div>
                         </form>
                     </Card>
-                </div>
+                </div>}
 
-                {/* List */}
-                <div className="md:col-span-2">
-                    <Card title="Doctores Registrados">
-                        <div className="space-y-3">
-                            {doctors.length === 0 ? (
-                                <p className="text-text-secondary text-center py-4">No hay doctores registrados.</p>
-                            ) : (
-                                doctors.map(doc => (
-                                    <div key={doc.id} className="flex justify-between items-center p-3 border border-border rounded-lg hover:bg-gray-50">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-primary font-bold">
-                                                {doc.name.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <h4 className="font-bold text-text-main">{doc.name}</h4>
-                                                <p className="text-xs text-text-secondary">{doc.id} · {doc.specialty || doc.license || 'Sin especialidad registrada'}</p>
-                                                {doc.source_status && <p className="text-xs text-text-secondary">{doc.source_status}</p>}
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <Button size="sm" variant="ghost" onClick={() => handleEdit(doc)}>
-                                                <Edit2 size={16} className="text-text-secondary" />
-                                            </Button>
-                                            <Button size="sm" variant="ghost" onClick={() => handleDelete(doc.id)}>
-                                                <Trash2 size={16} className="text-danger" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
+                <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+                        <div className="relative w-full sm:max-w-lg">
+                            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" aria-hidden="true" />
+                            <input type="search" aria-label="Buscar doctores" value={search} onChange={event => setSearch(event.target.value)}
+                                placeholder="Buscar por nombre, código, especialidad, centro o contacto..."
+                                className="w-full rounded-lg border border-border bg-white pl-10 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
                         </div>
-                    </Card>
+                        <p className="text-sm text-text-secondary whitespace-nowrap" role="status">{filteredDoctors.length} de {doctors.length} doctores</p>
+                    </div>
+                    <div className="overflow-auto max-h-[70vh] rounded-lg border border-border bg-white shadow-sm">
+                        <table className="w-full min-w-[1000px] text-sm text-left">
+                            <caption className="sr-only">Listado de doctores</caption>
+                            <thead className="sticky top-0 z-10 bg-gray-50 text-text-secondary"><tr>
+                                {['Código', 'Doctor', 'Especialidad', 'Centro', 'Estado', 'Contacto', 'Acciones'].map(title => (
+                                    <th key={title} scope="col" className="px-4 py-3 font-semibold border-b border-border">{title}</th>
+                                ))}
+                            </tr></thead>
+                            <tbody className="divide-y divide-border">
+                                {filteredDoctors.map(doctor => <tr key={doctor.id} className="hover:bg-gray-50">
+                                    <td className="px-4 py-3 text-text-secondary whitespace-nowrap">{doctor.id}</td>
+                                    <th scope="row" className="px-4 py-3 font-semibold text-text-main">{doctor.name}</th>
+                                    <td className="px-4 py-3 text-text-secondary">{doctor.specialty || '—'}</td>
+                                    <td className="px-4 py-3 text-text-secondary">{centerLabel(doctor)}</td>
+                                    <td className="px-4 py-3 text-text-secondary whitespace-nowrap">{doctor.source_status || (doctor.is_active === false ? 'INACTIVO' : '—')}</td>
+                                    <td className="px-4 py-3 text-text-secondary">
+                                        <div className="whitespace-nowrap">{doctor.mobile || doctor.phone || '—'}</div>
+                                        {doctor.email && <div className="text-xs mt-1">{doctor.email}</div>}
+                                    </td>
+                                    <td className="px-4 py-3"><div className="flex gap-1">
+                                        <button onClick={() => handleEdit(doctor)} aria-label={`Editar ${doctor.name}`} title="Editar"
+                                            className="p-2 text-text-secondary hover:text-primary hover:bg-blue-50 rounded-md"><Edit2 size={16} /></button>
+                                        <button onClick={() => handleDelete(doctor.id)} aria-label={`Eliminar ${doctor.name}`} title="Eliminar"
+                                            className="p-2 text-text-secondary hover:text-danger hover:bg-red-50 rounded-md"><Trash2 size={16} /></button>
+                                    </div></td>
+                                </tr>)}
+                                {filteredDoctors.length === 0 && <tr><td colSpan={7} className="py-12 text-center text-text-secondary">
+                                    <p>{doctors.length === 0 ? 'No hay doctores registrados.' : 'No se encontraron doctores con esos datos.'}</p>
+                                    {search && <Button variant="ghost" onClick={() => setSearch('')} className="mt-2">Limpiar búsqueda</Button>}
+                                </td></tr>}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
