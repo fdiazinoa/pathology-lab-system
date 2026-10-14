@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { labAuth } from '../services/supabaseAuth';
 import { useData } from '../services/DataContext';
 import { AlertCircle } from 'lucide-react';
 import Button from '../components/Button';
-import { useGoogleLogin } from '@react-oauth/google';
 
 const Login = () => {
     const navigate = useNavigate();
-    const { login, loginWithGoogleProfile, canLoginWithGoogle, settings } = useData();
+    const { login, settings } = useData();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -32,47 +32,15 @@ const Login = () => {
         }
     };
 
-    const googleLogin = useGoogleLogin({
-        scope: "email profile openid",
-        onSuccess: async (tokenResponse) => {
-
-
-            try {
-                const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                    headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-                });
-
-                if (!userInfoResponse.ok) {
-                    throw new Error(`Failed to fetch user info: ${userInfoResponse.status} ${userInfoResponse.statusText}`);
-                }
-
-                const userInfo = await userInfoResponse.json();
-
-
-                const result = await loginWithGoogleProfile(userInfo);
-                if (result.success) {
-                    navigate('/dashboard');
-                } else {
-                    setError(result.message);
-                }
-
-            } catch (error) {
-                console.error("Error fetching Google user info:", error);
-                setError(`Error de Google: ${error.message || 'Desconocido'}`);
-            }
-        },
-        onError: errorResponse => {
-            console.error("Google Login Failed:", errorResponse);
-            setError(`Error al iniciar sesión con Google: ${JSON.stringify(errorResponse)}`);
-        },
-    });
-
-    const handleSocialLogin = (provider) => {
+    const handleSocialLogin = async (provider) => {
+        if (loading) return;
         if (provider === 'Google') {
-            if (!canLoginWithGoogle) return;
-            googleLogin();
+            setError(''); setLoading(true);
+            try { await labAuth.google(); }
+            catch (error) { setError(error.message || 'No se pudo iniciar Google.'); }
+            finally { setLoading(false); }
         } else {
-            alert(`La integración con ${provider} se configurará en la siguiente fase.`);
+            alert('La integración con Microsoft aún no está disponible.');
         }
     };
 
@@ -176,7 +144,8 @@ const Login = () => {
 
                 {/* Social Login */}
                 <div className="space-y-3">
-                    {canLoginWithGoogle && <button
+                    <button
+                        disabled={loading}
                         onClick={() => handleSocialLogin('Google')}
                         className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 font-medium hover:bg-gray-50 transition-all active:scale-[0.99]"
                     >
@@ -199,7 +168,7 @@ const Login = () => {
                             />
                         </svg>
                         Iniciar sesión con Google
-                    </button>}
+                    </button>
 
                     <button
                         onClick={() => handleSocialLogin('Microsoft')}
@@ -219,9 +188,9 @@ const Login = () => {
                 <div className="mt-8 text-center">
                     <p className="text-sm text-gray-600">
                         ¿No tienes una cuenta?{' '}
-                        <a href="#" className="font-semibold text-blue-600 hover:text-blue-700 hover:underline">
+                        <Link to="/register" className="font-semibold text-blue-600 hover:text-blue-700 hover:underline">
                             Regístrate
-                        </a>
+                        </Link>
                     </p>
                 </div>
             </div>
