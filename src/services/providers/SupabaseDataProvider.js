@@ -249,7 +249,11 @@ class SupabaseDataProvider extends DataProvider {
     async getEquipment() { return []; }
     async getRoles() { return []; }
     async getUsers() { return []; }
-    async getExams() { return []; }
+    async getExams() {
+        const { data, error } = await supabase.from('exams').select('*').eq('is_active', true).order('name');
+        if (error) throw error;
+        return data.map(exam => ({ ...exam, pricePrivate: exam.price_private, priceInsurance: exam.price_insurance }));
+    }
     async getCenters() { return []; }
 }
 

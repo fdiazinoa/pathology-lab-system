@@ -78,24 +78,26 @@ export const DataProvider = ({ children }) => {
             setCenters(await dataProvider.getCenters());
             setDoctors(await dataProvider.getDoctors());
             setOrgans(await dataProvider.getOrgans());
+            // Make configured catalogs available even if an unrelated clinical module fails to load.
+            const [loadedSettings, loadedExams] = await Promise.all([dataProvider.getSettings(), dataProvider.getExams()]);
+            setSettings(loadedSettings);
+            setExams(loadedExams);
             const [
                 loadedPatients, loadedCases, loadedGlobalCases, loadedAudit,
-                loadedDeliveries, loadedSettings, loadedHistory, loadedConfig,
-                loadedInsurers, loadedEquipment, loadedRoles, loadedUsers, loadedExams
+                loadedDeliveries, loadedHistory, loadedConfig,
+                loadedInsurers, loadedEquipment, loadedRoles, loadedUsers
             ] = await Promise.all([
                 dataProvider.getPatients(),
                 dataProvider.getCases(),
                 dataProvider.getGlobalCases(),
                 dataProvider.getGlobalAuditLog(),
                 dataProvider.getDeliveries(),
-                dataProvider.getSettings(),
                 dataProvider.getConfigHistory(),
                 dataProvider.getConnectionConfig(),
                 dataProvider.getInsurers(),
                 dataProvider.getEquipment(),
                 dataProvider.getRoles(),
-                dataProvider.getUsers(),
-                dataProvider.getExams()
+                dataProvider.getUsers()
             ]);
 
             setPatients(loadedPatients);
@@ -103,14 +105,12 @@ export const DataProvider = ({ children }) => {
             setGlobalCases(loadedGlobalCases);
             setGlobalAuditLog(loadedAudit);
             setDeliveries(loadedDeliveries);
-            setSettings(loadedSettings);
             setConfigHistory(loadedHistory);
             setConnectionConfig(loadedConfig);
             setInsurers(loadedInsurers);
             setEquipment(loadedEquipment);
             setRoles(loadedRoles);
             setUsers(loadedUsers);
-            setExams(loadedExams);
 
         } catch (error) {
             console.error("Error loading data:", error);
