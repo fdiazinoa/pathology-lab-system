@@ -29,6 +29,13 @@ test('cytology separates category, inflammation, organisms, maturation and follo
     }
 });
 
+test('double spaces inside a cytology phrase do not split it into unrelated fields', () => {
+    const t = template('L', 'Células en LIMITES NORMALES.    Inflamatorio  Moderado.    Metaplasia  Escamosa.    Células Endocervicales.');
+    assert.equal(t.sections.inflammation, 'Inflamatorio Moderado.');
+    assert.equal(t.sections.microscopy, 'Metaplasia Escamosa.\nCélulas Endocervicales.');
+    assert.equal(t.result.includes('Metaplasia  Escamosa.'), true);
+});
+
 test('HPV keeps method, genotype, interpretation, result and comments separate', () => {
     const t = template('HPV', '1- Técnica: Prueba cervical.   2- Genotipado: Alto riesgo 16, 18.   3- Interpretación: No detectado.   4- Resultados: NEGATIVO.   5- Comentario: Control.');
     assert.equal(t.sections.technique, 'Prueba cervical.');
