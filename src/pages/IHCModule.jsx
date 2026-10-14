@@ -11,7 +11,7 @@ import BiomarkerEditModal from '../components/ihc/BiomarkerEditModal';
 const IHCModule = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { getCase, updateCase, currentUser } = useData();
+    const { getCase, updateCase, currentUser, can } = useData();
     const caseData = getCase(id);
 
     const [markers, setMarkers] = useState([]);
@@ -85,7 +85,8 @@ const IHCModule = () => {
         }
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
+        try {
         // Generate summary text
         const summary = markers.map(m => `${m.name}: ${m.result} ${m.result === 'Positivo' ? `(${m.percentage}%, ${m.intensity})` : ''}`).join('\n');
 
@@ -96,16 +97,18 @@ const IHCModule = () => {
             details: `Se actualizaron los resultados de IHQ (${markers.length} marcadores).`
         };
 
-        updateCase({
+        await updateCase({
             ...caseData,
             ihc_results: markers,
             ihc: summary, // Sync to main report field
             auditLogs: [...(caseData.auditLogs || []), logEntry]
         });
         alert('Resultados de IHQ guardados.');
+        } catch (failure) { alert(failure.message); }
     };
 
-    const handleFinalize = () => {
+    const handleFinalize = async () => {
+        try {
         const summary = markers.map(m => `${m.name}: ${m.result} ${m.result === 'Positivo' ? `(${m.percentage}%, ${m.intensity})` : ''}`).join('\n');
 
         const logEntry = {
@@ -115,13 +118,14 @@ const IHCModule = () => {
             details: 'Módulo de IHQ finalizado.'
         };
 
-        updateCase({
+        await updateCase({
             ...caseData,
             ihc_results: markers,
             ihc: summary,
             auditLogs: [...(caseData.auditLogs || []), logEntry]
         });
         navigate(`/cases/${id}`);
+        } catch (failure) { alert(failure.message); }
     };
 
     if (!caseData) return <div>Cargando caso...</div>;
@@ -147,11 +151,11 @@ const IHCModule = () => {
                         <Images size={18} className="mr-2" />
                         Ver Galería
                     </Button>
-                    <Button variant="secondary" onClick={handleSave}>
+                    <Button permission={['ihc', 'edit']} variant="secondary" onClick={handleSave}>
                         <Save size={18} className="mr-2" />
                         Guardar
                     </Button>
-                    <Button onClick={handleFinalize}>
+                    <Button disabled={!can('ihc', 'edit')} onClick={handleFinalize}>
                         <CheckCircle size={18} className="mr-2" />
                         Finalizar y Volver
                     </Button>
@@ -198,10 +202,10 @@ const IHCModule = () => {
 
                 {/* Right: AI Panel */}
                 <div className="w-1/4 min-w-[300px] bg-white border-l border-gray-200 overflow-y-auto">
-                    <IHCAIPanel
+                    {can('images', 'analyze') && <IHCAIPanel
                         activeMarker={activeMarker}
                         onUpdateMarker={handleSaveMarker}
-                    />
+                    />}
                 </div>
             </div>
 

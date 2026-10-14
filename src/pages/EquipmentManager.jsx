@@ -9,7 +9,7 @@ import Modal from '../components/Modal';
 
 const EquipmentManager = () => {
     const navigate = useNavigate();
-    const { equipment, addEquipment, updateEquipment, deleteEquipment, lisConnection, toggleLisConnection, simulateLisDataTransfer } = useData();
+    const { equipment, addEquipment, updateEquipment, deleteEquipment, lisConnection, toggleLisConnection, simulateLisDataTransfer, can } = useData();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
     const [activeTab, setActiveTab] = useState('equipment'); // 'equipment' or 'lis'
@@ -120,7 +120,7 @@ const EquipmentManager = () => {
             {activeTab === 'equipment' && (
                 <>
                     <div className="flex justify-end mb-4">
-                        <Button onClick={() => handleOpenModal()}>
+                        <Button permission={['equipment', 'create']} onClick={() => handleOpenModal()}>
                             <Plus size={20} className="mr-2" />
                             Agregar Equipo
                         </Button>
@@ -145,11 +145,11 @@ const EquipmentManager = () => {
                                 </div>
 
                                 <div className="flex gap-2 border-t border-gray-100 pt-4">
-                                    <Button variant="ghost" size="sm" onClick={() => handleOpenModal(item)} className="flex-1">
+                                    <Button variant="ghost" size="sm" disabled={!can('equipment', 'edit')} onClick={() => handleOpenModal(item)} className="flex-1">
                                         Editar
                                     </Button>
                                     <button
-                                        onClick={() => handleDelete(item.id)}
+                                        disabled={!can('equipment', 'delete')} onClick={() => handleDelete(item.id)}
                                         className="p-2 text-red-500 hover:bg-red-50 rounded transition-colors"
                                     >
                                         <Trash2 size={18} />

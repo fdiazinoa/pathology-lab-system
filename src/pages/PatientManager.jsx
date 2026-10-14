@@ -92,7 +92,7 @@ const PatientManager = () => {
                     <h1 className="text-2xl font-bold text-text-main">Gestión de Pacientes</h1>
                     <p className="text-text-secondary">Administra el registro de pacientes.</p>
                 </div>
-                <Button onClick={() => setShowForm(!showForm)}>
+                <Button permission={['patients', 'create']} onClick={() => setShowForm(!showForm)}>
                     <Plus size={18} className="mr-2" />
                     Nuevo Paciente
                 </Button>
@@ -182,7 +182,7 @@ const PatientManager = () => {
                 {!loading && filteredPatients.length === 0 && (
                     <div className="text-center py-6 space-y-3" role="status">
                         <p className="text-text-secondary">{searchTerm.trim() ? 'No se encontraron pacientes con estos datos.' : 'Todavía no hay pacientes registrados.'}</p>
-                        {searchTerm.trim() && <Button variant="secondary" onClick={() => setShowNoResults(true)}>Crear paciente con estos datos</Button>}
+                        {searchTerm.trim() && <Button permission={['patients', 'create']} variant="secondary" onClick={() => setShowNoResults(true)}>Crear paciente con estos datos</Button>}
                     </div>
                 )}
 

@@ -6,7 +6,7 @@ import Input from '../components/Input';
 import { useData } from '../services/DataContext';
 
 const OrgansManager = () => {
-    const { organs, addOrgan, updateOrgan, deleteOrgan } = useData();
+    const { organs, addOrgan, updateOrgan, deleteOrgan, can } = useData();
     const [isEditing, setIsEditing] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState({ name: '', procedure_type: 'Biopsia' });
@@ -59,7 +59,7 @@ const OrgansManager = () => {
                     <p className="text-text-secondary">Administra la lista de órganos y localizaciones.</p>
                 </div>
                 {!showForm && (
-                    <Button onClick={() => setShowForm(true)}>
+                    <Button permission={['organs', 'create']} onClick={() => setShowForm(true)}>
                         <Plus size={18} className="mr-2" />
                         Nuevo Órgano
                     </Button>
@@ -125,8 +125,8 @@ const OrgansManager = () => {
                                 <td className="px-4 py-3 text-text-secondary">{organ.procedure_type || '—'}</td>
                                 <td className="px-4 py-3 text-text-secondary">{organ.original_code || '—'}</td>
                                 <td className="px-4 py-3"><div className="flex gap-1">
-                                    <button onClick={() => handleEdit(organ)} aria-label={`Editar ${organ.name}`} title="Editar" className="p-2 text-text-secondary hover:text-primary hover:bg-blue-50 rounded-md"><Edit2 size={16} /></button>
-                                    <button onClick={() => handleDelete(organ.id)} aria-label={`Eliminar ${organ.name}`} title="Eliminar" className="p-2 text-text-secondary hover:text-danger hover:bg-red-50 rounded-md"><Trash2 size={16} /></button>
+                                    <button disabled={!can('organs', 'edit')} onClick={() => handleEdit(organ)} aria-label={`Editar ${organ.name}`} title="Editar" className="p-2 text-text-secondary hover:text-primary hover:bg-blue-50 rounded-md"><Edit2 size={16} /></button>
+                                    <button disabled={!can('organs', 'delete')} onClick={() => handleDelete(organ.id)} aria-label={`Eliminar ${organ.name}`} title="Eliminar" className="p-2 text-text-secondary hover:text-danger hover:bg-red-50 rounded-md"><Trash2 size={16} /></button>
                                 </div></td>
                             </tr>)}
                             {filteredOrgans.length === 0 && <tr><td colSpan={5} className="py-12 text-center text-text-secondary">{organs.length ? 'No se encontraron localizaciones con esos filtros.' : 'No hay órganos registrados.'}</td></tr>}

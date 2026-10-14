@@ -6,7 +6,7 @@ import Input from '../components/Input';
 import { useData } from '../services/DataContext';
 
 const InsurersManager = () => {
-    const { insurers, addInsurer, updateInsurer, deleteInsurer } = useData();
+    const { insurers, addInsurer, updateInsurer, deleteInsurer, can } = useData();
     const [isEditing, setIsEditing] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState({ name: '', tariff: '' });
@@ -49,7 +49,7 @@ const InsurersManager = () => {
                     <p className="text-text-secondary">Administra las ARS y sus tarifas.</p>
                 </div>
                 {!showForm && (
-                    <Button onClick={() => setShowForm(true)}>
+                    <Button permission={['insurers', 'create']} onClick={() => setShowForm(true)}>
                         <Plus size={18} className="mr-2" />
                         Nueva Aseguradora
                     </Button>
@@ -104,13 +104,13 @@ const InsurersManager = () => {
                         </div>
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
-                                onClick={() => handleEdit(insurer)}
+                                disabled={!can('insurers', 'edit')} onClick={() => handleEdit(insurer)}
                                 className="p-2 text-text-secondary hover:text-primary hover:bg-blue-50 rounded-md transition-colors"
                             >
                                 <Edit2 size={16} />
                             </button>
                             <button
-                                onClick={() => handleDelete(insurer.id)}
+                                disabled={!can('insurers', 'delete')} onClick={() => handleDelete(insurer.id)}
                                 className="p-2 text-text-secondary hover:text-danger hover:bg-red-50 rounded-md transition-colors"
                             >
                                 <Trash2 size={16} />

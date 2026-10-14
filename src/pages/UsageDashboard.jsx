@@ -6,12 +6,12 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 
 const UsageDashboard = () => {
-    const { getUsageStats, currentUser, roles } = useData();
+    const { getUsageStats, can } = useData();
     const [period, setPeriod] = useState(30); // 7, 30, 0 (Total)
 
     const stats = useMemo(() => getUsageStats(period), [getUsageStats, period]);
 
-    const isAdmin = roles.find(r => r.id === currentUser?.roleId)?.name === 'Administrador';
+    const isAdmin = can('audit', 'read');
 
     if (!isAdmin) {
         return (

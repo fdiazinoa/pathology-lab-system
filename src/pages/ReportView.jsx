@@ -8,7 +8,7 @@ import { DETAIL_LABELS } from '../services/structuredResultTemplates';
 
 const ReportView = () => {
     const { id } = useParams();
-    const { getCase, updateCase, settings, doctors, cases, currentUser } = useData();
+    const { getCase, updateCase, settings, doctors, cases, currentUser, can } = useData();
     const [isReleasing, setIsReleasing] = useState(false);
 
     const caseData = getCase(id);
@@ -24,45 +24,24 @@ const ReportView = () => {
         );
     }
 
-    const isReleased = caseData.status === 'Listo para despacho' || caseData.status === 'Entregado';
+    const isReleased = ['Listo para despacho', 'En Transito', 'Entregado'].includes(caseData.status);
 
-    const handleRelease = async () => {
-        if (!caseData.diagnosis || caseData.diagnosis.trim() === '') {
-            alert("No se puede validar ni firmar un informe sin un diagnóstico definitivo.");
-            return;
-        }
-
-        if (!window.confirm("¿Está seguro de que desea VALIDAR y FIRMAR este informe? Esta acción no se puede deshacer y habilitará el despacho del resultado.")) {
-            return;
-        }
-
+    const isValidated = caseData.status === 'Finalizado';
+    const changeWorkflow = async (action) => {
+        const operation = { validate: 'validar', sign: 'firmar y liberar', reopen: 'reabrir' }[action];
+        if (!can('reports', action)) return;
+        if (action !== 'reopen' && !caseData.diagnosis?.trim()) return alert('Complete el diagnóstico antes de validar.');
+        if (!window.confirm(`¿Desea ${operation} este informe?`)) return;
         setIsReleasing(true);
-
-        // Simulate cryptographic signing delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        const digitalSignature = `SIG-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-
-        const updatedCase = {
-            ...caseData,
-            status: 'Listo para despacho',
-            releasedAt: new Date().toISOString(),
-            releasedBy: currentUser ? currentUser.name : 'Sistema',
-            digitalSignature: digitalSignature,
-            auditLogs: [
-                ...caseData.auditLogs,
-                {
-                    date: new Date().toISOString(),
-                    user: currentUser ? currentUser.name : 'Sistema',
-                    action: 'Liberación de Resultados',
-                    details: `Informe validado y firmado digitalmente. Firma: ${digitalSignature}`
-                }
-            ]
-        };
-
-        updateCase(updatedCase);
-        setIsReleasing(false);
-        alert("Informe validado y liberado exitosamente.");
+        try {
+            const now = new Date().toISOString();
+            const user = currentUser.name;
+            const changes = action === 'validate' ? { status: 'Finalizado', validatedAt: now, validatedBy: user }
+                : action === 'sign' ? { status: 'Listo para despacho', releasedAt: now, releasedBy: user, digitalSignature: `SIG-${crypto.randomUUID()}` }
+                : { status: 'Borrador', validatedAt: null, validatedBy: null, releasedAt: null, releasedBy: null, digitalSignature: null };
+            await updateCase({ ...caseData, ...changes, auditLogs: [...(caseData.auditLogs || []), { date: now, user, action: operation, details: `Cambio de estado: ${changes.status}` }] });
+        } catch (failure) { alert(failure.message); }
+        finally { setIsReleasing(false); }
     };
 
     return (
@@ -83,34 +62,11 @@ const ReportView = () => {
                     )}
                 </div>
                 <div className="flex gap-2">
-                    {!isReleased && (
-                        <Link to={`/cases/${id}/edit`}>
-                            <Button variant="secondary">
-                                <Edit size={18} className="mr-2" />
-                                Editar
-                            </Button>
-                        </Link>
-                    )}
-
-                    {!isReleased && (
-                        <Button
-                            onClick={handleRelease}
-                            isLoading={isReleasing}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                        >
-                            <FileSignature size={18} className="mr-2" />
-                            Validar y Firmar
-                        </Button>
-                    )}
-
-                    <Button variant="secondary" onClick={() => window.print()}>
-                        <Printer size={18} className="mr-2" />
-                        Imprimir
-                    </Button>
-                    <Button>
-                        <Download size={18} className="mr-2" />
-                        Exportar PDF
-                    </Button>
+                    {!isReleased && !isValidated && can('cases', 'edit') && <Link to={`/cases/${id}/edit`}><Button variant="secondary"><Edit size={18} className="mr-2" />Editar</Button></Link>}
+                    {!isReleased && !isValidated && <Button permission={['reports', 'validate']} onClick={() => changeWorkflow('validate')} isLoading={isReleasing}><Check size={18} className="mr-2" />Validar informe</Button>}
+                    {isValidated && <Button permission={['reports', 'sign']} onClick={() => changeWorkflow('sign')} isLoading={isReleasing}><FileSignature size={18} className="mr-2" />Firmar y liberar</Button>}
+                    {(isValidated || isReleased) && caseData.status !== 'Entregado' && <Button permission={['reports', 'reopen']} variant="secondary" onClick={() => changeWorkflow('reopen')} isLoading={isReleasing}>Reabrir informe</Button>}
+                    <Button permission={['reports', 'print']} variant="secondary" onClick={() => window.print()}><Printer size={18} className="mr-2" />Imprimir / PDF</Button>
                 </div>
             </div>
 

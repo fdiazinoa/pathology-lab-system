@@ -1,4 +1,4 @@
-const REPORT_FIELDS = ['examId', 'doctorId', 'clinicalData', 'macroscopy', 'microscopy', 'diagnosis', 'ihc', 'resultDetails'];
+const REPORT_FIELDS = ['examId', 'doctorId', 'clinicalData', 'macroscopy', 'microscopy', 'diagnosis', 'ihc', 'resultDetails', 'validatedAt', 'validatedBy', 'releasedAt', 'releasedBy', 'digitalSignature', 'auditLogs'];
 
 export function caseReportMetadata(record, existingMetadata = {}) {
     const report = { ...(existingMetadata.report || {}), ...(record.metadata?.report || {}) };

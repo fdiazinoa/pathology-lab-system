@@ -7,7 +7,7 @@ import Modal from '../components/Modal';
 import { useData } from '../services/DataContext';
 
 const TariffsManager = () => {
-    const { exams, addExam, updateExam, deleteExam } = useData();
+    const { exams, addExam, updateExam, deleteExam, can } = useData();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingExam, setEditingExam] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -83,7 +83,7 @@ const TariffsManager = () => {
                     <h1 className="text-2xl font-bold text-text-main">Tarifas por Examen</h1>
                     <p className="text-text-secondary">Gestione el catálogo de exámenes y sus precios diferenciados.</p>
                 </div>
-                <Button onClick={() => handleOpenModal()}>
+                <Button permission={['exams', 'create']} onClick={() => handleOpenModal()}>
                     <Plus size={20} className="mr-2" />
                     Nuevo Examen
                 </Button>
@@ -135,7 +135,7 @@ const TariffsManager = () => {
                                     <td className="p-4 text-right">
                                         <div className="flex justify-end gap-2">
                                             <button
-                                                onClick={() => handleOpenModal(exam)}
+                                                disabled={!can('exams', 'edit')} onClick={() => handleOpenModal(exam)}
                                                 className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                                                 title="Editar"
                                             >

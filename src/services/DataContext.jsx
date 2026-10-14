@@ -1,7 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import DemoDataProvider from './providers/DemoDataProvider';
 import ProductionDataProvider from './providers/ProductionDataProvider';
 import SupabaseDataProvider from './providers/AuthenticatedSupabaseDataProvider';
+import { hasPermission } from './permissions';
+import { guardProvider } from './permissionGuard';
 import BackupService from './BackupService';
 import TelemetryService from './TelemetryService';
 
@@ -10,6 +12,7 @@ const DataContext = createContext();
 export const useData = () => useContext(DataContext);
 
 export const DataProvider = ({ children }) => {
+    const authorization = useRef({ user: null, roles: [] });
     // --- Provider Initialization ---
     const [dataProvider, setDataProvider] = useState(null);
     const [backupService, setBackupService] = useState(null);
@@ -35,6 +38,7 @@ export const DataProvider = ({ children }) => {
             setIsProductionMode(false);
         }
         console.log("Provider instance created:", provider.constructor.name);
+        provider = guardProvider(provider, (section, action) => hasPermission(authorization.current.user, authorization.current.roles, section, action));
         setDataProvider(provider);
         const bService = new BackupService(provider);
         setBackupService(bService);
@@ -66,6 +70,9 @@ export const DataProvider = ({ children }) => {
     const [exams, setExams] = useState([]);
     const [centers, setCenters] = useState([]);
 
+    authorization.current = { user: currentUser, roles };
+    const can = useCallback((section, action = 'read') => hasPermission(currentUser, roles, section, action), [currentUser, roles]);
+
     // Temporary/UI-only state
     const [lisConnection, setLisConnection] = useState({ status: 'Disconnected', lastSync: null, logs: [] });
 
@@ -74,7 +81,11 @@ export const DataProvider = ({ children }) => {
         if (!dataProvider) return;
         setLoading(true);
         try {
-            setCurrentUser(await dataProvider.getCurrentUser());
+            const [loadedUser, earlyRoles] = await Promise.all([dataProvider.getCurrentUser(), dataProvider.getRoles()]);
+            setCurrentUser(loadedUser);
+            setRoles(earlyRoles);
+            setUsers(await dataProvider.getUsers());
+            setGlobalAuditLog(await dataProvider.getGlobalAuditLog());
             setCenters(await dataProvider.getCenters());
             setDoctors(await dataProvider.getDoctors());
             setOrgans(await dataProvider.getOrgans());
@@ -83,34 +94,29 @@ export const DataProvider = ({ children }) => {
             setSettings(loadedSettings);
             setExams(loadedExams);
             const [
-                loadedPatients, loadedCases, loadedGlobalCases, loadedAudit,
+                loadedPatients, loadedCases, loadedGlobalCases,
                 loadedDeliveries, loadedHistory, loadedConfig,
-                loadedInsurers, loadedEquipment, loadedRoles, loadedUsers
+                loadedInsurers, loadedEquipment
             ] = await Promise.all([
                 dataProvider.getPatients(),
                 dataProvider.getCases(),
                 dataProvider.getGlobalCases(),
-                dataProvider.getGlobalAuditLog(),
                 dataProvider.getDeliveries(),
                 dataProvider.getConfigHistory(),
                 dataProvider.getConnectionConfig(),
                 dataProvider.getInsurers(),
-                dataProvider.getEquipment(),
-                dataProvider.getRoles(),
-                dataProvider.getUsers()
+                dataProvider.getEquipment()
             ]);
 
             setPatients(loadedPatients);
             setCases(loadedCases);
             setGlobalCases(loadedGlobalCases);
-            setGlobalAuditLog(loadedAudit);
             setDeliveries(loadedDeliveries);
             setConfigHistory(loadedHistory);
             setConnectionConfig(loadedConfig);
             setInsurers(loadedInsurers);
             setEquipment(loadedEquipment);
-            setRoles(loadedRoles);
-            setUsers(loadedUsers);
+
 
         } catch (error) {
             console.error("Error loading data:", error);
@@ -123,7 +129,26 @@ export const DataProvider = ({ children }) => {
         loadData();
     }, [loadData]);
 
+    useEffect(() => {
+        if (!dataProvider) return;
+        let active = true;
+        const refresh = async () => {
+            try {
+                const [user, freshRoles] = await Promise.all([dataProvider.getCurrentUser(), dataProvider.getRoles()]);
+                if (active) { setCurrentUser(user); setRoles(freshRoles); }
+            } catch { if (active) { setCurrentUser(null); setRoles([]); } }
+        };
+        window.addEventListener('focus', refresh);
+        return () => { active = false; window.removeEventListener('focus', refresh); };
+    }, [dataProvider]);
+
+    const requirePermission = useCallback(async (section, action) => {
+        const allowed = dataProvider?.checkPermission ? await dataProvider.checkPermission(section, action) : can(section, action);
+        if (!allowed) throw new Error('No tiene permiso para realizar esta acción.');
+    }, [dataProvider, can]);
+
     const switchSystemMode = useCallback(async (newMode) => {
+        await requirePermission('system', 'edit');
         if (!dataProvider) return;
         if (newMode === 'DEMO' && (isProductionMode || ['PROD', 'SUPABASE'].includes(localStorage.getItem('app_system_mode')))) return;
 
@@ -146,23 +171,29 @@ export const DataProvider = ({ children }) => {
 
         localStorage.setItem('app_system_mode', newMode);
         window.location.reload();
-    }, [dataProvider, currentUser, roles, isProductionMode]);
+    }, [dataProvider, currentUser, roles, isProductionMode, requirePermission]);
 
     // --- Actions ---
 
     const login = useCallback(async (email, password) => {
         if (!dataProvider) return { success: false, message: 'Provider not ready' };
         const result = await dataProvider.login(email, password);
-        if (result.success) setCurrentUser(result.user);
+        if (result.success) {
+            setCurrentUser(result.user);
+            await loadData();
+        }
         return result;
-    }, [dataProvider]);
+    }, [dataProvider, loadData]);
 
     const loginWithGoogle = useCallback(async (credentialResponse) => {
         if (!dataProvider) return { success: false, message: 'Provider not ready' };
         const result = await dataProvider.loginWithGoogle(credentialResponse);
-        if (result.success) setCurrentUser(result.user);
+        if (result.success) {
+            setCurrentUser(result.user);
+            await loadData();
+        }
         return result;
-    }, [dataProvider]);
+    }, [dataProvider, loadData]);
 
     const loginWithGoogleProfile = useCallback(async (profile) => {
         if (!dataProvider) return { success: false, message: 'Provider not ready' };
@@ -170,11 +201,15 @@ export const DataProvider = ({ children }) => {
             return { success: false, message: 'El acceso con Google no está configurado en este modo. Use su correo y contraseña registrados.' };
         }
         const result = await dataProvider.loginWithGoogleProfile(profile);
-        if (result.success) setCurrentUser(result.user);
+        if (result.success) {
+            setCurrentUser(result.user);
+            await loadData();
+        }
         return result;
-    }, [dataProvider]);
+    }, [dataProvider, loadData]);
 
     const runMigration = useCallback(async (options) => {
+        if (!can('system', 'edit')) throw new Error('No tiene permiso para migrar datos.');
         if (!dataProvider || !isProductionMode) {
             return { success: false, message: 'La migración solo está disponible en Modo Producción.' };
         }
@@ -202,7 +237,7 @@ export const DataProvider = ({ children }) => {
             console.error("Migration failed", e);
             return { success: false, message: e.message, errors: [e.message] };
         }
-    }, [dataProvider, isProductionMode, currentUser, roles, loadData]);
+    }, [dataProvider, isProductionMode, currentUser, roles, loadData, can]);
 
     const logout = useCallback(async () => {
         if (!dataProvider) return;
@@ -420,13 +455,13 @@ export const DataProvider = ({ children }) => {
         setCenters(prev => prev.filter(c => c.id !== id));
     }, [dataProvider]);
 
-    const addRole = useCallback(async (r) => { if (dataProvider) { await dataProvider.addRole(r); setRoles(prev => [...prev, r]); } }, [dataProvider]);
+    const addRole = useCallback(async (r) => { if (dataProvider) { const saved = await dataProvider.addRole(r); setRoles(prev => [...prev, saved]); } }, [dataProvider]);
     const updateRole = useCallback(async (r) => { if (dataProvider) { await dataProvider.updateRole(r); setRoles(prev => prev.map(x => x.id === r.id ? r : x)); } }, [dataProvider]);
     const deleteRole = useCallback(async (id) => { if (dataProvider) { await dataProvider.deleteRole(id); setRoles(prev => prev.filter(x => x.id !== id)); } }, [dataProvider]);
 
-    const addUser = useCallback(async (u) => { if (dataProvider) { await dataProvider.addUser(u); setUsers(prev => [...prev, u]); } }, [dataProvider]);
-    const updateUser = useCallback(async (u) => { if (dataProvider) { await dataProvider.updateUser(u); setUsers(prev => prev.map(x => x.id === u.id ? u : x)); } }, [dataProvider]);
-    const deleteUser = useCallback(async (id) => { if (dataProvider) { await dataProvider.deleteUser(id); setUsers(prev => prev.filter(x => x.id !== id)); } }, [dataProvider]);
+    const addUser = useCallback(async (u) => { if (dataProvider) { const saved = await dataProvider.addUser(u); setUsers(prev => [...prev, saved]); } }, [dataProvider]);
+    const updateUser = useCallback(async (u) => { if (dataProvider) { const saved = await dataProvider.updateUser(u); setUsers(prev => prev.map(x => x.id === u.id ? saved : x)); setCurrentUser(await dataProvider.getCurrentUser()); } }, [dataProvider]);
+    const deleteUser = useCallback(async (id) => { if (dataProvider) { await dataProvider.deleteUser(id); setUsers(prev => prev.map(x => x.id === id ? { ...x, status: 'Inactive' } : x)); setCurrentUser(await dataProvider.getCurrentUser()); } }, [dataProvider]);
 
     const addImage = useCallback(async (caseId, imageData) => {
         const currentCase = cases.find(c => c.id === caseId);
@@ -515,6 +550,7 @@ export const DataProvider = ({ children }) => {
 
     // --- Backup Actions ---
     const createBackup = useCallback(async (type) => {
+        await requirePermission('system', 'edit');
         if (!backupService) return;
         const result = await backupService.createBackup(type);
 
@@ -530,9 +566,10 @@ export const DataProvider = ({ children }) => {
         });
 
         return result;
-    }, [backupService, dataProvider, currentUser, roles]);
+    }, [backupService, dataProvider, currentUser, roles, requirePermission]);
 
     const restoreBackup = useCallback(async (backupData) => {
+        await requirePermission('system', 'edit');
         if (!backupService) return;
         const result = await backupService.restoreBackup(backupData);
         if (result) {
@@ -549,7 +586,7 @@ export const DataProvider = ({ children }) => {
             await loadData();
         }
         return result;
-    }, [backupService, dataProvider, currentUser, roles, loadData]);
+    }, [backupService, dataProvider, currentUser, roles, loadData, requirePermission]);
 
     const getBackupHistory = useCallback(() => {
         return backupService ? backupService.getHistory() : [];
@@ -569,6 +606,8 @@ export const DataProvider = ({ children }) => {
     }, [telemetryService]);
 
     const value = useMemo(() => ({
+        can,
+        isCloudMode: localStorage.getItem('app_system_mode') === 'SUPABASE',
         loading,
         isProductionMode,
         switchSystemMode,
@@ -598,7 +637,7 @@ export const DataProvider = ({ children }) => {
         createBackup, restoreBackup, getBackupHistory, downloadBackup,
         logUsageEvent, getUsageStats
     }), [
-        loading, isProductionMode, switchSystemMode, resetDemoData, runMigration, currentUser, login, loginWithGoogle, loginWithGoogleProfile, logout,
+        can, loading, isProductionMode, switchSystemMode, resetDemoData, runMigration, currentUser, login, loginWithGoogle, loginWithGoogleProfile, logout,
         patients, addPatient, updatePatient,
         cases, addCase, updateCase, deleteCase, updateCaseStage, updateCaseInterconsultation, updateCaseTumorBoard,
         globalCases, publishToGlobal,

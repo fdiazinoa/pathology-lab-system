@@ -18,7 +18,7 @@ export const createLabAuth = (client) => ({
         if (profileError) throw new Error('No se pudo verificar su autorización. Contacte al administrador para completar la configuración de usuarios.');
         const roleId = roles[profile?.role?.toLowerCase()] || (['1', '2', '3', '4'].includes(profile?.roleId) ? profile.roleId : null);
         if (!profile || !roleId || profile.is_active === false || (profile.status && !['Active', 'Activo'].includes(profile.status))) return null;
-        return { id: data.user.id, email: data.user.email, name: profile.full_name, roleId };
+        return { id: data.user.id, email: data.user.email, name: profile.full_name, roleId: roleId === '1' ? '1' : profile.permission_role_id || roleId };
     },
     async password(email, password) {
         const { error } = await client.auth.signInWithPassword({ email, password });

@@ -1,3 +1,4 @@
+import { defaultRoles } from '../permissions';
 import DataProvider from './DataProvider';
 import { readLocalExams, saveLocalExam, deleteLocalExam } from '../localExamCatalog';
 
@@ -42,21 +43,39 @@ class ProductionDataProvider extends DataProvider {
 
     async getCurrentUser() {
         const saved = localStorage.getItem('prod_user');
-        return saved ? JSON.parse(saved) : null;
+        if (!saved) return null;
+        const session = JSON.parse(saved);
+        const user = (await this.getUsers()).find(u => u.id === session.id);
+        if (user) return user.status === 'Inactive' ? null : user;
+        return session.roleId === '1' && session.status !== 'Inactive' ? session : null;
     }
 
     async getUsers() {
         const saved = localStorage.getItem('prod_users');
         return saved ? JSON.parse(saved) : [];
     }
-
     async addUser(user) {
         const users = await this.getUsers();
-        // Check duplicate
-        if (users.find(u => u.email === user.email)) return user;
-        const newUsers = [...users, user];
-        localStorage.setItem('prod_users', JSON.stringify(newUsers));
+        if (users.some(u => u.email.toLowerCase() === user.email.toLowerCase())) throw new Error('Ya existe un usuario con ese correo.');
+        const saved = { ...user, id: crypto.randomUUID() };
+        localStorage.setItem('prod_users', JSON.stringify([...users, saved]));
+        return saved;
+    }
+    async updateUser(user) {
+        const users = await this.getUsers();
+        const old = users.find(u => u.id === user.id);
+        if (!old) throw new Error('Usuario no encontrado.');
+        if (old.roleId === '1' && (user.roleId !== '1' || user.status !== 'Active') && !users.some(u => u.id !== user.id && u.roleId === '1' && u.status === 'Active')) throw new Error('Debe conservar al menos un administrador activo.');
+        localStorage.setItem('prod_users', JSON.stringify(users.map(u => u.id === user.id ? user : u)));
+        const session = JSON.parse(localStorage.getItem('prod_user') || 'null');
+        if (session?.id === user.id) localStorage.setItem('prod_user', JSON.stringify(user));
         return user;
+    }
+    async deleteUser(id) {
+        const user = (await this.getUsers()).find(u => u.id === id);
+        if (!user) throw new Error('Usuario no encontrado.');
+        await this.updateUser({ ...user, status: 'Inactive' });
+        return true;
     }
 
     // --- Patients ---
@@ -244,14 +263,7 @@ class ProductionDataProvider extends DataProvider {
     // --- Roles ---
     async getRoles() {
         const saved = localStorage.getItem('prod_roles');
-        if (saved) return JSON.parse(saved);
-        // Default roles for prod simulation
-        return [
-            { id: '1', name: 'Administrador', permissions: ['all'] },
-            { id: '2', name: 'Patólogo', permissions: ['read_cases', 'edit_cases', 'sign_reports'] },
-            { id: '3', name: 'Técnico', permissions: ['read_cases', 'edit_cases'] },
-            { id: '4', name: 'Secretaria', permissions: ['read_cases', 'create_cases'] }
-        ];
+        return saved ? JSON.parse(saved) : defaultRoles();
     }
 
     async addRole(role) {
@@ -263,6 +275,7 @@ class ProductionDataProvider extends DataProvider {
     }
 
     async updateRole(role) {
+        if (role.id === '1') throw new Error('El administrador del sistema está protegido.');
         const roles = await this.getRoles();
         const newRoles = roles.map(r => r.id === role.id ? role : r);
         localStorage.setItem('prod_roles', JSON.stringify(newRoles));
@@ -270,6 +283,8 @@ class ProductionDataProvider extends DataProvider {
     }
 
     async deleteRole(id) {
+        if (['1','2','3','4'].includes(id)) throw new Error('No puede eliminar un rol del sistema.');
+        if ((await this.getUsers()).some(u => u.roleId === id)) throw new Error('El rol tiene usuarios asignados.');
         const roles = await this.getRoles();
         const newRoles = roles.filter(r => r.id !== id);
         localStorage.setItem('prod_roles', JSON.stringify(newRoles));

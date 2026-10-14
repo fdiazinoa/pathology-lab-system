@@ -157,12 +157,9 @@ class SupabaseDataProvider extends DataProvider {
 
     // --- Audit Log ---
     async getGlobalAuditLog() {
-        const { data, error } = await supabase
-            .from('audit_logs')
-            .select('*, profiles(full_name)')
-            .order('created_at', { ascending: false });
+        const { data, error } = await supabase.from('permission_audit_log').select('*').order('created_at', { ascending: false }).limit(500);
         if (error) throw error;
-        return data;
+        return (data || []).map(log => ({ id: log.id, date: log.created_at, user: log.actor || 'Sistema', action: `${log.operation}: ${log.resource}`, details: `Registro ${log.target}: ${JSON.stringify(log.changes)}` }));
     }
 
     // --- Catalogs ---
@@ -250,8 +247,47 @@ class SupabaseDataProvider extends DataProvider {
     async getOrgans() { return []; }
     async getDoctors() { return []; }
     async getEquipment() { return []; }
-    async getRoles() { return []; }
-    async getUsers() { return []; }
+    async checkPermission(section, action) {
+        const { data, error } = await supabase.rpc('has_app_permission', { section_name: section, action_name: action });
+        if (error) throw error;
+        return data === true;
+    }
+    async getRoles() {
+        const { data, error } = await supabase.from('app_roles').select('*').order('name');
+        if (error) throw error;
+        return data || [];
+    }
+    async addRole(role) {
+        const { data, error } = await supabase.from('app_roles').insert({ id: crypto.randomUUID(), name: role.name, description: role.description, permissions: role.permissions }).select().single();
+        if (error) throw error;
+        return data;
+    }
+    async updateRole(role) {
+        const { data, error } = await supabase.from('app_roles').update({ name: role.name, description: role.description, permissions: role.permissions }).eq('id', role.id).select().single();
+        if (error) throw error;
+        return data;
+    }
+    async deleteRole(id) {
+        const { data, error } = await supabase.from('app_roles').delete().eq('id', id).select('id').single();
+        if (error) throw error;
+        return data;
+    }
+    async getUsers() {
+        const { data, error } = await supabase.from('profiles').select('*').order('full_name');
+        if (error) throw error;
+        const legacy = { admin: '1', pathologist: '2', technician: '3', courier: '4' };
+        return (data || []).map(p => ({ id: p.id, name: p.full_name || '', email: '', roleId: p.role === 'admin' ? '1' : p.permission_role_id || legacy[p.role] || '', status: p.is_active ? 'Active' : 'Inactive', profileRole: p.role }));
+    }
+    async updateUser(user) {
+        const { data, error } = await supabase.from('profiles').update({ full_name: user.name, permission_role_id: user.roleId, is_active: user.status === 'Active' }).eq('id', user.id).select().single();
+        if (error) throw error;
+        return { ...user, name: data.full_name };
+    }
+    async deleteUser(id) {
+        const { error } = await supabase.from('profiles').update({ is_active: false }).eq('id', id).select('id').single();
+        if (error) throw error;
+        return true;
+    }
     async getExams() {
         const { data, error } = await supabase.from('exams').select('*').eq('is_active', true).order('name');
         if (error) throw error;
