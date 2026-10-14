@@ -1,6 +1,7 @@
 import DataProvider from './DataProvider';
 import { supabase } from '../supabaseClient';
 import { buildLabInfoPayload, labInfoToSettings } from '../labSettings';
+import { caseReportMetadata, caseWithReport } from '../caseReportMetadata';
 
 class SupabaseDataProvider extends DataProvider {
     constructor() {
@@ -90,7 +91,7 @@ class SupabaseDataProvider extends DataProvider {
             .select('*, patients(*), ars_providers(*)')
             .order('created_at', { ascending: false });
         if (error) throw error;
-        return data;
+        return data.map(caseWithReport);
     }
 
     async getCase(id) {
@@ -100,7 +101,7 @@ class SupabaseDataProvider extends DataProvider {
             .eq('id', id)
             .single();
         if (error) throw error;
-        return data;
+        return caseWithReport(data);
     }
 
     async addCase(newCase) {
@@ -116,15 +117,17 @@ class SupabaseDataProvider extends DataProvider {
                 current_stage: newCase.current_stage || newCase.stage || 'recepcion',
                 payment_method: newCase.payment_method || newCase.paymentType || 'Privado',
                 total_cost: newCase.total_cost || newCase.cost || 0,
-                metadata: newCase.metadata || newCase.tracking || {}
+                metadata: caseReportMetadata(newCase)
             }])
             .select()
             .single();
         if (error) throw error;
-        return data;
+        return caseWithReport(data);
     }
 
     async updateCase(updatedCase) {
+        const { data: existing, error: readError } = await supabase.from('cases').select('metadata').eq('id', updatedCase.id).single();
+        if (readError) throw readError;
         const { data, error } = await supabase
             .from('cases')
             .update({
@@ -132,13 +135,13 @@ class SupabaseDataProvider extends DataProvider {
                 current_stage: updatedCase.current_stage || updatedCase.stage,
                 diagnosis: updatedCase.diagnosis,
                 total_cost: updatedCase.total_cost || updatedCase.cost,
-                metadata: updatedCase.metadata
+                metadata: caseReportMetadata(updatedCase, existing.metadata || {})
             })
             .eq('id', updatedCase.id)
             .select()
             .single();
         if (error) throw error;
-        return data;
+        return caseWithReport(data);
     }
 
     // --- Global Cases ---

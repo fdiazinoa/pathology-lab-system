@@ -24,13 +24,14 @@ import { checkReportConsistency } from '../services/consistencyService';
 import ConsistencyAlerts from '../components/ConsistencyAlerts';
 import ResultTemplatePicker from '../components/ResultTemplatePicker';
 import SearchableCatalogField from '../components/SearchableCatalogField';
-import { appendTemplate } from '../services/resultTemplates';
+import { applyStructuredTemplate, clearAppliedTemplate } from '../services/structuredResultTemplates';
+import StudyResultFields from '../components/StudyResultFields';
 
 const CaseManager = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [searchParams] = useSearchParams();
-    const { patients, addCase, updateCase, deleteCase, getCase, cases, insurers, organs, doctors, settings, updateSettings, updateCaseInterconsultation, exams, currentUser, roles, isProductionMode, logUsageEvent } = useData();
+    const { patients, addCase, updateCase, deleteCase, getCase, cases, insurers, organs, doctors, settings, updateCaseInterconsultation, exams, currentUser, roles, isProductionMode, logUsageEvent } = useData();
     const currentCase = id ? cases.find(c => c.id === id) : null;
 
     console.log("CaseManager settings:", settings);
@@ -188,6 +189,7 @@ const CaseManager = () => {
         microscopy: '',
         ihc: '',
         diagnosis: '',
+        resultDetails: {},
         paymentType: 'Privado',
         arsName: '',
         policyNumber: '',
@@ -202,6 +204,8 @@ const CaseManager = () => {
         microscopyStructured: {},
         secondLook: { active: false, reason: '' }
     });
+
+    const studyGroup = settings?.resultTemplateExamGroups?.[String(formData.examId)];
 
     const [validationModal, setValidationModal] = useState({
         isOpen: false,
@@ -258,6 +262,7 @@ const CaseManager = () => {
                     macroscopy: existingCase.macroscopy,
                     microscopy: existingCase.microscopy,
                     diagnosis: existingCase.diagnosis,
+                    resultDetails: existingCase.resultDetails || {},
                     ihc: existingCase.ihc || '',
                     images: existingCase.images || [],
                     paymentType: existingCase.paymentType || 'Privado',
@@ -304,17 +309,19 @@ const CaseManager = () => {
         }
     };
 
+    const changeStudyContext = (patch) => {
+        const changed = (patch.organ !== undefined && patch.organ !== formData.organ) || (patch.examId !== undefined && patch.examId !== formData.examId);
+        if (!changed) { setFormData(prev => ({ ...prev, ...patch })); return; }
+        if (formData.resultDetails?._template && !window.confirm('Al cambiar el examen o el órgano se retirarán los campos cargados por la plantilla anterior, incluidas sus ediciones. ¿Desea continuar?')) return;
+        setFormData(prev => ({ ...clearAppliedTemplate(prev), ...patch }));
+    };
+
     const handleExamChange = (e) => {
         const selectedExamId = e.target.value;
         const selectedExam = exams.find(ex => ex.id === selectedExamId);
         const newPrice = calculatePrice(selectedExamId, formData.paymentType, formData.arsName);
 
-        setFormData(prev => ({
-            ...prev,
-            examId: selectedExamId,
-            type: selectedExam ? selectedExam.name : '',
-            price: newPrice
-        }));
+        changeStudyContext({ examId: selectedExamId, type: selectedExam ? selectedExam.name : '', price: newPrice });
     };
 
     const handlePaymentTypeChange = (e) => {
@@ -531,6 +538,12 @@ const CaseManager = () => {
 
     const handleSave = async (e) => {
         e.preventDefault();
+
+        const applied = formData.resultDetails?._template;
+        if (applied && (applied.organ !== formData.organ || applied.group !== settings?.resultTemplateExamGroups?.[String(formData.examId)])) {
+            alert('La plantilla cargada ya no corresponde al examen u órgano. Seleccione una plantilla compatible antes de guardar.');
+            return;
+        }
 
         // Run consistency check before saving
         const consistency = checkReportConsistency(formData);
@@ -909,7 +922,7 @@ const CaseManager = () => {
                                     search: [org.id, org.section_code, org.original_code].filter(Boolean).join(' ')
                                 }))}
                                 value={formData.organ}
-                                onChange={organ => setFormData(prev => ({ ...prev, organ }))}
+                                onChange={organ => changeStudyContext({ organ })}
                                 required
                             />
 
@@ -1015,7 +1028,7 @@ const CaseManager = () => {
                     {/* Macroscopy & Microscopy */}
                     <Card title="Descripción">
                         <div className="space-y-4">
-                            <div className="flex justify-end mb-2 gap-2">
+                            <div className="flex flex-wrap justify-end mb-2 gap-2">
                                 <Button
                                     type="button"
                                     variant="secondary"
@@ -1043,10 +1056,23 @@ const CaseManager = () => {
                                     <Microscope size={16} className="mr-2" />
                                     Módulo IHQ
                                 </Button>
+                                <ResultTemplatePicker
+                                    key={`${id || 'new'}:${formData.examId}:${formData.organ}`}
+                                    examId={formData.examId} organ={formData.organ}
+                                    catalog={settings?.resultTemplates || []}
+                                    groupsByExam={settings?.resultTemplateExamGroups || {}}
+                                    form={formData}
+                                    onApply={template => setFormData(applyStructuredTemplate(formData, template, formData.organ, settings?.resultTemplateExamGroups?.[String(formData.examId)]))}
+                                />
                             </div>
-                            <div className="flex gap-2">
+                            {formData.resultDetails?._template && <p role="status" className="rounded-md bg-blue-50 p-3 text-sm text-blue-800">
+                                Plantilla cargada: {formData.resultDetails._template.title}. Revise y complete los campos del estudio.
+                            </p>}
+                            {(!['C', 'L', 'HPV'].includes(studyGroup) || formData.macroscopy) && <div className="flex gap-2">
                                 <Input
                                     label="Macroscopía"
+                                    lang="es"
+                                    spellCheck
                                     textarea
                                     placeholder="Descripción de la muestra recibida..."
                                     value={formData.macroscopy}
@@ -1077,18 +1103,20 @@ const CaseManager = () => {
                                         </Button>
                                     </div>
                                 )}
-                            </div>
-                            <Input
-                                label="Microscopía"
+                            </div>}
+                            {(studyGroup !== 'HPV' || formData.microscopy) && <Input
+                                label={['C', 'L', 'CT'].includes(studyGroup) ? 'Descripción citológica' : 'Microscopía'}
+                                lang="es"
+                                spellCheck
                                 textarea
                                 placeholder="Descripción de los hallazgos microscópicos..."
                                 value={formData.microscopy}
                                 onChange={e => setFormData({ ...formData, microscopy: e.target.value })}
                                 className="h-32"
-                            />
+                            />}
 
                             {/* IHC Section */}
-                            <div className="flex gap-2 items-start">
+                            {(!['C', 'L', 'HPV'].includes(studyGroup) || formData.ihc) && <div className="flex gap-2 items-start">
                                 <Input
                                     label="Inmunohistoquímica"
                                     textarea
@@ -1122,8 +1150,13 @@ const CaseManager = () => {
                                         <FileText size={18} />
                                     </Button>
                                 </div>
-                            </div>
+                            </div>}
                         </div>
+                    </Card>
+
+                    <Card title={`Campos de ${formData.type || 'resultado'}`}>
+                        <StudyResultFields group={studyGroup}
+                            data={formData.resultDetails} onChange={resultDetails => setFormData(prev => ({ ...prev, resultDetails }))} />
                     </Card>
 
                     {/* Images */}
@@ -1298,17 +1331,7 @@ const CaseManager = () => {
                     />
 
                     {/* Final Diagnosis */}
-                    <Card title="Diagnóstico Definitivo">
-                        <ResultTemplatePicker
-                            key={`${id || 'new'}:${formData.examId}`}
-                            examId={formData.examId}
-                            examName={formData.type}
-                            catalog={settings?.resultTemplates || []}
-                            groupsByExam={settings?.resultTemplateExamGroups || {}}
-                            canManage={!!userRole?.permissions?.settings?.write || (isProductionMode && currentUser?.roleId === '1')}
-                            onSave={updateSettings}
-                            onInsert={(field, text) => setFormData(prev => ({ ...prev, [field]: appendTemplate(prev[field], text) }))}
-                        />
+                    <Card title={studyGroup === 'HPV' ? 'Resultado de HPV' : 'Diagnóstico Definitivo'}>
                         <Input
                             textarea
                             lang="es"

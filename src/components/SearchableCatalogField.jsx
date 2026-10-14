@@ -4,7 +4,7 @@ import { Search, X, Check } from 'lucide-react';
 
 const normalize = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
-export default function SearchableCatalogField({ label, title, placeholder, items, value, onChange, fallbackLabel, required = false }) {
+export default function SearchableCatalogField({ label, title, placeholder, items, value, onChange, fallbackLabel, required = false, compact = false, triggerText, disabled = false, emptyMessage = 'No se encontraron coincidencias.' }) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [invalid, setInvalid] = useState(false);
@@ -43,12 +43,12 @@ export default function SearchableCatalogField({ label, title, placeholder, item
     };
 
     return (
-        <div className="flex flex-col gap-1.5">
-            <label htmlFor={id} className="text-sm font-medium text-text-main">{label}</label>
-            <button ref={trigger} id={id} type="button" aria-haspopup="dialog" aria-expanded={open} aria-invalid={invalid || undefined}
+        <div className={compact ? 'inline-flex' : 'flex flex-col gap-1.5'}>
+            <label htmlFor={id} className={compact ? 'sr-only' : 'text-sm font-medium text-text-main'}>{label}</label>
+            <button ref={trigger} id={id} type="button" disabled={disabled} title={disabled ? 'Seleccione el examen y el órgano del caso' : undefined} aria-haspopup="dialog" aria-expanded={open} aria-invalid={invalid || undefined}
                 className={`flex w-full items-center justify-between gap-3 rounded-md border bg-white px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-primary ${invalid ? 'border-danger' : 'border-border'}`}
                 onClick={show}>
-                <span className={value ? 'text-text-main' : 'text-text-secondary'}>{selected?.label || (value ? fallbackLabel || String(value) : placeholder)}</span>
+                <span className={value || triggerText ? 'text-text-main' : 'text-text-secondary'}>{triggerText || selected?.label || (value ? fallbackLabel || String(value) : placeholder)}</span>
                 <Search size={16} className="shrink-0 text-text-secondary" aria-hidden="true" />
             </button>
             {/* Keep native form validation while the visible control opens a searchable dialog. */}
@@ -79,7 +79,7 @@ export default function SearchableCatalogField({ label, title, placeholder, item
                                     <span><span className="block text-sm font-medium text-text-main">{item.label}</span>{item.detail && <span className="block text-xs text-text-secondary">{item.detail}</span>}</span>
                                     {String(item.value) === String(value) && <Check size={18} className="shrink-0 text-primary" aria-label="Seleccionado" />}
                                 </button>
-                            )) : <p className="p-6 text-center text-sm text-text-secondary">No se encontraron coincidencias.</p>}
+                            )) : <p className="p-6 text-center text-sm text-text-secondary">{emptyMessage}</p>}
                         </div>
                     </div>
                 </div>, document.body
