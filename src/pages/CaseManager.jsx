@@ -1066,7 +1066,7 @@ const CaseManager = () => {
                                 />
                             </div>
                             {formData.resultDetails?._template && <p role="status" className="rounded-md bg-blue-50 p-3 text-sm text-blue-800">
-                                Plantilla cargada: {formData.resultDetails._template.title}. Revise y complete los campos del estudio.
+                                Plantilla cargada: <strong>{formData.resultDetails._template.title}</strong> Revise y complete los campos del estudio.
                             </p>}
                             {(!['C', 'L', 'HPV'].includes(studyGroup) || formData.macroscopy) && <div className="flex gap-2">
                                 <Input

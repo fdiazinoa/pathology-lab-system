@@ -5,7 +5,7 @@ import { SECTION_LABELS, structureTemplate, templateMatchesOrgan } from '../serv
 
 export default function ResultTemplatePicker({ examId, organ, catalog, groupsByExam, onApply, form }) {
     const [error, setError] = useState('');
-    const structured = useMemo(() => catalog.map(item => item.structureVersion === 1 && item.sections ? item : structureTemplate(item)), [catalog]);
+    const structured = useMemo(() => catalog.map(item => item.structureVersion === 2 && item.sections ? item : structureTemplate(item)), [catalog]);
     const studyTemplates = templatesForExam(structured, groupsByExam, examId);
     const compatible = studyTemplates.filter(item => templateMatchesOrgan(item, organ)).sort((a, b) => a.title.localeCompare(b.title, 'es'));
     const applied = form.resultDetails?._template;

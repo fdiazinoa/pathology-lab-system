@@ -18,7 +18,8 @@ export const STUDY_FIELDS = {
 export function formatTemplateText(text) {
     return String(text || '').replace(/\r\n?/g, '\n').replace(/[ \t]{2,}/g, '\n')
         .replace(/\.\s*-\s*/g, '.\n').replace(/\n\s*-\s*/g, '\n')
-        .split('\n').map(line => line.trim().replace(/^[-•]\s*/, '')).filter(Boolean).join('\n');
+        .split('\n').map(line => line.trim().replace(/^[-•]\s*/, '')).filter(Boolean).join('\n')
+        .replace(/^(Metaplasia|Hiperplasia|C[eé]lulas|Colonias|Inflamatorio|Frotis|Material)\n(?=\S)/gim, '$1 ');
 }
 
 const add = (sections, key, value) => {
@@ -70,7 +71,7 @@ export function structureTemplate(template) {
     const first = titleSource.split('\n').find(line => line && !line.endsWith(':')) || titleSource.split('\n').find(Boolean) || template.code;
     const sentence = first.split(/\.\s+/)[0].replace(/^\d+[.)-]\s*/, '');
     const title = sentence.length > 85 ? `${sentence.slice(0, 82).replace(/\s+\S*$/, '')}…` : sentence;
-    return { ...template, title, sections, structureVersion: 1 };
+    return { ...template, title, sections, structureVersion: 2 };
 }
 
 // Anatomical terms explicitly present in the source. No diagnosis-to-organ guesses.
