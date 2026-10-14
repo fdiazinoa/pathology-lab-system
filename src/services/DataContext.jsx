@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import DemoDataProvider from './providers/DemoDataProvider';
 import ProductionDataProvider from './providers/ProductionDataProvider';
-import SupabaseDataProvider from './providers/SupabaseDataProvider';
+import SupabaseDataProvider from './providers/AuthenticatedSupabaseDataProvider';
 import BackupService from './BackupService';
 import TelemetryService from './TelemetryService';
 
@@ -74,12 +74,12 @@ export const DataProvider = ({ children }) => {
         if (!dataProvider) return;
         setLoading(true);
         try {
+            setCurrentUser(await dataProvider.getCurrentUser());
             const [
-                loadedUser, loadedPatients, loadedCases, loadedGlobalCases, loadedAudit,
+                loadedPatients, loadedCases, loadedGlobalCases, loadedAudit,
                 loadedDeliveries, loadedSettings, loadedHistory, loadedConfig,
                 loadedInsurers, loadedOrgans, loadedDoctors, loadedEquipment, loadedRoles, loadedUsers, loadedExams, loadedCenters
             ] = await Promise.all([
-                dataProvider.getCurrentUser(),
                 dataProvider.getPatients(),
                 dataProvider.getCases(),
                 dataProvider.getGlobalCases(),
@@ -98,7 +98,6 @@ export const DataProvider = ({ children }) => {
                 dataProvider.getCenters()
             ]);
 
-            setCurrentUser(loadedUser);
             setPatients(loadedPatients);
             setCases(loadedCases);
             setGlobalCases(loadedGlobalCases);
