@@ -36,6 +36,8 @@ class DemoDataProvider extends DataProvider {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
+    get supportsGoogleProfileLogin() { return true; }
+
     // --- Authentication & Users ---
     async login(email, password) {
         await this._delay(800);

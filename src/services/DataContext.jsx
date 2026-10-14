@@ -170,6 +170,9 @@ export const DataProvider = ({ children }) => {
 
     const loginWithGoogleProfile = useCallback(async (profile) => {
         if (!dataProvider) return { success: false, message: 'Provider not ready' };
+        if (!dataProvider.supportsGoogleProfileLogin || typeof dataProvider.loginWithGoogleProfile !== 'function') {
+            return { success: false, message: 'El acceso con Google no está configurado en este modo. Use su correo y contraseña registrados.' };
+        }
         const result = await dataProvider.loginWithGoogleProfile(profile);
         if (result.success) setCurrentUser(result.user);
         return result;
@@ -576,6 +579,7 @@ export const DataProvider = ({ children }) => {
         resetDemoData,
         runMigration,
         currentUser, setCurrentUser, login, loginWithGoogle, loginWithGoogleProfile, logout,
+        canLoginWithGoogle: !loading && dataProvider?.supportsGoogleProfileLogin === true,
         patients, addPatient, updatePatient,
         cases, setCases, getCase: (id) => cases.find(c => c.id === id), addCase, updateCase, deleteCase,
         updateCaseStage, updateCaseInterconsultation, updateCaseTumorBoard,

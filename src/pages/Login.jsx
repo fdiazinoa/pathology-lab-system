@@ -7,7 +7,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 
 const Login = () => {
     const navigate = useNavigate();
-    const { login, loginWithGoogle, loginWithGoogleProfile, settings } = useData();
+    const { login, loginWithGoogleProfile, canLoginWithGoogle, settings } = useData();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -69,6 +69,7 @@ const Login = () => {
 
     const handleSocialLogin = (provider) => {
         if (provider === 'Google') {
+            if (!canLoginWithGoogle) return;
             googleLogin();
         } else {
             alert(`La integración con ${provider} se configurará en la siguiente fase.`);
@@ -175,7 +176,7 @@ const Login = () => {
 
                 {/* Social Login */}
                 <div className="space-y-3">
-                    <button
+                    {canLoginWithGoogle && <button
                         onClick={() => handleSocialLogin('Google')}
                         className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 font-medium hover:bg-gray-50 transition-all active:scale-[0.99]"
                     >
@@ -198,7 +199,7 @@ const Login = () => {
                             />
                         </svg>
                         Iniciar sesión con Google
-                    </button>
+                    </button>}
 
                     <button
                         onClick={() => handleSocialLogin('Microsoft')}
