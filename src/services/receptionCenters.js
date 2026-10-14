@@ -21,13 +21,17 @@ export const SANTO_DOMINGO_CENTERS = [
 const centerKey = (name) => String(name ?? '').normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/\s+/g, ' ');
 
-export const getReceptionCenters = (configuredCenters = []) => {
+export const getReceptionCenters = (configuredCenters = [], includeDefaults = true) => {
     const centers = new Map();
+    const configuredNames = new Set();
     for (const center of configuredCenters) {
-        if (center.id && center.name) centers.set(centerKey(center.name), center);
+        if (center.id && center.name) {
+            centers.set(center.id, center);
+            configuredNames.add(centerKey(center.name));
+        }
     }
-    for (const center of SANTO_DOMINGO_CENTERS) {
-        if (!centers.has(centerKey(center.name))) centers.set(centerKey(center.name), center);
+    for (const center of includeDefaults ? SANTO_DOMINGO_CENTERS : []) {
+        if (!configuredNames.has(centerKey(center.name))) centers.set(center.id, center);
     }
     return [...centers.values()].filter(center => center.is_active !== false)
         .sort((a, b) => a.name.localeCompare(b.name, 'es'));

@@ -11,8 +11,8 @@ import { getReceptionCenters } from '../services/receptionCenters';
 
 const SampleReception = () => {
     const navigate = useNavigate();
-    const { patients, doctors, centers: configuredCenters, insurers, addCase, addPatient, currentUser, addAuditLog } = useData();
-    const originCenters = getReceptionCenters(configuredCenters);
+    const { patients, doctors, isProductionMode, centers: configuredCenters, insurers, addCase, addPatient, currentUser, addAuditLog } = useData();
+    const originCenters = getReceptionCenters(configuredCenters, !isProductionMode);
     const [loading, setLoading] = useState(false);
     const searchRef = useRef(null);
 
@@ -245,7 +245,7 @@ const SampleReception = () => {
                             >
                                 <option value="">Seleccionar Centro...</option>
                                 {originCenters && originCenters.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                    <option key={c.id} value={c.id}>{c.name} ({c.id})</option>
                                 ))}
                             </select>
                         </div>
