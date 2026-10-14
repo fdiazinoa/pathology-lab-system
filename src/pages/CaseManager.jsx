@@ -31,14 +31,14 @@ const CaseManager = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [searchParams] = useSearchParams();
-    const { patients, addCase, updateCase, deleteCase, getCase, cases, insurers, organs, doctors, settings, updateCaseInterconsultation, exams, currentUser, roles, isProductionMode, logUsageEvent } = useData();
+    const { patients, addCase, updateCase, deleteCase, getCase, cases, insurers, organs, doctors, settings, updateCaseInterconsultation, exams, currentUser, roles, isProductionMode, logUsageEvent, can } = useData();
     const currentCase = id ? cases.find(c => c.id === id) : null;
 
     console.log("CaseManager settings:", settings);
 
     // Permission Check
     const userRole = roles.find(r => r.id === currentUser?.roleId);
-    const canViewFinancials = userRole?.permissions?.financials?.read;
+    const canViewFinancials = can('financials', 'read');
 
     const [loading, setLoading] = useState(false);
     const [analyzing, setAnalyzing] = useState(false);
@@ -361,6 +361,7 @@ const CaseManager = () => {
 
 
     const handleAnalyze = async () => {
+        if (!can('images', 'analyze')) return alert('No tiene permiso para usar el análisis con IA.');
         if (formData.images.length === 0 && !formData.microscopy) {
             alert("Por favor sube imágenes o escribe una descripción microscópica para analizar.");
             return;
@@ -427,6 +428,7 @@ const CaseManager = () => {
     };
 
     const handlePreClassify = async () => {
+        if (!can('images', 'analyze')) return alert('No tiene permiso para usar el análisis con IA.');
         if (formData.images.length === 0) {
             alert("Sube al menos una imagen para pre-clasificar.");
             return;
@@ -443,6 +445,7 @@ const CaseManager = () => {
     };
 
     const handleQuantitativeAnalysis = async (type) => {
+        if (!can('images', 'analyze')) return alert('No tiene permiso para usar el análisis con IA.');
         if (formData.images.length === 0) {
             alert("Sube al menos una imagen para analizar.");
             return;
@@ -465,6 +468,7 @@ const CaseManager = () => {
     };
 
     const handleConversationalGenerate = async () => {
+        if (!can('images', 'analyze')) return alert('No tiene permiso para usar el análisis con IA.');
         if (!conversationalText.trim()) {
             alert("Por favor escribe o dicta el reporte primero.");
             return;
@@ -492,6 +496,7 @@ const CaseManager = () => {
     };
 
     const handleQualityControl = async () => {
+        if (!can('images', 'analyze')) return alert('No tiene permiso para usar el análisis con IA.');
         if (formData.images.length === 0) {
             alert("Sube al menos una imagen para verificar calidad.");
             return;
@@ -557,7 +562,7 @@ const CaseManager = () => {
         setLoading(true);
 
         // 1. AI Validation (Skip if disabled)
-        if (!settings?.aiEnabled) {
+        if (!settings?.aiEnabled || !can('images', 'analyze')) {
             proceedWithSave(false);
             return;
         }
@@ -642,11 +647,11 @@ const CaseManager = () => {
             patientName: selectedPatient ? (selectedPatient.name || selectedPatient.full_name) : 'Desconocido',
             age: selectedPatient ? selectedPatient.age : '?',
             sex: selectedPatient ? selectedPatient.sex : '?',
-            status: 'Finalizado',
             createdAt: id ? (existingCase?.createdAt) : new Date().toISOString().split('T')[0],
             updatedAt: new Date().toISOString().split('T')[0],
             aiCertified: isCertified,
             ...formData, // Overwrite with form data
+            status: 'Borrador',
             // Ensure nested objects are merged if needed, but formData has the full state for these:
             quantitativeResults: { ...(existingCase?.quantitativeResults || {}), ...formData.quantitativeResults },
             secondLook: { ...(existingCase?.secondLook || {}), ...formData.secondLook }
@@ -675,7 +680,7 @@ const CaseManager = () => {
                     // For new cases, we wait a bit more to ensure state propagation or just navigate
                 }
 
-                if (formData.contributeToAi) {
+                if (formData.contributeToAi && can('images', 'analyze')) {
                     try {
                         await trainModel(caseWithLog);
                         // In a real app, we might show a toast here, for now we will alert
@@ -809,7 +814,7 @@ const CaseManager = () => {
                 )}
 
                 {/* AI Conversational Assistant Toggle */}
-                {settings?.aiEnabled && (
+                {settings?.aiEnabled && can('images', 'analyze') && (
                     <div className="flex items-center gap-2 mb-6">
                         <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-full border border-blue-200">
                             <Wand2 size={18} className="text-blue-600" />
@@ -1032,6 +1037,7 @@ const CaseManager = () => {
                                 <Button
                                     type="button"
                                     variant="secondary"
+                                    permission={['macroscopy', 'read']}
                                     onClick={() => handleModuleAccess('Módulo Macroscopía', `/cases/${id}/macroscopy`)}
                                     className="text-orange-600 border-orange-200 hover:bg-orange-50"
                                 >
@@ -1041,6 +1047,7 @@ const CaseManager = () => {
                                 <Button
                                     type="button"
                                     variant="secondary"
+                                    permission={['microscopy', 'read']}
                                     onClick={() => handleModuleAccess('Módulo Microscopía', `/cases/${id}/microscopy`)}
                                     className="text-blue-600 border-blue-200 hover:bg-blue-50"
                                 >
@@ -1050,6 +1057,7 @@ const CaseManager = () => {
                                 <Button
                                     type="button"
                                     variant="secondary"
+                                    permission={['ihc', 'read']}
                                     onClick={() => handleModuleAccess('Módulo IHQ', `/cases/${id}/immunohistochemistry`)}
                                     className="text-purple-600 border-purple-200 hover:bg-purple-50"
                                 >
@@ -1057,12 +1065,19 @@ const CaseManager = () => {
                                     Módulo IHQ
                                 </Button>
                                 <ResultTemplatePicker
+                                    disabled={!can('templates', 'use') || !can('reports', 'edit')}
                                     key={`${id || 'new'}:${formData.examId}:${formData.organ}`}
                                     examId={formData.examId} organ={formData.organ}
                                     catalog={settings?.resultTemplates || []}
                                     groupsByExam={settings?.resultTemplateExamGroups || {}}
                                     form={formData}
-                                    onApply={template => setFormData(applyStructuredTemplate(formData, template, formData.organ, settings?.resultTemplateExamGroups?.[String(formData.examId)]))}
+                                    onApply={template => {
+                                        for (const field of Object.keys(template.sections)) {
+                                            const section = ['macroscopy', 'microscopy'].includes(field) ? field : 'reports';
+                                            if (!can(section, 'edit')) throw new Error('No tiene permiso para modificar todos los campos de esta plantilla.');
+                                        }
+                                        setFormData(applyStructuredTemplate(formData, template, formData.organ, settings?.resultTemplateExamGroups?.[String(formData.examId)]));
+                                    }}
                                 />
                             </div>
                             {formData.resultDetails?._template && <p role="status" className="rounded-md bg-blue-50 p-3 text-sm text-blue-800">
@@ -1070,6 +1085,7 @@ const CaseManager = () => {
                             </p>}
                             {(!['C', 'L', 'HPV'].includes(studyGroup) || formData.macroscopy) && <div className="flex gap-2">
                                 <Input
+                                    disabled={!can('macroscopy', 'edit')}
                                     label="Macroscopía"
                                     lang="es"
                                     spellCheck
@@ -1079,7 +1095,7 @@ const CaseManager = () => {
                                     onChange={e => setFormData({ ...formData, macroscopy: e.target.value })}
                                     className="flex-1"
                                 />
-                                {settings?.aiEnabled && settings?.openaiApiKey && (
+                                {settings?.aiEnabled && can('images', 'analyze') && settings?.openaiApiKey && (
                                     <div className="mt-8">
                                         <Button
                                             type="button"
@@ -1105,6 +1121,7 @@ const CaseManager = () => {
                                 )}
                             </div>}
                             {(studyGroup !== 'HPV' || formData.microscopy) && <Input
+                                disabled={!can('microscopy', 'edit')}
                                 label={['C', 'L', 'CT'].includes(studyGroup) ? 'Descripción citológica' : 'Microscopía'}
                                 lang="es"
                                 spellCheck
@@ -1118,6 +1135,7 @@ const CaseManager = () => {
                             {/* IHC Section */}
                             {(!['C', 'L', 'HPV'].includes(studyGroup) || formData.ihc) && <div className="flex gap-2 items-start">
                                 <Input
+                                    disabled={!can('ihc', 'edit')}
                                     label="Inmunohistoquímica"
                                     textarea
                                     placeholder="Resultados de marcadores IHQ..."
@@ -1155,7 +1173,7 @@ const CaseManager = () => {
                     </Card>
 
                     <Card title={`Campos de ${formData.type || 'resultado'}`}>
-                        <StudyResultFields group={studyGroup}
+                        <StudyResultFields disabled={!can('reports', 'edit')} group={studyGroup}
                             data={formData.resultDetails} onChange={resultDetails => setFormData(prev => ({ ...prev, resultDetails }))} />
                     </Card>
 
@@ -1223,7 +1241,7 @@ const CaseManager = () => {
                             </div>
                         )}
 
-                        {settings?.aiEnabled && settings?.openaiApiKey && formData.aiClassification && (
+                        {settings?.aiEnabled && can('images', 'analyze') && settings?.openaiApiKey && formData.aiClassification && (
                             <div className={`mt - 4 p - 3 rounded - lg border ${formData.aiClassification.nature === 'Maligno' ? 'bg-red-50 border-red-200' :
                                 formData.aiClassification.nature === 'Sospechoso' ? 'bg-yellow-50 border-yellow-200' :
                                     'bg-green-50 border-green-200'
@@ -1252,7 +1270,7 @@ const CaseManager = () => {
                         )}
 
                         {/* Quantitative Analysis Section */}
-                        {settings?.aiEnabled && settings?.openaiApiKey && (
+                        {settings?.aiEnabled && can('images', 'analyze') && settings?.openaiApiKey && (
                             <div className="mt-6 border-t border-border pt-4">
                                 <h4 className="text-sm font-bold text-text-main mb-3 flex items-center gap-2">
                                     <Activity size={16} className="text-primary" />
@@ -1336,11 +1354,11 @@ const CaseManager = () => {
                             textarea
                             lang="es"
                             spellCheck
+                            disabled={!can('reports', 'edit')}
                             placeholder="Escriba el diagnóstico final..."
                             value={formData.diagnosis}
                             onChange={e => setFormData({ ...formData, diagnosis: e.target.value })}
                             className="min-h-[120px] text-lg font-medium"
-                            required
                         />
                     </Card>
 
@@ -1365,6 +1383,7 @@ const CaseManager = () => {
                             <Button
                                 type="button"
                                 variant="danger"
+                                permission={['cases', 'delete']}
                                 onClick={handleDelete}
                                 className="mr-auto"
                             >
@@ -1375,7 +1394,7 @@ const CaseManager = () => {
                         <Button type="button" variant="ghost" onClick={() => navigate('/dashboard')}>Cancelar</Button>
                         <Button type="submit" isLoading={loading} size="lg">
                             <Save size={20} className="mr-2" />
-                            Guardar Informe
+                            Guardar borrador
                         </Button>
                     </div>
                 </form>

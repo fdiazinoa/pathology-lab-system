@@ -240,7 +240,7 @@ export { HELP_SECTIONS };
 
 const Settings = () => {
     const navigate = useNavigate();
-    const { settings, updateSettings, configHistory, currentUser, exams, testPrinter, isProductionMode, switchSystemMode, resetDemoData, runMigration, createBackup, restoreBackup, getBackupHistory, downloadBackup } = useData();
+    const { can, settings, updateSettings, configHistory, currentUser, exams, testPrinter, isProductionMode, switchSystemMode, resetDemoData, runMigration, createBackup, restoreBackup, getBackupHistory, downloadBackup } = useData();
     const { config: aiConfig, updateConfig: updateAIConfig } = useAIConfig();
     const [formData, setFormData] = useState(settings);
     const [loading, setLoading] = useState(false);
@@ -510,7 +510,7 @@ const Settings = () => {
 
             {/* Tabs */}
             <div className="flex border-b border-border">
-                {currentUser?.roleId === '1' && <button type="button" className={`px-4 py-2 text-sm font-medium ${activeTab === 'templates' ? 'border-b-2 border-primary text-primary' : 'text-text-secondary'}`} onClick={() => setActiveTab('templates')}>Plantillas</button>}
+                {can('templates', 'read') && <button type="button" className={`px-4 py-2 text-sm font-medium ${activeTab === 'templates' ? 'border-b-2 border-primary text-primary' : 'text-text-secondary'}`} onClick={() => setActiveTab('templates')}>Plantillas</button>}
                 <button
                     className={`px-4 py-2 font-medium text-sm flex items-center gap-2 ${activeTab === 'general' ? 'border-b-2 border-primary text-primary' : 'text-text-secondary hover:text-text-main'}`}
                     onClick={() => setActiveTab('general')}
@@ -529,7 +529,7 @@ const Settings = () => {
 
 
 
-                {isProductionMode && currentUser?.roleId === '1' && (
+                {isProductionMode && can('system', 'edit') && (
                     <button
                         className={`px-4 py-2 font-medium text-sm flex items-center gap-2 ${activeTab === 'migration' ? 'border-b-2 border-primary text-primary' : 'text-text-secondary hover:text-text-main'}`}
                         onClick={() => setActiveTab('migration')}
@@ -556,7 +556,7 @@ const Settings = () => {
                 </button>
             </div>
 
-            {currentUser?.roleId === '1' && activeTab === 'templates' && <ResultTemplateCatalogSettings settings={settings} exams={exams} onSave={updateSettings} />}
+            {can('templates', 'read') && activeTab === 'templates' && <ResultTemplateCatalogSettings settings={settings} exams={exams} onSave={updateSettings} />}
             {!isProductionMode && activeTab === 'general' && (
                 <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -576,7 +576,7 @@ const Settings = () => {
 
             {/* --- INSTALLATION WIZARD (ADMIN ONLY) --- */}
             {
-                currentUser?.roleId === '1' && (
+                can('system', 'edit') && (
                     <div className="mt-8 pt-8 border-t border-gray-200">
                         <h3 className="text-lg font-semibold text-text-main mb-4 flex items-center gap-2">
                             <Sparkles size={20} className="text-blue-600" />
@@ -608,7 +608,7 @@ const Settings = () => {
 
             {/* --- SYSTEM MODE CONTROL (ADMIN ONLY) --- */}
             {
-                currentUser?.roleId === '1' && (
+                can('system', 'edit') && (
                     <div className="mt-8 pt-8 border-t border-gray-200">
                         <h3 className="text-lg font-semibold text-text-main mb-4 flex items-center gap-2">
                             <ShieldAlert size={20} className="text-red-600" />
@@ -806,7 +806,7 @@ const Settings = () => {
                                     </div>
                                 </div>
 
-                                {currentUser?.roleId === '1' && (
+                                {can('system', 'edit') && (
                                     <div className="flex items-center justify-between border-t border-gray-100 pt-4">
                                         <div>
                                             <h3 className="font-medium text-text-main">Escaneo QR Obligatorio en Etapas Internas</h3>

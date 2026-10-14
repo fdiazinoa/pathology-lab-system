@@ -7,7 +7,7 @@ import SignaturePad from '../components/SignaturePad';
 import { useData } from '../services/DataContext';
 
 const DoctorsManager = () => {
-    const { centers, doctors, addDoctor, updateDoctor, deleteDoctor } = useData();
+    const { centers, doctors, addDoctor, updateDoctor, deleteDoctor, can } = useData();
     const [showForm, setShowForm] = useState(false);
     const [search, setSearch] = useState('');
     const centerNames = new Map(centers.map(center => [center.id, center.name]));
@@ -76,7 +76,7 @@ const DoctorsManager = () => {
                     <p className="text-text-secondary">Administra el maestro de médicos del laboratorio.</p>
                     </div>
                 </div>
-                {!showForm && <Button onClick={() => setShowForm(true)}><Plus size={18} className="mr-2" />Nuevo Doctor</Button>}
+                {!showForm && <Button permission={['doctors', 'create']} onClick={() => setShowForm(true)}><Plus size={18} className="mr-2" />Nuevo Doctor</Button>}
             </div>
 
             <div className="space-y-6">
@@ -168,9 +168,9 @@ const DoctorsManager = () => {
                                         {doctor.email && <div className="text-xs mt-1">{doctor.email}</div>}
                                     </td>
                                     <td className="px-4 py-3"><div className="flex gap-1">
-                                        <button onClick={() => handleEdit(doctor)} aria-label={`Editar ${doctor.name}`} title="Editar"
+                                        <button disabled={!can('doctors', 'edit')} onClick={() => handleEdit(doctor)} aria-label={`Editar ${doctor.name}`} title="Editar"
                                             className="p-2 text-text-secondary hover:text-primary hover:bg-blue-50 rounded-md"><Edit2 size={16} /></button>
-                                        <button onClick={() => handleDelete(doctor.id)} aria-label={`Eliminar ${doctor.name}`} title="Eliminar"
+                                        <button disabled={!can('doctors', 'delete')} onClick={() => handleDelete(doctor.id)} aria-label={`Eliminar ${doctor.name}`} title="Eliminar"
                                             className="p-2 text-text-secondary hover:text-danger hover:bg-red-50 rounded-md"><Trash2 size={16} /></button>
                                     </div></td>
                                 </tr>)}

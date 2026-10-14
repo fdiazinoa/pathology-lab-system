@@ -1,5 +1,6 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { permissionForPath } from './services/permissions';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -15,6 +16,7 @@ import IHCModule from './pages/IHCModule';
 import ImagesModule from './pages/ImagesModule';
 import SettingsPage from './pages/Settings';
 import UsersManager from './pages/UsersManager';
+import ResultTemplatesManager from './pages/ResultTemplatesManager';
 import RolesManager from './pages/RolesManager';
 import TariffsManager from './pages/TariffsManager';
 import DoctorsManager from './pages/DoctorsManager';
@@ -49,8 +51,9 @@ import BackupConfig from './pages/setup/steps/BackupConfig';
 import Summary from './pages/setup/steps/Summary';
 
 // Protected Route Component
-const ProtectedRoute = ({ children, allowedRoles = [] }) => {
-    const { currentUser, loading } = useData();
+const ProtectedRoute = ({ children }) => {
+    const { currentUser, loading, can } = useData();
+    const location = useLocation();
     const isSetupCompleted = localStorage.getItem('setupCompleted') === 'true';
 
     if (!isSetupCompleted) {
@@ -64,9 +67,9 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     }
 
     // Check role permission
-    if (allowedRoles.length > 0 && !allowedRoles.includes(currentUser.roleId)) {
+    if (!can(...permissionForPath(location.pathname))) {
         // Redirect to dashboard if authorized, or login if not
-        return <Navigate to="/dashboard" replace />;
+        return <div className="p-10" role="alert">No tiene permiso para acceder a esta sección. <a href="/">Volver al inicio</a></div>;
     }
 
     return children;
@@ -228,6 +231,7 @@ const AppRoutes = () => {
                     </Layout>
                 </ProtectedRoute>
             } />
+            <Route path="/templates" element={<ProtectedRoute><Layout><ResultTemplatesManager /></Layout></ProtectedRoute>} />
             <Route path="/roles" element={
                 <ProtectedRoute allowedRoles={['1']}>
                     <Layout>

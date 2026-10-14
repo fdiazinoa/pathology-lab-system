@@ -7,11 +7,12 @@ import {
     Package, Microscope, History, ShieldCheck, ShieldAlert, FlaskConical,
     Dna, BarChart3, BookOpen, Building
 } from 'lucide-react';
+import { permissionForPath } from '../services/permissions';
 import { useData } from '../services/DataContext';
 
 const Layout = ({ children }) => {
     const location = useLocation();
-    const { logout, currentUser, roles, isProductionMode } = useData();
+    const { logout, currentUser, roles, isProductionMode, can } = useData();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // Get user role name
@@ -65,9 +66,10 @@ const Layout = ({ children }) => {
             category: 'Configuración',
             items: [
                 { path: '/users', label: 'Usuarios', icon: Users, allowedRoles: ['1'] },
+                { path: '/templates', label: 'Plantillas', icon: FilePlus },
                 { path: '/roles', label: 'Roles y Permisos', icon: Shield, allowedRoles: ['1'] },
                 { path: '/audit-log', label: 'Registro de Auditoría', icon: History, allowedRoles: ['1'] },
-                ...(userRoleName === 'Administrador' ? [{ path: '/usage-dashboard', label: 'Dashboard de Uso', icon: BarChart3, allowedRoles: ['1'] }] : []),
+                ...(can('audit', 'read') ? [{ path: '/usage-dashboard', label: 'Dashboard de Uso', icon: BarChart3, allowedRoles: ['1'] }] : []),
                 { path: '/settings', label: 'Configuración', icon: Settings, allowedRoles: ['1', '2'] },
                 { path: '/help', label: 'Ayuda', icon: BookOpen, allowedRoles: ['1', '2', '3', '4'] },
             ]
@@ -93,7 +95,7 @@ const Layout = ({ children }) => {
                 <div className="flex flex-col gap-6">
                     {navCategories.map((group) => {
                         const visibleItems = group.items.filter(item =>
-                            !item.allowedRoles || (currentUser?.roleId && item.allowedRoles.includes(currentUser.roleId))
+                            can(...permissionForPath(item.path))
                         );
 
                         if (visibleItems.length === 0) return null;

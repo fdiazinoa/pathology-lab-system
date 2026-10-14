@@ -6,7 +6,7 @@ import Input from '../components/Input';
 import { useData } from '../services/DataContext';
 
 const CentersManager = () => {
-    const { centers, addCenter, updateCenter, deleteCenter } = useData();
+    const { centers, addCenter, updateCenter, deleteCenter, can } = useData();
     const [search, setSearch] = useState('');
     const normalize = (value) => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
     const terms = normalize(search).split(/\s+/).filter(Boolean);
@@ -70,7 +70,7 @@ const CentersManager = () => {
                     <p className="text-text-secondary">Administra los hospitales y clínicas de procedencia.</p>
                 </div>
                 {!showForm && (
-                    <Button onClick={() => setShowForm(true)}>
+                    <Button permission={['centers', 'create']} onClick={() => setShowForm(true)}>
                         <Plus size={18} className="mr-2" />
                         Nuevo Centro
                     </Button>
@@ -166,11 +166,11 @@ const CentersManager = () => {
                                                 className="p-2 text-blue-600 hover:bg-blue-50 rounded-md">
                                                 <MapPin size={16} />
                                             </a>}
-                                            <button onClick={() => handleEdit(center)} aria-label={`Editar ${center.name}`} title="Editar"
+                                            <button disabled={!can('centers', 'edit')} onClick={() => handleEdit(center)} aria-label={`Editar ${center.name}`} title="Editar"
                                                 className="p-2 text-text-secondary hover:text-primary hover:bg-blue-50 rounded-md">
                                                 <Edit2 size={16} />
                                             </button>
-                                            <button onClick={() => handleDelete(center.id)} aria-label={`Eliminar ${center.name}`} title="Eliminar"
+                                            <button disabled={!can('centers', 'delete')} onClick={() => handleDelete(center.id)} aria-label={`Eliminar ${center.name}`} title="Eliminar"
                                                 className="p-2 text-text-secondary hover:text-danger hover:bg-red-50 rounded-md">
                                                 <Trash2 size={16} />
                                             </button>
@@ -183,7 +183,7 @@ const CentersManager = () => {
                                     {centers.length === 0 ? <>
                                         <Building size={32} className="mx-auto mb-3 opacity-50" />
                                         <p>No hay centros registrados.</p>
-                                        <Button variant="ghost" onClick={() => setShowForm(true)} className="mt-2">Crear el primero</Button>
+                                        <Button variant="ghost" permission={['centers', 'create']} onClick={() => setShowForm(true)} className="mt-2">Crear el primero</Button>
                                     </> : <>
                                         <p>No se encontraron centros con esos datos.</p>
                                         <Button variant="ghost" onClick={() => setSearch('')} className="mt-2">Limpiar búsqueda</Button>

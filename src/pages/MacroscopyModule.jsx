@@ -10,7 +10,7 @@ import { useData } from '../services/DataContext';
 const MacroscopyModule = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { getCase, updateCase, addImage, settings, currentUser } = useData();
+    const { getCase, updateCase, addImage, settings, currentUser, can } = useData();
 
     // Load case data
     const caseData = getCase(id);
@@ -78,7 +78,8 @@ const MacroscopyModule = () => {
         }
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
+        try {
         const generatedText = generateText(macroscopyData);
 
         const logEntry = {
@@ -88,7 +89,7 @@ const MacroscopyModule = () => {
             details: 'Se actualizaron los datos macroscópicos estructurados.'
         };
 
-        updateCase({
+        await updateCase({
             ...caseData,
             macroscopyStructured: macroscopyData,
             macroscopy_text: generatedText,
@@ -96,9 +97,11 @@ const MacroscopyModule = () => {
             auditLogs: [...(caseData.auditLogs || []), logEntry]
         });
         alert('Datos de macroscopía guardados y sincronizados con el informe.');
+        } catch (failure) { alert(failure.message); }
     };
 
-    const handleFinalize = () => {
+    const handleFinalize = async () => {
+        try {
         const generatedText = generateText(macroscopyData);
 
         const logEntry = {
@@ -108,7 +111,7 @@ const MacroscopyModule = () => {
             details: 'Módulo de macroscopía finalizado y enviado a procesamiento.'
         };
 
-        updateCase({
+        await updateCase({
             ...caseData,
             macroscopyStructured: macroscopyData,
             macroscopy_text: generatedText,
@@ -118,6 +121,7 @@ const MacroscopyModule = () => {
         });
         alert('Macroscopía finalizada. Caso enviado a Procesamiento Histológico.');
         navigate(`/cases/${id}/edit`);
+        } catch (failure) { alert(failure.message); }
     };
 
     const generateText = (data) => {
@@ -158,11 +162,11 @@ const MacroscopyModule = () => {
                         <Images size={18} className="mr-2" />
                         Ver Galería
                     </Button>
-                    <Button variant="secondary" onClick={handleSave}>
+                    <Button permission={['macroscopy', 'edit']} variant="secondary" onClick={handleSave}>
                         <Save size={18} className="mr-2" />
                         Guardar Borrador
                     </Button>
-                    <Button onClick={handleFinalize} className="bg-orange-600 hover:bg-orange-700 text-white">
+                    <Button disabled={!can('macroscopy', 'edit')} onClick={handleFinalize} className="bg-orange-600 hover:bg-orange-700 text-white">
                         <Package size={18} className="mr-2" />
                         Enviar a Procesamiento
                     </Button>
@@ -191,7 +195,7 @@ const MacroscopyModule = () => {
                 </div>
 
                 {/* Right: AI Panel */}
-                {settings?.aiEnabled && (
+                {settings?.aiEnabled && can('images', 'analyze') && (
                     <div className="w-1/4 min-w-[300px] bg-white border-l border-gray-200 overflow-y-auto">
                         <MacroAIPanel
                             activeImage={activeImage}

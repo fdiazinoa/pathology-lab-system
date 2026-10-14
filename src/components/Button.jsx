@@ -1,4 +1,5 @@
 import React from 'react';
+import { useData } from '../services/DataContext';
 
 const Button = ({
     children,
@@ -6,8 +7,11 @@ const Button = ({
     size = 'md',
     className = '',
     isLoading = false,
+    permission,
     ...props
 }) => {
+    const data = useData();
+    const denied = permission && !data?.can(...permission);
     const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
 
     const variants = {
@@ -26,8 +30,8 @@ const Button = ({
     return (
         <button
             className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
-            disabled={isLoading || props.disabled}
             {...props}
+            disabled={Boolean(isLoading || props.disabled || denied)}
         >
             {isLoading ? (
                 <span className="mr-2 animate-spin">⟳</span>

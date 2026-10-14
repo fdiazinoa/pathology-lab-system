@@ -12,7 +12,7 @@ import { generateHeatmapData, validateHistologyImage } from '../services/aiServi
 const MicroscopyModule = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { getCase, updateCase, addImage, settings, currentUser } = useData();
+    const { getCase, updateCase, addImage, settings, currentUser, can } = useData();
 
     // Load case data
     const caseData = getCase(id);
@@ -59,7 +59,7 @@ const MicroscopyModule = () => {
 
     // Generate Heatmap when toggled ON for the first time
     useEffect(() => {
-        if (showHeatmap && activeImage && heatmapData.length === 0) {
+        if (can('images', 'analyze') && showHeatmap && activeImage && heatmapData.length === 0) {
             const loadHeatmap = async () => {
                 const data = await generateHeatmapData(activeImage);
                 setHeatmapData(data);
@@ -118,7 +118,8 @@ const MicroscopyModule = () => {
         }
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
+        try {
         const logEntry = {
             date: new Date().toISOString(),
             user: currentUser ? currentUser.name : 'Sistema',
@@ -126,18 +127,21 @@ const MicroscopyModule = () => {
             details: 'Se actualizaron los datos microscópicos estructurados.'
         };
 
-        updateCase({
+        await updateCase({
             ...caseData,
             microscopyStructured: microscopyData,
             microscopy: generateText(microscopyData), // Sync to main report field
             auditLogs: [...(caseData.auditLogs || []), logEntry]
         });
         alert('Datos de microscopía guardados y sincronizados con el informe.');
+        } catch (failure) { alert(failure.message); }
     };
 
-    const handleFinalize = () => {
+    const handleFinalize = async () => {
+        try {
         // Logic to update status or notify
         navigate(`/cases/${id}/edit`);
+        } catch (failure) { alert(failure.message); }
     };
 
     const generateText = (data) => {
@@ -184,11 +188,11 @@ const MicroscopyModule = () => {
                         <Images size={18} className="mr-2" />
                         Ver Galería
                     </Button>
-                    <Button variant="secondary" onClick={handleSave}>
+                    <Button permission={['microscopy', 'edit']} variant="secondary" onClick={handleSave}>
                         <Save size={18} className="mr-2" />
                         Guardar Borrador
                     </Button>
-                    <Button onClick={handleFinalize}>
+                    <Button disabled={!can('microscopy', 'edit')} onClick={handleFinalize}>
                         <CheckCircle size={18} className="mr-2" />
                         Finalizar y Volver
                     </Button>
@@ -223,7 +227,7 @@ const MicroscopyModule = () => {
                 </div>
 
                 {/* Right: AI Panel or Regions Panel */}
-                {settings?.aiEnabled && (
+                {settings?.aiEnabled && can('images', 'analyze') && (
                     <div className="w-1/4 min-w-[300px] bg-white border-l border-gray-200 overflow-y-auto">
                         {showHeatmap ? (
                             <RegionsPanel

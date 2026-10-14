@@ -7,7 +7,9 @@ import Modal from '../components/Modal';
 import { useData } from '../services/DataContext';
 
 const UsersManager = () => {
-    const { users, roles, addUser, updateUser, deleteUser } = useData();
+    const { users, roles, addUser, updateUser, deleteUser, can, isCloudMode } = useData();
+    const [error, setError] = useState('');
+    const [saving, setSaving] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -27,21 +29,20 @@ const UsersManager = () => {
             setFormData({
                 name: '',
                 email: '',
-                roleId: roles[0]?.id || '',
+                roleId: '',
                 status: 'Active'
             });
         }
         setIsModalOpen(true);
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (editingUser) {
-            updateUser(formData);
-        } else {
-            addUser(formData);
-        }
-        setIsModalOpen(false);
+    const handleSubmit = async (e) => {
+        e.preventDefault(); setSaving(true); setError('');
+        try {
+            if (editingUser) await updateUser(formData); else await addUser(formData);
+            setIsModalOpen(false);
+        } catch (failure) { setError(failure.message); }
+        finally { setSaving(false); }
     };
 
     const filteredUsers = users.filter(u =>
@@ -56,12 +57,14 @@ const UsersManager = () => {
                     <h1 className="text-2xl font-bold text-text-main">Gestión de Usuarios</h1>
                     <p className="text-text-secondary">Administre los usuarios y sus asignaciones de roles.</p>
                 </div>
-                <Button onClick={() => handleOpenModal()}>
+                <Button permission={['users', 'create']} disabled={isCloudMode} onClick={() => handleOpenModal()}>
                     <Plus size={20} className="mr-2" />
                     Nuevo Usuario
                 </Button>
             </div>
 
+            {isCloudMode && <p className="text-sm text-text-secondary">Los usuarios se registran desde el acceso al sistema. Aquí puede asignarles un rol y activar o desactivar su acceso.</p>}
+            {error && <p role="alert" className="text-red-700">{error}</p>}
             <Card>
                 <div className="p-4 border-b border-border">
                     <div className="relative max-w-md">
@@ -125,6 +128,7 @@ const UsersManager = () => {
                                         <td className="p-4 text-right">
                                             <div className="flex justify-end gap-2">
                                                 <button
+                                                    disabled={!['edit', 'assignRole', 'deactivate'].some(a => can('users', a))}
                                                     onClick={() => handleOpenModal(user)}
                                                     className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                                                     title="Editar"
@@ -132,11 +136,12 @@ const UsersManager = () => {
                                                     <Edit size={18} />
                                                 </button>
                                                 <button
-                                                    onClick={() => {
-                                                        if (window.confirm('¿Eliminar usuario?')) deleteUser(user.id);
+                                                    disabled={!can('users', 'deactivate')}
+                                                    onClick={async () => {
+                                                        if (window.confirm('¿Desactivar usuario?')) { try { await deleteUser(user.id); } catch (failure) { setError(failure.message); } }
                                                     }}
                                                     className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                                    title="Eliminar"
+                                                    title="Desactivar"
                                                 >
                                                     <Trash2 size={18} />
                                                 </button>
@@ -151,12 +156,14 @@ const UsersManager = () => {
             </Card>
 
             <Modal
+                showFooter={false}
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 title={editingUser ? "Editar Usuario" : "Nuevo Usuario"}
             >
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <Input
+                        disabled={!can('users', 'edit')}
                         label="Nombre Completo"
                         icon={<User size={18} />}
                         value={formData.name}
@@ -164,12 +171,13 @@ const UsersManager = () => {
                         required
                     />
                     <Input
+                        disabled={isCloudMode || !can('users', 'edit')}
                         label="Correo Electrónico"
                         type="email"
                         icon={<Mail size={18} />}
                         value={formData.email}
                         onChange={e => setFormData({ ...formData, email: e.target.value })}
-                        required
+                        required={!isCloudMode}
                     />
 
                     <div className="space-y-1">
@@ -178,6 +186,7 @@ const UsersManager = () => {
                             <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                             <select
                                 className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none bg-white"
+                                disabled={!can('users', 'assignRole') || editingUser?.profileRole === 'admin'}
                                 value={formData.roleId}
                                 onChange={e => setFormData({ ...formData, roleId: e.target.value })}
                                 required
@@ -194,6 +203,7 @@ const UsersManager = () => {
                         <label className="text-sm font-medium text-text-secondary">Estado</label>
                         <select
                             className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-white"
+                            disabled={!can('users', 'deactivate')}
                             value={formData.status}
                             onChange={e => setFormData({ ...formData, status: e.target.value })}
                         >
@@ -206,7 +216,7 @@ const UsersManager = () => {
                         <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
                             Cancelar
                         </Button>
-                        <Button type="submit">
+                        <Button type="submit" isLoading={saving}>
                             <Save size={18} className="mr-2" />
                             Guardar Usuario
                         </Button>

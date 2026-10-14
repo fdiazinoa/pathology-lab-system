@@ -3,7 +3,7 @@ import SearchableCatalogField from './SearchableCatalogField';
 import { templatesForExam } from '../services/resultTemplates';
 import { SECTION_LABELS, structureTemplate, templateMatchesOrgan } from '../services/structuredResultTemplates';
 
-export default function ResultTemplatePicker({ examId, organ, catalog, groupsByExam, onApply, form }) {
+export default function ResultTemplatePicker({ examId, organ, catalog, groupsByExam, onApply, form, disabled = false }) {
     const [error, setError] = useState('');
     const structured = useMemo(() => catalog.map(item => item.structureVersion === 2 && item.sections ? item : structureTemplate(item)), [catalog]);
     const studyTemplates = templatesForExam(structured, groupsByExam, examId);
@@ -28,7 +28,7 @@ export default function ResultTemplatePicker({ examId, organ, catalog, groupsByE
     };
     return <div>
         <SearchableCatalogField label="Cargar plantilla" title={`Plantillas para ${organ || 'el órgano seleccionado'}`} placeholder="Cargar plantilla"
-            compact triggerText="Cargar plantilla" disabled={!examId || !organ}
+            compact triggerText="Cargar plantilla" disabled={disabled || !examId || !organ}
             emptyMessage="No hay plantillas de este examen con correspondencia identificable para el órgano seleccionado. Las de otros órganos o sin órgano asignado están excluidas."
             value={selected?.id || ''}
             items={compatible.map(item => ({ id: item.id, value: item.id, label: item.title,

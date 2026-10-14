@@ -1,210 +1,69 @@
 import React, { useState } from 'react';
-import { Shield, Plus, Edit, Trash2, Check, X, Save } from 'lucide-react';
+import { Shield, Plus, Edit, Trash2, Save } from 'lucide-react';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import Modal from '../components/Modal';
 import { useData } from '../services/DataContext';
+import { PERMISSION_SECTIONS, ACTION_LABELS, emptyPermissions, normalizePermissions } from '../services/permissions';
 
-const MODULES = [
-    { id: 'dashboard', label: 'Dashboard' },
-    { id: 'patients', label: 'Pacientes' },
-    { id: 'cases', label: 'Casos' },
-    { id: 'reports', label: 'Reportes' },
-    { id: 'settings', label: 'Configuración' },
-    { id: 'security', label: 'Seguridad (Usuarios/Roles)' },
-    { id: 'financials', label: 'Finanzas / Costos' }
-];
-
-const ACTIONS = [
-    { id: 'read', label: 'Ver' },
-    { id: 'write', label: 'Crear/Editar' },
-    { id: 'delete', label: 'Eliminar' }
-];
-
-const RolesManager = () => {
-    const { roles = [], addRole, updateRole, deleteRole } = useData();
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingRole, setEditingRole] = useState(null);
-    const [formData, setFormData] = useState({
-        name: '',
-        description: '',
-        permissions: {}
+export default function RolesManager() {
+    const { roles = [], addRole, updateRole, deleteRole, can } = useData();
+    const [open, setOpen] = useState(false);
+    const [editing, setEditing] = useState(null);
+    const [form, setForm] = useState({ name: '', description: '', permissions: emptyPermissions() });
+    const [search, setSearch] = useState('');
+    const [error, setError] = useState('');
+    const [saving, setSaving] = useState(false);
+    const show = (role) => {
+        setEditing(role || null);
+        setForm(role ? { ...role, permissions: normalizePermissions(role.permissions) } : { name: '', description: '', permissions: emptyPermissions() });
+        setError(''); setSearch(''); setOpen(true);
+    };
+    const toggle = (section, action) => setForm(previous => {
+        const permissions = structuredClone(previous.permissions);
+        const enabled = !permissions[section][action];
+        permissions[section][action] = enabled;
+        if (enabled) permissions[section].read = true;
+        if (action === 'read' && !enabled) for (const key of Object.keys(permissions[section])) permissions[section][key] = false;
+        return { ...previous, permissions };
     });
-
-    // Initialize permissions object
-    const initialPermissions = {};
-    MODULES.forEach(m => {
-        initialPermissions[m.id] = { read: false, write: false, delete: false };
-    });
-
-    const handleOpenModal = (role = null) => {
-        if (role) {
-            setEditingRole(role);
-            setFormData({ ...role });
-        } else {
-            setEditingRole(null);
-            setFormData({
-                name: '',
-                description: '',
-                permissions: JSON.parse(JSON.stringify(initialPermissions))
-            });
-        }
-        setIsModalOpen(true);
+    const save = async (event) => {
+        event.preventDefault(); setSaving(true); setError('');
+        try {
+            if (editing) await updateRole(form); else await addRole(form);
+            setOpen(false);
+        } catch (failure) { setError(failure.message); }
+        finally { setSaving(false); }
     };
-
-    const handlePermissionChange = (moduleId, actionId) => {
-        setFormData(prev => ({
-            ...prev,
-            permissions: {
-                ...prev.permissions,
-                [moduleId]: {
-                    ...prev.permissions[moduleId],
-                    [actionId]: !prev.permissions[moduleId]?.[actionId]
-                }
-            }
-        }));
+    const remove = async (role) => {
+        if (!window.confirm(`¿Eliminar el rol ${role.name}?`)) return;
+        try { await deleteRole(role.id); } catch (failure) { setError(failure.message); }
     };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (editingRole) {
-            updateRole(formData);
-        } else {
-            addRole(formData);
-        }
-        setIsModalOpen(false);
-    };
-
-    return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold text-text-main">Gestión de Roles y Permisos</h1>
-                    <p className="text-text-secondary">Defina los perfiles de acceso al sistema.</p>
-                </div>
-                <Button onClick={() => handleOpenModal()}>
-                    <Plus size={20} className="mr-2" />
-                    Nuevo Rol
-                </Button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {(roles || []).map(role => (
-                    <Card key={role.id} className="hover:shadow-md transition-shadow bg-gradient-to-br from-white to-slate-50 border-none shadow-sm">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-blue-500/10 text-blue-600 rounded-xl">
-                                    <Shield size={24} strokeWidth={1.5} />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-lg text-text-main tracking-tight">{role.name}</h3>
-                                    <p className="text-sm text-text-secondary">{role.description}</p>
-                                </div>
-                            </div>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => handleOpenModal(role)}
-                                    className="p-1.5 text-text-tertiary hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
-                                >
-                                    <Edit size={18} />
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        if (window.confirm('¿Seguro que desea eliminar este rol?')) {
-                                            deleteRole(role.id);
-                                        }
-                                    }}
-                                    className="p-1.5 text-text-tertiary hover:text-danger hover:bg-red-50 rounded-lg transition-colors"
-                                >
-                                    <Trash2 size={18} />
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="space-y-3 pt-2 border-t border-gray-100">
-                            <h4 className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest">Acceso a Módulos</h4>
-                            <div className="flex flex-wrap gap-2">
-                                {Object.entries(role.permissions || {}).map(([module, perms]) => {
-                                    if (!perms.read) return null;
-                                    const moduleLabel = MODULES.find(m => m.id === module)?.label || module;
-                                    return (
-                                        <span key={module} className="px-2 py-1 bg-white text-text-secondary text-xs font-medium rounded-full border border-gray-100 shadow-sm">
-                                            {moduleLabel}
-                                        </span>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </Card>
-                ))}
-            </div>
-
-            <Modal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title={editingRole ? "Editar Rol" : "Nuevo Rol"}
-                maxWidth="max-w-4xl"
-            >
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input
-                            label="Nombre del Rol"
-                            value={formData.name}
-                            onChange={e => setFormData({ ...formData, name: e.target.value })}
-                            required
-                        />
-                        <Input
-                            label="Descripción"
-                            value={formData.description}
-                            onChange={e => setFormData({ ...formData, description: e.target.value })}
-                            required
-                        />
-                    </div>
-
-                    <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-slate-50/50 text-text-tertiary font-semibold uppercase tracking-wider text-xs border-b border-gray-100">
-                                <tr>
-                                    <th className="px-6 py-3">Módulo</th>
-                                    {ACTIONS.map(action => (
-                                        <th key={action.id} className="px-6 py-3 text-center">{action.label}</th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-50 bg-white">
-                                {MODULES.map(module => (
-                                    <tr key={module.id} className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-6 py-4 font-medium text-text-main">{module.label}</td>
-                                        {ACTIONS.map(action => (
-                                            <td key={action.id} className="px-6 py-4 text-center">
-                                                <input
-                                                    type="checkbox"
-                                                    className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary/20 cursor-pointer"
-                                                    checked={formData.permissions[module.id]?.[action.id] || false}
-                                                    onChange={() => handlePermissionChange(module.id, action.id)}
-                                                />
-                                            </td>
-                                        ))}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                        <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>
-                            Cancelar
-                        </Button>
-                        <Button type="submit">
-                            <Save size={18} className="mr-2" />
-                            Guardar Rol
-                        </Button>
-                    </div>
-                </form>
-            </Modal>
+    const writable = editing?.id !== '1' && can('roles', editing ? 'edit' : 'create');
+    return <div className="space-y-6">
+        <div className="flex items-center justify-between gap-4">
+            <div><h1 className="text-2xl font-bold">Roles y permisos</h1><p className="text-text-secondary">Configure qué puede ver y hacer cada perfil en cada sección.</p></div>
+            <Button permission={['roles', 'create']} onClick={() => show()}><Plus size={18} className="mr-2" />Nuevo rol</Button>
         </div>
-    );
-};
-
-export default RolesManager;
+        {error && !open && <p role="alert" className="text-red-700">{error}</p>}
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">{roles.map(role => <Card key={role.id}>
+            <div className="flex justify-between gap-2"><div><Shield className="text-primary mb-3" /><h2 className="font-bold">{role.name}</h2><p className="text-sm text-text-secondary">{role.description}</p></div>
+                <div className="flex items-start gap-2"><button aria-label={`Ver permisos de ${role.name}`} onClick={() => show(role)} className="p-2"><Edit size={18} /></button>
+                    {!role.is_system && !['1','2','3','4'].includes(role.id) && <button aria-label={`Eliminar ${role.name}`} disabled={!can('roles', 'delete')} onClick={() => remove(role)} className="p-2 disabled:opacity-30"><Trash2 size={18} /></button>}</div></div>
+            <div className="flex flex-wrap gap-1 mt-4">{PERMISSION_SECTIONS.filter(s => role.id === '1' || normalizePermissions(role.permissions)[s.id].read).map(s => <span className="text-xs bg-slate-100 px-2 py-1 rounded" key={s.id}>{s.label}</span>)}</div>
+        </Card>)}</div>
+        <Modal isOpen={open} onClose={() => !saving && setOpen(false)} title={editing ? `Permisos: ${editing.name}` : 'Nuevo rol'} maxWidth="max-w-4xl" showFooter={false}>
+            <form onSubmit={save} className="space-y-5">
+                <div className="grid md:grid-cols-2 gap-4"><Input label="Nombre del rol" required value={form.name} disabled={!writable} onChange={e => setForm({ ...form, name: e.target.value })} /><Input label="Descripción" value={form.description} disabled={!writable} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
+                <p className="text-sm bg-blue-50 text-blue-900 p-3 rounded">{editing?.id === '1' ? 'El administrador del sistema conserva acceso completo y está protegido.' : 'Cada acción se concede por separado. Quitar «Ver» desactiva las acciones de esa sección. Los roles nuevos comienzan sin acceso.'}</p>
+                <Input label="Buscar sección" placeholder="Ej.: informes, plantillas, doctores…" value={search} onChange={e => setSearch(e.target.value)} />
+                <div className="divide-y border rounded-lg">{PERMISSION_SECTIONS.filter(s => s.label.toLocaleLowerCase().includes(search.toLocaleLowerCase())).map(s => <fieldset key={s.id} disabled={!writable || saving} className="p-4">
+                    <legend className="font-semibold px-1">{s.label}</legend><div className="flex flex-wrap gap-x-6 gap-y-3">{s.actions.map(a => <label key={a} className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={editing?.id === '1' || form.permissions[s.id]?.[a] === true} onChange={() => toggle(s.id, a)} className="w-4 h-4" />{ACTION_LABELS[a]}</label>)}</div>
+                </fieldset>)}</div>
+                {error && <p role="alert" className="text-red-700">{error}</p>}
+                <div className="flex justify-end gap-3"><Button type="button" variant="secondary" onClick={() => setOpen(false)} disabled={saving}>Cerrar</Button>{writable && <Button type="submit" isLoading={saving}><Save size={18} className="mr-2" />Guardar permisos</Button>}</div>
+            </form>
+        </Modal>
+    </div>;
+}
