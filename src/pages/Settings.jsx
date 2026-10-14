@@ -4,6 +4,7 @@ import { Save, Upload, Building, Phone, MapPin, Stethoscope, Mic, MicOff, Histor
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
+import ResultTemplateCatalogSettings from '../components/ResultTemplateCatalogSettings';
 import { useData } from '../services/DataContext';
 import { useAIConfig } from '../ai/AIConfigContext';
 import { testConnection } from '../services/aiService';
@@ -239,7 +240,7 @@ export { HELP_SECTIONS };
 
 const Settings = () => {
     const navigate = useNavigate();
-    const { settings, updateSettings, configHistory, currentUser, testPrinter, isProductionMode, switchSystemMode, resetDemoData, runMigration, createBackup, restoreBackup, getBackupHistory, downloadBackup } = useData();
+    const { settings, updateSettings, configHistory, currentUser, exams, testPrinter, isProductionMode, switchSystemMode, resetDemoData, runMigration, createBackup, restoreBackup, getBackupHistory, downloadBackup } = useData();
     const { config: aiConfig, updateConfig: updateAIConfig } = useAIConfig();
     const [formData, setFormData] = useState(settings);
     const [loading, setLoading] = useState(false);
@@ -509,6 +510,7 @@ const Settings = () => {
 
             {/* Tabs */}
             <div className="flex border-b border-border">
+                {currentUser?.roleId === '1' && <button type="button" className={`px-4 py-2 text-sm font-medium ${activeTab === 'templates' ? 'border-b-2 border-primary text-primary' : 'text-text-secondary'}`} onClick={() => setActiveTab('templates')}>Plantillas</button>}
                 <button
                     className={`px-4 py-2 font-medium text-sm flex items-center gap-2 ${activeTab === 'general' ? 'border-b-2 border-primary text-primary' : 'text-text-secondary hover:text-text-main'}`}
                     onClick={() => setActiveTab('general')}
@@ -554,6 +556,7 @@ const Settings = () => {
                 </button>
             </div>
 
+            {currentUser?.roleId === '1' && activeTab === 'templates' && <ResultTemplateCatalogSettings settings={settings} exams={exams} onSave={updateSettings} />}
             {!isProductionMode && activeTab === 'general' && (
                 <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-between">
                     <div className="flex items-center gap-3">
