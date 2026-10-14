@@ -10,6 +10,11 @@ export default function ResultTemplatePicker({ examId, organ, catalog, groupsByE
     const compatible = studyTemplates.filter(item => templateMatchesOrgan(item, organ)).sort((a, b) => a.title.localeCompare(b.title, 'es'));
     const applied = form.resultDetails?._template;
     const selected = compatible.find(item => item.id === applied?.id);
+    const summary = item => {
+        if (!['C', 'L'].includes(item.group)) return `${Object.keys(item.sections).length} campos`;
+        const text = [item.sections.inflammation, item.sections.organisms, item.sections.microscopy].filter(Boolean).join(' · ').replace(/\s+/g, ' ');
+        return text.length > 120 ? `${text.slice(0, 117)}…` : text;
+    };
     const choose = id => {
         const template = compatible.find(item => item.id === id);
         if (!template) return;
@@ -27,7 +32,7 @@ export default function ResultTemplatePicker({ examId, organ, catalog, groupsByE
             emptyMessage="No hay plantillas de este examen con correspondencia identificable para el órgano seleccionado. Las de otros órganos o sin órgano asignado están excluidas."
             value={selected?.id || ''}
             items={compatible.map(item => ({ id: item.id, value: item.id, label: item.title,
-                detail: `${item.code} · ${Object.keys(item.sections).length} campos`,
+                detail: `${item.code} · ${summary(item)}`,
                 search: `${item.code} ${item.result} ${item.description || ''}` }))} onChange={choose} />
         {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
     </div>;
