@@ -1,5 +1,6 @@
 import DataProvider from './DataProvider';
 import { supabase } from '../supabaseClient';
+import { buildLabInfoPayload, labInfoToSettings } from '../labSettings';
 
 class SupabaseDataProvider extends DataProvider {
     constructor() {
@@ -211,26 +212,17 @@ class SupabaseDataProvider extends DataProvider {
     async updateSettings(newSettings) {
         try {
             // Check if record exists
-            const { data: existing } = await supabase.from('lab_info').select('id').limit(1).maybeSingle();
-
-            const payload = {
-                name: newSettings.labName,
-                address: newSettings.address,
-                phone: newSettings.phone,
-                email: newSettings.email,
-                logo_url: newSettings.logo_url,
-                settings: {
-                    aiEnabled: newSettings.aiEnabled,
-                    enableLabWorkflow: newSettings.enableLabWorkflow,
-                    requireStepQR: newSettings.requireStepQR
-                }
-            };
+            const { data: existing, error: readError } = await supabase.from('lab_info').select('*').limit(1).maybeSingle();
+            if (readError) throw readError;
+            const payload = buildLabInfoPayload(existing, newSettings);
 
             if (existing) {
                 const { error } = await supabase
                     .from('lab_info')
                     .update(payload)
-                    .eq('id', existing.id);
+                    .eq('id', existing.id)
+                    .select('id')
+                    .single();
                 if (error) throw error;
             } else {
                 const { error } = await supabase
@@ -238,7 +230,7 @@ class SupabaseDataProvider extends DataProvider {
                     .insert([payload]);
                 if (error) throw error;
             }
-            return true;
+            return labInfoToSettings({ ...existing, ...payload });
         } catch (error) {
             console.error("Error updating settings:", error);
             throw error;

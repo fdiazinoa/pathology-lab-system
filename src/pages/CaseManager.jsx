@@ -22,12 +22,14 @@ import { analyzeCase, trainModel, validateDiagnosis, preClassifyCase, analyzeQua
 import { runAIAnalysis } from '../ai/aiOrchestrator';
 import { checkReportConsistency } from '../services/consistencyService';
 import ConsistencyAlerts from '../components/ConsistencyAlerts';
+import ResultTemplatePicker from '../components/ResultTemplatePicker';
+import { appendTemplate } from '../services/resultTemplates';
 
 const CaseManager = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [searchParams] = useSearchParams();
-    const { patients, addCase, updateCase, deleteCase, getCase, cases, insurers, organs, doctors, settings, updateCaseInterconsultation, exams, currentUser, roles, isProductionMode, logUsageEvent } = useData();
+    const { patients, addCase, updateCase, deleteCase, getCase, cases, insurers, organs, doctors, settings, updateSettings, updateCaseInterconsultation, exams, currentUser, roles, isProductionMode, logUsageEvent } = useData();
     const currentCase = id ? cases.find(c => c.id === id) : null;
 
     console.log("CaseManager settings:", settings);
@@ -1303,8 +1305,20 @@ const CaseManager = () => {
 
                     {/* Final Diagnosis */}
                     <Card title="Diagnóstico Definitivo">
+                        <ResultTemplatePicker
+                            key={`${id || 'new'}:${formData.examId}`}
+                            examId={formData.examId}
+                            examName={formData.type}
+                            catalog={settings?.resultTemplates || []}
+                            groupsByExam={settings?.resultTemplateExamGroups || {}}
+                            canManage={!!userRole?.permissions?.settings?.write}
+                            onSave={updateSettings}
+                            onInsert={(field, text) => setFormData(prev => ({ ...prev, [field]: appendTemplate(prev[field], text) }))}
+                        />
                         <Input
                             textarea
+                            lang="es"
+                            spellCheck
                             placeholder="Escriba el diagnóstico final..."
                             value={formData.diagnosis}
                             onChange={e => setFormData({ ...formData, diagnosis: e.target.value })}
