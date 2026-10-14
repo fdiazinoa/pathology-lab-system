@@ -905,8 +905,8 @@ const CaseManager = () => {
                                     required
                                 >
                                     <option value="">Seleccionar Órgano...</option>
-                                    {organs && organs.map(org => (
-                                        <option key={org.id} value={org.name}>{org.name}</option>
+                                    {organs && organs.filter(org => org.is_active !== false).map(org => (
+                                        <option key={org.id} value={org.name}>{org.name}{org.procedure_type ? ` · ${org.procedure_type}` : ''}{org.code ? ` (${org.code})` : ''}</option>
                                     ))}
                                 </select>
                             </div>

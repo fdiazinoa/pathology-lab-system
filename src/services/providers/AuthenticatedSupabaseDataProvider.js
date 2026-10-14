@@ -4,6 +4,26 @@ import { labAuth } from '../supabaseAuth';
 
 // Keep cloud authorization independent of local demo sessions.
 export default class AuthenticatedSupabaseDataProvider extends SupabaseDataProvider {
+    async getOrgans() {
+        const { data, error } = await supabase.from('organs').select('*').order('name');
+        if (error) throw error;
+        return data;
+    }
+    async addOrgan(organ) {
+        const { data, error } = await supabase.from('organs').insert([{ name: organ.name, procedure_type: organ.procedure_type }]).select().single();
+        if (error) throw error;
+        return data;
+    }
+    async updateOrgan(organ) {
+        const { data, error } = await supabase.from('organs').update({ name: organ.name, procedure_type: organ.procedure_type }).eq('id', organ.id).select().single();
+        if (error) throw error;
+        return data;
+    }
+    async deleteOrgan(id) {
+        const { error } = await supabase.from('organs').delete().eq('id', id);
+        if (error) throw error;
+        return true;
+    }
     async getDoctors() {
         const { data, error } = await supabase.from('doctors').select('*').order('name');
         if (error) throw error;
