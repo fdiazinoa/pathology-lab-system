@@ -23,6 +23,7 @@ import { runAIAnalysis } from '../ai/aiOrchestrator';
 import { checkReportConsistency } from '../services/consistencyService';
 import ConsistencyAlerts from '../components/ConsistencyAlerts';
 import ResultTemplatePicker from '../components/ResultTemplatePicker';
+import SearchableCatalogField from '../components/SearchableCatalogField';
 import { appendTemplate } from '../services/resultTemplates';
 
 const CaseManager = () => {
@@ -898,20 +899,19 @@ const CaseManager = () => {
                                 </select>
                             </div>
 
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-sm font-medium text-text-main">Órgano / Localización</label>
-                                <select
-                                    className="flex w-full rounded-md border border-border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
-                                    value={formData.organ}
-                                    onChange={e => setFormData({ ...formData, organ: e.target.value })}
-                                    required
-                                >
-                                    <option value="">Seleccionar Órgano...</option>
-                                    {organs && organs.filter(org => org.is_active !== false).map(org => (
-                                        <option key={org.id} value={org.name}>{org.name}{org.procedure_type ? ` · ${org.procedure_type}` : ''}{org.code ? ` (${org.code})` : ''}</option>
-                                    ))}
-                                </select>
-                            </div>
+                            <SearchableCatalogField
+                                label="Órgano / Localización"
+                                title="Buscar órgano / localización"
+                                placeholder="Buscar órgano o localización…"
+                                items={(organs || []).filter(org => org.is_active !== false).map(org => ({
+                                    id: org.id, value: org.name, label: org.name,
+                                    detail: [org.procedure_type, org.code || org.original_code].filter(Boolean).join(' · '),
+                                    search: [org.id, org.section_code, org.original_code].filter(Boolean).join(' ')
+                                }))}
+                                value={formData.organ}
+                                onChange={organ => setFormData(prev => ({ ...prev, organ }))}
+                                required
+                            />
 
                             <Input
                                 label="Datos Clínicos Relevantes"
@@ -960,26 +960,20 @@ const CaseManager = () => {
                                 </>
                             )}
 
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-sm font-medium text-text-main">Doctor Asignado</label>
-                                <select
-                                    className="flex w-full rounded-md border border-border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
-                                    value={formData.doctorId}
-                                    onChange={e => setFormData({ ...formData, doctorId: e.target.value })}
-                                    required
-                                >
-                                    <option value="">Seleccionar Doctor...</option>
-                                    {doctors && doctors.filter(doctor => doctor.is_active !== false).map(doc => (
-                                        <option key={doc.id} value={doc.id}>{doc.name}</option>
-                                    ))}
-                                    {/* Fallback for preserved doctor if not in list */}
-                                    {formData.doctorId && !doctors.find(d => d.id === formData.doctorId) && (
-                                        <option value={formData.doctorId}>
-                                            {preservedNames.doctorName || formData.doctorId} (Preservado)
-                                        </option>
-                                    )}
-                                </select>
-                            </div>
+                            <SearchableCatalogField
+                                label="Doctor Asignado"
+                                title="Buscar doctor"
+                                placeholder="Buscar doctor…"
+                                items={(doctors || []).filter(doctor => doctor.is_active !== false).map(doctor => ({
+                                    id: doctor.id, value: doctor.id, label: doctor.name,
+                                    detail: [doctor.specialty, doctor.license, doctor.lis_id || doctor.id].filter(Boolean).join(' · '),
+                                    search: [doctor.lis_id, doctor.license, doctor.id].filter(Boolean).join(' ')
+                                }))}
+                                value={formData.doctorId}
+                                fallbackLabel={preservedNames.doctorName}
+                                onChange={doctorId => setFormData(prev => ({ ...prev, doctorId }))}
+                                required
+                            />
 
                             {canViewFinancials && (
                                 <div className="flex flex-col gap-1.5">
