@@ -77,10 +77,11 @@ export const DataProvider = ({ children }) => {
             setCurrentUser(await dataProvider.getCurrentUser());
             setCenters(await dataProvider.getCenters());
             setDoctors(await dataProvider.getDoctors());
+            setOrgans(await dataProvider.getOrgans());
             const [
                 loadedPatients, loadedCases, loadedGlobalCases, loadedAudit,
                 loadedDeliveries, loadedSettings, loadedHistory, loadedConfig,
-                loadedInsurers, loadedOrgans, loadedEquipment, loadedRoles, loadedUsers, loadedExams
+                loadedInsurers, loadedEquipment, loadedRoles, loadedUsers, loadedExams
             ] = await Promise.all([
                 dataProvider.getPatients(),
                 dataProvider.getCases(),
@@ -91,7 +92,6 @@ export const DataProvider = ({ children }) => {
                 dataProvider.getConfigHistory(),
                 dataProvider.getConnectionConfig(),
                 dataProvider.getInsurers(),
-                dataProvider.getOrgans(),
                 dataProvider.getEquipment(),
                 dataProvider.getRoles(),
                 dataProvider.getUsers(),
@@ -107,7 +107,6 @@ export const DataProvider = ({ children }) => {
             setConfigHistory(loadedHistory);
             setConnectionConfig(loadedConfig);
             setInsurers(loadedInsurers);
-            setOrgans(loadedOrgans);
             setEquipment(loadedEquipment);
             setRoles(loadedRoles);
             setUsers(loadedUsers);
@@ -374,8 +373,8 @@ export const DataProvider = ({ children }) => {
     const updateInsurer = useCallback(async (i) => { if (dataProvider) { await dataProvider.updateInsurer(i); setInsurers(prev => prev.map(x => x.id === i.id ? i : x)); } }, [dataProvider]);
     const deleteInsurer = useCallback(async (id) => { if (dataProvider) { await dataProvider.deleteInsurer(id); setInsurers(prev => prev.filter(x => x.id !== id)); } }, [dataProvider]);
 
-    const addOrgan = useCallback(async (o) => { if (dataProvider) { await dataProvider.addOrgan(o); setOrgans(prev => [...prev, o]); } }, [dataProvider]);
-    const updateOrgan = useCallback(async (o) => { if (dataProvider) { await dataProvider.updateOrgan(o); setOrgans(prev => prev.map(x => x.id === o.id ? o : x)); } }, [dataProvider]);
+    const addOrgan = useCallback(async (o) => { if (dataProvider) { const saved = await dataProvider.addOrgan(o); setOrgans(prev => [...prev, saved]); return saved; } }, [dataProvider]);
+    const updateOrgan = useCallback(async (o) => { if (dataProvider) { const saved = await dataProvider.updateOrgan(o); setOrgans(prev => prev.map(x => x.id === saved.id ? saved : x)); return saved; } }, [dataProvider]);
     const deleteOrgan = useCallback(async (id) => { if (dataProvider) { await dataProvider.deleteOrgan(id); setOrgans(prev => prev.filter(x => x.id !== id)); } }, [dataProvider]);
 
     const addDoctor = useCallback(async (d) => { if (dataProvider) { const saved = await dataProvider.addDoctor(d); setDoctors(prev => [...prev, saved]); return saved; } }, [dataProvider]);
