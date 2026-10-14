@@ -75,10 +75,11 @@ export const DataProvider = ({ children }) => {
         setLoading(true);
         try {
             setCurrentUser(await dataProvider.getCurrentUser());
+            setCenters(await dataProvider.getCenters());
             const [
                 loadedPatients, loadedCases, loadedGlobalCases, loadedAudit,
                 loadedDeliveries, loadedSettings, loadedHistory, loadedConfig,
-                loadedInsurers, loadedOrgans, loadedDoctors, loadedEquipment, loadedRoles, loadedUsers, loadedExams, loadedCenters
+                loadedInsurers, loadedOrgans, loadedDoctors, loadedEquipment, loadedRoles, loadedUsers, loadedExams
             ] = await Promise.all([
                 dataProvider.getPatients(),
                 dataProvider.getCases(),
@@ -94,8 +95,7 @@ export const DataProvider = ({ children }) => {
                 dataProvider.getEquipment(),
                 dataProvider.getRoles(),
                 dataProvider.getUsers(),
-                dataProvider.getExams(),
-                dataProvider.getCenters()
+                dataProvider.getExams()
             ]);
 
             setPatients(loadedPatients);
@@ -113,7 +113,6 @@ export const DataProvider = ({ children }) => {
             setRoles(loadedRoles);
             setUsers(loadedUsers);
             setExams(loadedExams);
-            setCenters(loadedCenters);
 
         } catch (error) {
             console.error("Error loading data:", error);
