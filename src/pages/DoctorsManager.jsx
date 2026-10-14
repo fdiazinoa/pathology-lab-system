@@ -22,7 +22,7 @@ const DoctorsManager = () => {
         setCurrentDoctor(doctor);
         setFormData({
             name: doctor.name,
-            license: doctor.license,
+            license: doctor.license || '',
             email: doctor.email || '',
             signatureUrl: doctor.signatureUrl || ''
         });
@@ -34,14 +34,18 @@ const DoctorsManager = () => {
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (isEditing && currentDoctor) {
-            updateDoctor({ ...currentDoctor, ...formData });
-        } else {
-            addDoctor(formData);
+        try {
+            if (isEditing && currentDoctor) {
+                await updateDoctor({ ...currentDoctor, ...formData });
+            } else {
+                await addDoctor(formData);
+            }
+            resetForm();
+        } catch (error) {
+            window.alert(error.message || 'No se pudo guardar el médico.');
         }
-        resetForm();
     };
 
     const resetForm = () => {
@@ -56,7 +60,7 @@ const DoctorsManager = () => {
                 <Stethoscope size={32} className="text-primary" />
                 <div>
                     <h1 className="text-2xl font-bold text-text-main">Gestión de Doctores</h1>
-                    <p className="text-text-secondary">Administra el personal médico autorizado para firmar informes.</p>
+                    <p className="text-text-secondary">Administra el maestro de médicos del laboratorio.</p>
                 </div>
             </div>
 
@@ -73,11 +77,10 @@ const DoctorsManager = () => {
                                 required
                             />
                             <Input
-                                label="Exequatur / Licencia"
+                                label="Exequatur / Licencia (opcional)"
                                 placeholder="MP-12345"
                                 value={formData.license}
                                 onChange={e => setFormData({ ...formData, license: e.target.value })}
-                                required
                             />
                             <Input
                                 label="Email"
@@ -135,7 +138,8 @@ const DoctorsManager = () => {
                                             </div>
                                             <div>
                                                 <h4 className="font-bold text-text-main">{doc.name}</h4>
-                                                <p className="text-xs text-text-secondary">{doc.license}</p>
+                                                <p className="text-xs text-text-secondary">{doc.id} · {doc.specialty || doc.license || 'Sin especialidad registrada'}</p>
+                                                {doc.source_status && <p className="text-xs text-text-secondary">{doc.source_status}</p>}
                                             </div>
                                         </div>
                                         <div className="flex gap-2">
