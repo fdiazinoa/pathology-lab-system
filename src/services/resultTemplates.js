@@ -1,7 +1,7 @@
 export const RESULT_TEMPLATE_GROUPS = {
     B: 'Biopsias',
-    C: 'Citología · sección C',
-    L: 'Citología · sección L',
+    C: 'Citología',
+    L: 'Citología en base líquida',
     CT: 'Citología no ginecológica · CT',
     HPV: 'Pruebas de HPV'
 };
