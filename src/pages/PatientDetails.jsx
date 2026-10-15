@@ -55,7 +55,7 @@ const PatientDetails = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => ({ ...prev, [name]: value, ...(name === 'age' ? { birth_date: null } : {}) }));
     };
 
     const getStatusColor = (status) => {
@@ -78,7 +78,7 @@ const PatientDetails = () => {
                 </div>
                 <div>
                     {!isEditing ? (
-                        <Button onClick={handleEditClick} variant="outline">
+                        <Button permission={['patients', 'edit']} onClick={handleEditClick} variant="outline">
                             <Edit2 size={18} className="mr-2" /> Editar Ficha
                         </Button>
                     ) : (
@@ -86,7 +86,7 @@ const PatientDetails = () => {
                             <Button onClick={handleCancelClick} disabled={saving} variant="ghost" className="text-danger">
                                 <X size={18} className="mr-2" /> Cancelar
                             </Button>
-                            <Button onClick={handleSaveClick} isLoading={saving}>
+                            <Button permission={['patients', 'edit']} onClick={handleSaveClick} isLoading={saving}>
                                 <Save size={18} className="mr-2" /> Guardar Cambios
                             </Button>
                         </div>
@@ -125,7 +125,7 @@ const PatientDetails = () => {
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-text-secondary">Sexo</span>
-                                        <span className="font-medium">{patient.sex === 'F' ? 'Femenino' : 'Masculino'}</span>
+                                        <span className="font-medium">{patient.sex === 'F' ? 'Femenino' : patient.sex === 'M' ? 'Masculino' : 'Otro / No especificado'}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-text-secondary">Ciudad</span>
@@ -154,6 +154,7 @@ const PatientDetails = () => {
                                             >
                                                 <option value="F">Femenino</option>
                                                 <option value="M">Masculino</option>
+                                                <option value="Otro">Otro / No especificado</option>
                                             </select>
                                         </div>
                                     </div>

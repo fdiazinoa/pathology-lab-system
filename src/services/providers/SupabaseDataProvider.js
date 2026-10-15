@@ -1,4 +1,5 @@
 import { managedLabUser } from '../labUserDirectory';
+import { patientFromRow, patientPayload } from '../patientRecords';
 import DataProvider from './DataProvider';
 import { supabase } from '../supabaseClient';
 import { buildLabInfoPayload, labInfoToSettings } from '../labSettings';
@@ -42,47 +43,19 @@ class SupabaseDataProvider extends DataProvider {
 
     // --- Patients ---
     async getPatients() {
-        const { data, error } = await supabase
-            .from('patients')
-            .select('*')
-            .order('full_name');
+        const { data, error } = await supabase.from('patients').select('*').order('full_name');
         if (error) throw error;
-        return data;
+        return data.map(patientFromRow);
     }
-
     async addPatient(patient) {
-        const { data, error } = await supabase
-            .from('patients')
-            .insert([{
-                full_name: patient.name || patient.full_name,
-                birth_date: patient.birth_date || null,
-                identification_number: patient.identification_number || null,
-                sex: patient.sex || 'Otro',
-                city: patient.city || null,
-                region: patient.region || null,
-                medical_history: patient.history || patient.medical_history || null
-            }])
-            .select()
-            .single();
+        const { data, error } = await supabase.from('patients').insert([patientPayload(patient)]).select().single();
         if (error) throw error;
-        return data;
+        return patientFromRow(data);
     }
-
     async updatePatient(patient) {
-        const { data, error } = await supabase
-            .from('patients')
-            .update({
-                full_name: patient.full_name,
-                sex: patient.sex,
-                city: patient.city,
-                region: patient.region,
-                medical_history: patient.medical_history
-            })
-            .eq('id', patient.id)
-            .select()
-            .single();
+        const { data, error } = await supabase.from('patients').update(patientPayload(patient)).eq('id', patient.id).select().single();
         if (error) throw error;
-        return data;
+        return patientFromRow(data);
     }
 
     // --- Cases ---

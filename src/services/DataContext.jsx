@@ -94,12 +94,13 @@ export const DataProvider = ({ children }) => {
             const [loadedSettings, loadedExams] = await Promise.all([dataProvider.getSettings(), dataProvider.getExams()]);
             setSettings(loadedSettings);
             setExams(loadedExams);
+            // Patient persistence must survive unrelated clinical modules being unavailable.
+            setPatients(await dataProvider.getPatients());
             const [
-                loadedPatients, loadedCases, loadedGlobalCases,
+                loadedCases, loadedGlobalCases,
                 loadedDeliveries, loadedHistory, loadedConfig,
                 loadedInsurers, loadedEquipment
             ] = await Promise.all([
-                dataProvider.getPatients(),
                 dataProvider.getCases(),
                 dataProvider.getGlobalCases(),
                 dataProvider.getDeliveries(),
@@ -109,7 +110,6 @@ export const DataProvider = ({ children }) => {
                 dataProvider.getEquipment()
             ]);
 
-            setPatients(loadedPatients);
             setCases(loadedCases);
             setGlobalCases(loadedGlobalCases);
             setDeliveries(loadedDeliveries);
@@ -257,6 +257,7 @@ export const DataProvider = ({ children }) => {
         if (!dataProvider) return;
         const result = await dataProvider.updatePatient(patient);
         setPatients(prev => prev.map(p => p.id === result.id ? result : p));
+        return result;
     }, [dataProvider]);
 
     const addCase = useCallback(async (newCase) => {
@@ -274,7 +275,8 @@ export const DataProvider = ({ children }) => {
             action: 'Recepción de Muestra',
             details: `Caso ${newCase.id} creado para el paciente ${newCase.patientName}.`
         };
-        await addAuditLog(newCase.id, logEntry.action, logEntry.details);
+        await addAuditLog(result.id, logEntry.action, logEntry.details);
+        return result;
     }, [dataProvider, currentUser, roles]);
 
     const updateCase = useCallback(async (updatedCase) => {
