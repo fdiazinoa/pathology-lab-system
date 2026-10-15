@@ -29,6 +29,34 @@ import StudyResultFields from '../components/StudyResultFields';
 import ReceptionPicker from '../components/ReceptionPicker';
 import { pendingReceptions, receptionExamId } from '../services/receptionCases';
 
+const initialCaseForm = () => ({
+        patientId: '',
+        doctorId: '',
+        type: '',
+        examId: '',
+        price: 0,
+        organ: '',
+        clinicalData: '',
+        macroscopy: '',
+        microscopy: '',
+        ihc: '',
+        diagnosis: '',
+        resultDetails: {},
+        paymentType: 'Privado',
+        arsName: '',
+        policyNumber: '',
+        specimens: [], // Hierarchical Data: Specimens -> Blocks
+        images: [],
+        contributeToAi: true,
+        aiClassification: null,
+        quantitativeResults: {},
+        qualityControl: null,
+        interconsultation: null,
+        tracking: null,
+        microscopyStructured: {},
+        secondLook: { active: false, reason: '' }
+    });
+
 const CaseManager = () => {
     const navigate = useNavigate();
     const { id } = useParams();
@@ -179,33 +207,7 @@ const CaseManager = () => {
         setSecondLookReason('');
     };
 
-    const [formData, setFormData] = useState({
-        patientId: '',
-        doctorId: '',
-        type: '',
-        examId: '',
-        price: 0,
-        organ: '',
-        clinicalData: '',
-        macroscopy: '',
-        microscopy: '',
-        ihc: '',
-        diagnosis: '',
-        resultDetails: {},
-        paymentType: 'Privado',
-        arsName: '',
-        policyNumber: '',
-        specimens: [], // Hierarchical Data: Specimens -> Blocks
-        images: [],
-        contributeToAi: true,
-        aiClassification: null,
-        quantitativeResults: {},
-        qualityControl: null,
-        interconsultation: null,
-        tracking: null,
-        microscopyStructured: {},
-        secondLook: { active: false, reason: '' }
-    });
+    const [formData, setFormData] = useState(initialCaseForm);
 
     const [receptionPicker, setReceptionPicker] = useState(null);
     const continueReception = receipt => {
@@ -214,7 +216,7 @@ const CaseManager = () => {
         navigate(`/cases/${receipt.id}/edit`);
     };
     const selectPatient = patientId => {
-        setFormData(previous => ({ ...previous, patientId }));
+        setFormData(previous => previous.patientId === patientId ? previous : ({ ...(id ? previous : initialCaseForm()), patientId }));
         if (id || !patientId) return;
         const pending = pendingReceptions(cases, patientId);
         if (pending.length === 1) continueReception(pending[0]);
@@ -229,7 +231,16 @@ const CaseManager = () => {
         message: ''
     });
 
+    const previousCaseId = useRef(id);
     const initializedPatient = useRef(null);
+    useEffect(() => {
+        if (previousCaseId.current && !id) {
+            setFormData(initialCaseForm());
+            setPreservedNames({ patientName: '', doctorName: '' });
+            initializedPatient.current = null;
+        }
+        previousCaseId.current = id;
+    }, [id]);
     const requestedPatientId = searchParams.get('patientId');
     useEffect(() => {
         if (id || dataLoading) return;
