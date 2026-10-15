@@ -80,10 +80,10 @@ const Layout = ({ children }) => {
 
     // Renderizado del Sidebar Interno (Reutilizable para Desktop y Mobile)
     const SidebarContent = () => (
-        <div className="flex flex-col h-full bg-white text-slate-900">
+        <div className="flex flex-col h-full bg-blue-900 text-white">
             {/* A. HEADER (Fijo) */}
-            <div className="h-16 flex-shrink-0 flex items-center px-6 border-b border-slate-100 gap-3">
-                <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center text-white">
+            <div className="h-16 flex-shrink-0 flex items-center px-6 border-b border-white/15 gap-3">
+                <div className="w-8 h-8 bg-white/15 rounded-lg flex items-center justify-center text-white">
                     <Microscope size={20} />
                 </div>
                 <h1 className="font-bold text-xl tracking-tight">PathAI</h1>
@@ -102,7 +102,7 @@ const Layout = ({ children }) => {
 
                         return (
                             <div key={group.category}>
-                                <h3 className="px-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                                <h3 className="px-2 text-[10px] font-bold text-white/75 uppercase tracking-widest mb-2">
                                     {group.category}
                                 </h3>
                                 <ul className="flex flex-col gap-1 list-none p-0 m-0">
@@ -112,8 +112,8 @@ const Layout = ({ children }) => {
                                             <li key={item.path}>
                                                 <NavLink to={item.path} onClick={() => setIsSidebarOpen(false)}
                                                     className={({ isActive }) => `
-                                                        flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                                                        ${isActive ? 'bg-teal-50 text-teal-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
+                                                        flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white
+                                                        ${isActive ? 'bg-blue-600 text-white shadow-sm ring-1 ring-white/20' : 'text-white hover:bg-white/10'}
                                                     `}>
                                                     <Icon size={18} />
                                                     {item.label}
@@ -132,13 +132,13 @@ const Layout = ({ children }) => {
             </nav>
 
             {/* C. FOOTER (Fijo) */}
-            <div className="flex-shrink-0 p-4 border-t border-slate-100 bg-slate-50">
-                <button onClick={logout} className="flex items-center gap-3 w-full px-4 py-2 text-sm font-medium text-slate-600 hover:text-red-600 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-slate-200">
+            <div className="flex-shrink-0 p-4 border-t border-white/15 bg-blue-950/40">
+                <button onClick={logout} className="flex items-center gap-3 w-full px-4 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">
                     <LogOut size={18} />
                     <span>Cerrar Sesión</span>
                 </button>
                 <div className="mt-3 text-center">
-                    <span className="text-[10px] text-slate-400 font-mono italic">v2.5.0 • PathAI System</span>
+                    <span className="text-[10px] text-white/70 font-mono italic">v2.5.0 • PathAI System</span>
                 </div>
             </div>
         </div>
@@ -148,7 +148,7 @@ const Layout = ({ children }) => {
         <div className="grid grid-cols-1 lg:grid-cols-[264px_1fr] h-screen w-full bg-slate-50 overflow-hidden font-sans">
 
             {/* 1. SIDEBAR DESKTOP (Columna Izquierda Real) */}
-            <aside className="hidden lg:flex flex-col h-full border-r border-slate-200 overflow-hidden">
+            <aside className="hidden lg:flex flex-col h-full border-r border-blue-950 overflow-hidden">
                 <SidebarContent />
             </aside>
 
@@ -183,7 +183,7 @@ const Layout = ({ children }) => {
                 {/* Header del Main */}
                 <header className="h-16 flex-shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 z-10 transition-colors">
                     <div className="flex items-center gap-3">
-                        <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-md">
+                        <button aria-label="Abrir menú" onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-md">
                             <Menu size={20} />
                         </button>
                         <h2 className="font-bold text-slate-800 text-lg truncate">
