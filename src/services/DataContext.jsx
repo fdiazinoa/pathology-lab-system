@@ -96,12 +96,12 @@ export const DataProvider = ({ children }) => {
             setExams(loadedExams);
             // Patient persistence must survive unrelated clinical modules being unavailable.
             setPatients(await dataProvider.getPatients());
+            setCases(await dataProvider.getCases());
             const [
-                loadedCases, loadedGlobalCases,
+                loadedGlobalCases,
                 loadedDeliveries, loadedHistory, loadedConfig,
                 loadedInsurers, loadedEquipment
             ] = await Promise.all([
-                dataProvider.getCases(),
                 dataProvider.getGlobalCases(),
                 dataProvider.getDeliveries(),
                 dataProvider.getConfigHistory(),
@@ -110,7 +110,6 @@ export const DataProvider = ({ children }) => {
                 dataProvider.getEquipment()
             ]);
 
-            setCases(loadedCases);
             setGlobalCases(loadedGlobalCases);
             setDeliveries(loadedDeliveries);
             setConfigHistory(loadedHistory);
