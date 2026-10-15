@@ -17,7 +17,7 @@ RLS controla SELECT/INSERT/UPDATE/DELETE de los catálogos existentes (`centers`
 
 `permission_catalog` no tiene acceso directo para clientes: RLS activado y todos los grants revocados. Su lectura interna requiere las funciones privadas con search_path fijo. Es intencional que el asesor informe una tabla con RLS sin política de acceso.
 
-**Alcance del backend:** al implementar este cambio el proyecto Supabase todavía no tiene tablas `patients`, `cases` ni los demás modelos clínicos. Los permisos de esas secciones se comprueban en las operaciones de la aplicación y en los modos locales, pero el flujo clínico completo no puede probarse contra Supabase hasta habilitar su esquema. Antes de exponer esas tablas, deben tener RLS y controles equivalentes de transición y de contenido; el RPC previo no sustituye esos controles de servidor.
+**Alcance del backend:** al implementar este cambio el proyecto Supabase todavía no tiene la tabla `cases` ni los demás modelos clínicos de estudios. El directorio `patients` ya dispone de persistencia y RLS por acción, verificados en la corrección del registro rápido. Los permisos de esas secciones se comprueban en las operaciones de la aplicación y en los modos locales, pero el flujo clínico completo no puede probarse contra Supabase hasta habilitar su esquema. Antes de exponer esas tablas, deben tener RLS y controles equivalentes de transición y de contenido; el RPC previo no sustituye esos controles de servidor.
 
 Los modos DEMO/PROD locales sirven como simulación y no constituyen una frontera de seguridad frente a alguien con acceso al almacenamiento del navegador.
 

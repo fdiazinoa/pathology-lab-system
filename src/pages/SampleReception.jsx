@@ -1,17 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react';
-import { Save, Printer, Plus, Search, User, Building, FileText, Tag, Clock } from 'lucide-react';
+import { Save, Printer, Plus, Search, User, Building, FileText, Tag, Clock, Edit2 } from 'lucide-react';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import Modal from '../components/Modal';
 import { useData } from '../services/DataContext';
+import { matchesPatientSearch } from '../services/patientSearch';
+import { prepareReceptionPatient, patientSaveError, ageFromBirthDate } from '../services/patientRecords';
 import { getReceptionCenters } from '../services/receptionCenters';
 
 const SampleReception = () => {
     const navigate = useNavigate();
-    const { patients, doctors, isProductionMode, centers: configuredCenters, insurers, addCase, addPatient, currentUser, addAuditLog } = useData();
+    const { patients, doctors, isProductionMode, centers: configuredCenters, insurers, addCase, addPatient, updatePatient, currentUser, addAuditLog, can } = useData();
     const originCenters = getReceptionCenters(configuredCenters, !isProductionMode);
     const [loading, setLoading] = useState(false);
     const searchRef = useRef(null);
@@ -20,7 +22,12 @@ const SampleReception = () => {
     const [patientSearch, setPatientSearch] = useState('');
     const [showPatientResults, setShowPatientResults] = useState(false);
     const [showNewPatientModal, setShowNewPatientModal] = useState(false);
-    const [newPatientData, setNewPatientData] = useState({ name: '', age: '', sex: 'F', history: '', cedula: '' });
+    const emptyPatient = { name: '', age: '', sex: 'F', history: '', cedula: '', birth_date: '', city: '', region: '', phone: '' };
+    const [newPatientData, setNewPatientData] = useState(emptyPatient);
+    const [editingPatientId, setEditingPatientId] = useState(null);
+    const [savingPatient, setSavingPatient] = useState(false);
+    const [patientError, setPatientError] = useState('');
+    const [receptionError, setReceptionError] = useState('');
 
     const [formData, setFormData] = useState({
         patientId: '',
@@ -39,11 +46,15 @@ const SampleReception = () => {
     const [showLabelModal, setShowLabelModal] = useState(false);
 
     // Patient Search Logic
-    const filteredPatients = patients.filter(p =>
-        p.name.toLowerCase().includes(patientSearch.toLowerCase()) ||
-        (p.cedula && p.cedula.includes(patientSearch)) ||
-        p.id.toLowerCase().includes(patientSearch.toLowerCase())
-    );
+    const filteredPatients = patients.filter(p => matchesPatientSearch(p, patientSearch));
+    const selectedPatient = patients.find(p => p.id === formData.patientId);
+    const openPatientEditor = (patient = null) => {
+        setPatientError('');
+        setEditingPatientId(patient?.id || null);
+        setNewPatientData(patient ? { ...emptyPatient, ...patient } : { ...emptyPatient, name: patientSearch });
+        setShowPatientResults(false);
+        setShowNewPatientModal(true);
+    };
 
     const handleSelectPatient = (patient) => {
         setFormData({ ...formData, patientId: patient.id });
@@ -51,31 +62,22 @@ const SampleReception = () => {
         setShowPatientResults(false);
     };
 
-    const handleCreatePatient = (e) => {
+    const handleCreatePatient = async (e) => {
         e.preventDefault();
-        const age = parseInt(newPatientData.age);
-        let finalCedula = newPatientData.cedula;
-
-        if (age >= 18 && (!finalCedula || finalCedula.trim() === '')) {
-            alert("La cédula es obligatoria para mayores de 18 años.");
-            return;
-        }
-
-        if (age < 18 && (!finalCedula || finalCedula.trim() === '')) {
-            finalCedula = `M-${Date.now().toString().slice(-6)}`;
-        }
-
-        const patient = {
-            id: `P-${1000 + patients.length + 1}`,
-            ...newPatientData,
-            cedula: finalCedula,
-            createdAt: new Date().toISOString().split('T')[0]
-        };
-
-        addPatient(patient);
-        handleSelectPatient(patient);
-        setShowNewPatientModal(false);
-        setNewPatientData({ name: '', age: '', sex: 'F', history: '', cedula: '' });
+        if (savingPatient) return;
+        setPatientError(''); setSavingPatient(true);
+        try {
+            const patient = prepareReceptionPatient(newPatientData, patients, editingPatientId);
+            const saved = editingPatientId
+                ? await updatePatient({ ...patient, id: editingPatientId })
+                : await addPatient({ ...patient, id: crypto.randomUUID() });
+            if (!saved?.id) throw new Error('El servidor no confirmó el guardado. Intente nuevamente.');
+            handleSelectPatient(saved);
+            setShowNewPatientModal(false);
+            setNewPatientData(emptyPatient);
+            setEditingPatientId(null);
+        } catch (error) { setPatientError(patientSaveError(error)); }
+        finally { setSavingPatient(false); }
     };
 
     // Click outside search results
@@ -89,8 +91,11 @@ const SampleReception = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        if (loading) return;
+        setReceptionError('');
+        if (!formData.patientId || !selectedPatient) { setReceptionError('Seleccione un paciente guardado antes de registrar la muestra.'); return; }
         setLoading(true);
 
         // Generate IDs
@@ -99,7 +104,6 @@ const SampleReception = () => {
         const sampleId = `S-${year}-${randomSuffix}`;
         const caseId = `C-${year}-${randomSuffix}`; // In a real app, logic might differ
 
-        const selectedPatient = patients.find(p => p.id === formData.patientId);
         const selectedDoctor = doctors.find(d => d.id === formData.doctorId);
         const selectedCenter = originCenters.find(c => c.id === formData.originCenterId);
 
@@ -114,7 +118,7 @@ const SampleReception = () => {
             originCenter: selectedCenter ? selectedCenter.name : 'Desconocido',
             type: formData.sampleType,
             organ: 'Por definir (Macro)', // Will be defined in Macroscopy
-            status: 'Recibida', // Initial status
+            status: 'Borrador', // Reception is not diagnostic validation.
             priority: formData.priority,
             clinicalData: formData.description,
             paymentType: formData.paymentType,
@@ -134,13 +138,13 @@ const SampleReception = () => {
             ]
         };
 
-        // Simulate API call
-        setTimeout(() => {
-            addCase(newCase);
-            setGeneratedSample({ ...newCase, patient: selectedPatient, doctor: selectedDoctor });
-            setLoading(false);
+        try {
+            const saved = await addCase(newCase);
+            if (!saved?.id) throw new Error('El servidor no confirmó el registro de la muestra.');
+            setGeneratedSample({ ...newCase, ...saved, patient: selectedPatient, doctor: selectedDoctor });
             setShowLabelModal(true);
-        }, 800);
+        } catch (error) { setReceptionError(`No se pudo registrar la muestra: ${error.message}. El paciente guardado se conserva.`); }
+        finally { setLoading(false); }
     };
 
     const handlePrint = () => {
@@ -200,7 +204,8 @@ const SampleReception = () => {
                                                 <Button
                                                     size="sm"
                                                     type="button"
-                                                    onClick={() => setShowNewPatientModal(true)}
+                                                    permission={['patients', 'create']}
+                                                    onClick={() => openPatientEditor()}
                                                 >
                                                     <Plus size={16} className="mr-1" />
                                                     Registrar Nuevo Paciente
@@ -210,10 +215,12 @@ const SampleReception = () => {
                                     </div>
                                 )}
                             </div>
-                            {formData.patientId && (
-                                <div className="flex items-center gap-2 mt-1 px-2 py-1 bg-green-50 text-green-700 rounded text-xs font-medium border border-green-100">
-                                    <User size={14} />
-                                    Paciente Seleccionado: {patients.find(p => p.id === formData.patientId)?.name}
+                            {selectedPatient && (
+                                <div className="mt-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-900 space-y-2">
+                                    <p className="font-semibold flex items-center gap-2"><User size={16} />{selectedPatient.name}</p>
+                                    <p>{selectedPatient.age} años · {selectedPatient.sex} · Documento: {selectedPatient.cedula || 'Sin documento'}</p>
+                                    <Button type="button" size="sm" variant="secondary" permission={['patients', 'edit']} onClick={() => openPatientEditor(selectedPatient)}><Edit2 size={16} className="mr-2" />Editar datos del paciente</Button>
+                                    {!can('patients', 'edit') && <p className="text-xs">Su rol no tiene permiso para corregir pacientes.</p>}
                                 </div>
                             )}
                         </div>
@@ -341,11 +348,12 @@ const SampleReception = () => {
                     </div>
                 </Card>
 
+                {receptionError && <p role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-red-800">{receptionError}</p>}
                 <div className="flex justify-end gap-4">
                     <Button type="button" variant="ghost" onClick={() => navigate('/dashboard')}>
                         Cancelar
                     </Button>
-                    <Button type="submit" isLoading={loading}>
+                    <Button type="submit" permission={['cases', 'create']} isLoading={loading} disabled={savingPatient || !formData.patientId}>
                         <Save size={20} className="mr-2" />
                         Registrar Muestra
                     </Button>
@@ -358,6 +366,7 @@ const SampleReception = () => {
                     isOpen={showLabelModal}
                     onClose={handleClose}
                     title="Etiqueta de Muestra Generada"
+                    showFooter={false}
                 >
                     <div className="flex flex-col items-center space-y-6 p-4">
                         <div className="border-2 border-dashed border-gray-300 p-4 rounded-lg bg-white w-full max-w-sm" id="printable-label">
@@ -389,54 +398,74 @@ const SampleReception = () => {
             {showNewPatientModal && (
                 <Modal
                     isOpen={showNewPatientModal}
-                    onClose={() => setShowNewPatientModal(false)}
-                    title="Registro Rápido de Paciente"
+                    onClose={() => !savingPatient && setShowNewPatientModal(false)}
+                    showFooter={false}
+                    maxWidth="max-w-2xl"
+                    title={editingPatientId ? "Editar datos generales del paciente" : "Registro rápido de paciente"}
                 >
-                    <form onSubmit={handleCreatePatient} className="space-y-4 p-4">
+                    <form onSubmit={handleCreatePatient} className="space-y-4">
+                        {patientError && <p role="alert" className="rounded bg-red-50 p-3 text-red-800">{patientError}</p>}
+                        <fieldset disabled={savingPatient} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Input
+                                aria-label="Nombre completo del paciente"
                                 label="Nombre Completo"
                                 value={newPatientData.name}
                                 onChange={e => setNewPatientData({ ...newPatientData, name: e.target.value })}
                                 required
                             />
                             <Input
+                                aria-label="Edad del paciente"
+                                min="0" max="130" step="1"
                                 label="Edad"
                                 type="number"
                                 value={newPatientData.age}
-                                onChange={e => setNewPatientData({ ...newPatientData, age: e.target.value })}
+                                onChange={e => setNewPatientData({ ...newPatientData, age: e.target.value, birth_date: '' })}
                                 required
                             />
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-sm font-medium text-text-main">Sexo</label>
                                 <select
                                     className="flex w-full rounded-md border border-border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
+                                    aria-label="Sexo del paciente"
                                     value={newPatientData.sex}
                                     onChange={e => setNewPatientData({ ...newPatientData, sex: e.target.value })}
                                 >
                                     <option value="F">Femenino</option>
                                     <option value="M">Masculino</option>
+                                    <option value="Otro">Otro / No especificado</option>
                                 </select>
                             </div>
                             <Input
+                                aria-label="Documento del paciente"
                                 label="Cédula / Documento"
                                 value={newPatientData.cedula}
                                 onChange={e => setNewPatientData({ ...newPatientData, cedula: e.target.value })}
                                 placeholder={newPatientData.age && parseInt(newPatientData.age) < 18 ? "Opcional" : "Obligatorio"}
                             />
+                            <Input label="Fecha de nacimiento (opcional)" aria-label="Fecha de nacimiento del paciente" type="date" value={newPatientData.birth_date || ''} max={new Date().toLocaleDateString('en-CA')} onChange={e => {
+                                const birth_date = e.target.value;
+                                try { setNewPatientData({ ...newPatientData, birth_date, age: birth_date ? ageFromBirthDate(birth_date) : newPatientData.age }); setPatientError(''); }
+                                catch (error) { setPatientError(error.message); }
+                            }} />
+                            <Input label="Teléfono" aria-label="Teléfono del paciente" type="tel" value={newPatientData.phone || ''} onChange={e => setNewPatientData({ ...newPatientData, phone: e.target.value })} />
+                            <Input label="Ciudad" aria-label="Ciudad del paciente" value={newPatientData.city || ''} onChange={e => setNewPatientData({ ...newPatientData, city: e.target.value })} />
+                            <Input label="Región / Provincia" aria-label="Provincia del paciente" value={newPatientData.region || ''} onChange={e => setNewPatientData({ ...newPatientData, region: e.target.value })} />
                         </div>
                         <Input
+                            aria-label="Antecedentes del paciente"
                             label="Antecedentes Relevantes"
                             textarea
                             value={newPatientData.history}
                             onChange={e => setNewPatientData({ ...newPatientData, history: e.target.value })}
                         />
+                        </fieldset>
                         <div className="flex justify-end gap-2 pt-4">
-                            <Button type="button" variant="ghost" onClick={() => setShowNewPatientModal(false)}>
+                            <Button type="button" variant="ghost" disabled={savingPatient} onClick={() => setShowNewPatientModal(false)}>
                                 Cancelar
                             </Button>
-                            <Button type="submit">
-                                Guardar y Seleccionar
+                            <Button type="submit" permission={['patients', editingPatientId ? 'edit' : 'create']} isLoading={savingPatient}>
+                                {editingPatientId ? 'Guardar cambios del paciente' : 'Guardar y seleccionar'}
                             </Button>
                         </div>
                     </form>
