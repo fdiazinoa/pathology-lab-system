@@ -6,6 +6,7 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import Modal from '../components/Modal';
+import SearchableCatalogField from '../components/SearchableCatalogField';
 import { useData } from '../services/DataContext';
 import { matchesPatientSearch } from '../services/patientSearch';
 import { prepareReceptionPatient, patientSaveError, ageFromBirthDate } from '../services/patientRecords';
@@ -226,36 +227,35 @@ const SampleReception = () => {
                         </div>
 
                         {/* Doctor */}
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-medium text-text-main">Médico Remitente</label>
-                            <select
-                                className="flex w-full rounded-md border border-border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
-                                value={formData.doctorId}
-                                onChange={e => setFormData({ ...formData, doctorId: e.target.value })}
-                                required
-                            >
-                                <option value="">Seleccionar Doctor...</option>
-                                {doctors.filter(doctor => doctor.is_active !== false).map(d => (
-                                    <option key={d.id} value={d.id}>{d.name}</option>
-                                ))}
-                            </select>
-                        </div>
+                        <SearchableCatalogField
+                            label="Médico Remitente"
+                            title="Buscar médico remitente"
+                            placeholder="Buscar médico…"
+                            items={(doctors || []).filter(doctor => doctor.is_active !== false).map(doctor => ({
+                                id: doctor.id, value: doctor.id, label: doctor.name,
+                                detail: [doctor.specialty, doctor.license, doctor.lis_id || doctor.id].filter(Boolean).join(' · ')
+                            }))}
+                            value={formData.doctorId}
+                            onChange={doctorId => setFormData(previous => ({ ...previous, doctorId }))}
+                            emptyMessage="No hay médicos que coincidan con la búsqueda."
+                            required
+                        />
 
                         {/* Origin Center */}
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-medium text-text-main">Centro de Origen</label>
-                            <select
-                                className="flex w-full rounded-md border border-border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
-                                value={formData.originCenterId}
-                                onChange={e => setFormData({ ...formData, originCenterId: e.target.value })}
-                                required
-                            >
-                                <option value="">Seleccionar Centro...</option>
-                                {originCenters && originCenters.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name} ({c.id})</option>
-                                ))}
-                            </select>
-                        </div>
+                        <SearchableCatalogField
+                            label="Centro de Origen"
+                            title="Buscar centro de origen"
+                            placeholder="Buscar centro de origen…"
+                            items={originCenters.map(center => ({
+                                id: center.id, value: center.id, label: center.name,
+                                detail: [center.code || center.id, center.address].filter(Boolean).join(' · '),
+                                search: center.id
+                            }))}
+                            value={formData.originCenterId}
+                            onChange={originCenterId => setFormData(previous => ({ ...previous, originCenterId }))}
+                            emptyMessage="No hay centros que coincidan con la búsqueda."
+                            required
+                        />
 
                         {/* Payment Type */}
                         <div className="flex flex-col gap-1.5">
@@ -273,20 +273,19 @@ const SampleReception = () => {
                         {/* Insurance Fields */}
                         {formData.paymentType === 'Asegurado' && (
                             <>
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-sm font-medium text-text-main">ARS / Seguro</label>
-                                    <select
-                                        className="flex w-full rounded-md border border-border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
-                                        value={formData.arsName}
-                                        onChange={e => setFormData({ ...formData, arsName: e.target.value })}
-                                        required
-                                    >
-                                        <option value="">Seleccionar ARS...</option>
-                                        {insurers && insurers.map(ins => (
-                                            <option key={ins.id} value={ins.name}>{ins.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                                <SearchableCatalogField
+                                    label="ARS / Seguro"
+                                    title="Buscar ARS / Seguro"
+                                    placeholder="Buscar ARS o seguro…"
+                                    items={(insurers || []).filter(insurer => insurer.is_active !== false).map(insurer => ({
+                                        id: insurer.id, value: insurer.name, label: insurer.name,
+                                        detail: insurer.code || insurer.id
+                                    }))}
+                                    value={formData.arsName}
+                                    onChange={arsName => setFormData(previous => ({ ...previous, arsName }))}
+                                    emptyMessage={insurers?.length ? 'No hay aseguradoras que coincidan con la búsqueda.' : 'No hay ARS / seguros disponibles en el catálogo.'}
+                                    required
+                                />
                                 <Input
                                     label="No. de Póliza"
                                     placeholder="Ej. 001-2345678-9"
