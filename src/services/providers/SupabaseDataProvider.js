@@ -60,18 +60,22 @@ class SupabaseDataProvider extends DataProvider {
 
     // --- Cases ---
     async getCases() {
-        const { data, error } = await supabase
-            .from('cases')
-            .select('*, patients(*), ars_providers(*)')
-            .order('created_at', { ascending: false });
-        if (error) throw error;
-        return data.map(caseWithReport);
+        const cases = [];
+        const pageSize = 1000;
+        for (let offset = 0; ; offset += pageSize) {
+            const { data, error } = await supabase.from('cases').select('*, patients(*)')
+                .order('created_at', { ascending: false }).order('id')
+                .range(offset, offset + pageSize - 1);
+            if (error) throw error;
+            cases.push(...data.map(caseWithReport));
+            if (data.length < pageSize) return cases;
+        }
     }
 
     async getCase(id) {
         const { data, error } = await supabase
             .from('cases')
-            .select('*, patients(*), ars_providers(*), case_tracking(*)')
+            .select('*, patients(*)')
             .eq('id', id)
             .single();
         if (error) throw error;
@@ -83,17 +87,18 @@ class SupabaseDataProvider extends DataProvider {
         const { data, error } = await supabase
             .from('cases')
             .insert([{
-                case_number: newCase.case_number || newCase.id || `C-${Date.now()}`,
+                ...(newCase.case_number ? { case_number: newCase.case_number } : {}),
                 patient_id: newCase.patient_id || newCase.patientId,
                 type: newCase.type,
                 organ: newCase.organ,
+                diagnosis: newCase.diagnosis || null,
                 status: newCase.status || 'Borrador',
                 current_stage: newCase.current_stage || newCase.stage || 'recepcion',
                 payment_method: newCase.payment_method || newCase.paymentType || 'Privado',
-                total_cost: newCase.total_cost || newCase.cost || 0,
+                total_cost: newCase.total_cost ?? newCase.price ?? newCase.cost ?? 0,
                 metadata: caseReportMetadata(newCase)
             }])
-            .select()
+            .select('*, patients(*)')
             .single();
         if (error) throw error;
         return caseWithReport(data);
@@ -105,14 +110,18 @@ class SupabaseDataProvider extends DataProvider {
         const { data, error } = await supabase
             .from('cases')
             .update({
+                patient_id: updatedCase.patientId,
+                type: updatedCase.type,
+                organ: updatedCase.organ,
+                payment_method: updatedCase.paymentType,
                 status: updatedCase.status,
                 current_stage: updatedCase.current_stage || updatedCase.stage,
                 diagnosis: updatedCase.diagnosis,
-                total_cost: updatedCase.total_cost || updatedCase.cost,
+                total_cost: updatedCase.price ?? updatedCase.total_cost ?? updatedCase.cost,
                 metadata: caseReportMetadata(updatedCase, existing.metadata || {})
             })
             .eq('id', updatedCase.id)
-            .select()
+            .select('*, patients(*)')
             .single();
         if (error) throw error;
         return caseWithReport(data);

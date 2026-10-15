@@ -13,3 +13,11 @@ La tabla tiene RLS por `patients.read/create/edit`. Los clientes no pueden borra
 **Límite existente:** el esquema de casos/muestras todavía no está habilitado. Recepción ahora espera también el guardado de la muestra y muestra el error si no puede persistirla; no ofrece una etiqueta de éxito para una muestra inexistente. Un paciente ya guardado no se pierde si el paso de registrar la muestra falla.
 
 Validación: pruebas Node del contrato de datos, correcciones, duplicados, edad/nacimiento y mensajes de error; `tests/sql/patient-directory.sql` verifica creación/edición, permisos y restricciones dentro de una transacción con ROLLBACK; build y lint focalizado.
+
+## Continuar el estudio recibido
+
+La migración `20261015192502_reception_case_continuation.sql` habilita `cases` y su auditoría inmutable; sustituye el límite de casos indicado arriba. El número de caso lo genera la BD y el UUID permanece como identidad interna. Se conservan médico, centro, muestra, fecha de recolección, prioridad, cobertura, póliza y observaciones en `metadata.report`. Se cargan casos antes de módulos independientes y por páginas para evitar truncar el catálogo en 1.000 filas.
+
+Nuevo caso permite buscar pacientes por nombre o documento mostrando sus generales, sin UUID visible. Al elegir un paciente con una sola recepción pendiente abre ese caso para editar; con varias, permite elegir entre sus recepciones pendientes ordenadas por fecha. La bandeja **Recepciones pendientes** permite buscar también por caso, fecha, muestra o médico, con 20 filas por página. Cancelar la bandeja no crea registros; guardar un nuevo caso con recepciones pendientes vuelve a pedir selección para evitar duplicados. Otra muestra se registra desde Recepción.
+
+Continuar conserva la identidad y los datos de la recepción; al guardar pasa de `pending` a `in_progress` y deja la bandeja. Nunca se reutilizan casos finalizados, cancelados o con contenido diagnóstico. El examen solo se asigna automáticamente si el catálogo tiene una coincidencia exacta y única; los tipos generales o ambiguos requieren elegir el examen correcto. Los permisos de casos, recepción, cada sección clínica y las transiciones de informe se verifican también en BD. Los UUID y el paciente de un caso recibido están protegidos; su auditoría de servidor no guarda una copia del contenido clínico.
