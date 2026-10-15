@@ -923,7 +923,7 @@ const CaseManager = () => {
                                 placeholder="Buscar órgano o localización…"
                                 items={(organs || []).filter(org => org.is_active !== false).map(org => ({
                                     id: org.id, value: org.name, label: org.name,
-                                    detail: [org.procedure_type, org.code || org.original_code].filter(Boolean).join(' · '),
+                                    detail: [org.anatomical_group, org.procedure_type, org.code || org.original_code].filter(Boolean).join(' · '),
                                     search: [org.id, org.section_code, org.original_code].filter(Boolean).join(' ')
                                 }))}
                                 value={formData.organ}
