@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useData } from '../services/DataContext';
+import { auditDisplay } from '../services/auditDisplay';
 import Card from '../components/Card';
 import Input from '../components/Input';
 import Button from '../components/Button';
@@ -8,7 +9,7 @@ import { Link } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Cell } from 'recharts';
 
 const AuditLog = () => {
-    const { globalAuditLog, cases, configHistory, users } = useData();
+    const { globalAuditLog, cases, configHistory, users, currentUser } = useData();
     const [activeTab, setActiveTab] = useState('logs'); // logs, traceability, performance, security
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('all');
@@ -25,14 +26,17 @@ const AuditLog = () => {
     const unifiedLogs = useMemo(() => [
         ...globalAuditLog.map(log => ({ ...log, type: 'Global' })),
         ...caseLogs
-    ].sort((a, b) => new Date(b.date) - new Date(a.date)), [globalAuditLog, caseLogs]);
+    ].map(log => auditDisplay(log, currentUser ? [...users, currentUser] : users))
+        .sort((a, b) => new Date(b.date) - new Date(a.date)), [globalAuditLog, caseLogs, users, currentUser]);
 
     const filteredLogs = useMemo(() => unifiedLogs.filter(log => {
         const matchesSearch =
             (log.details || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             (log.action || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             (log.user || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (log.caseId || '').toLowerCase().includes(searchTerm.toLowerCase());
+            (log.caseId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            String(log.actorId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (log.originalDetails || '').toLowerCase().includes(searchTerm.toLowerCase());
 
         const matchesType = filterType === 'all' ||
             (filterType === 'global' && log.type === 'Global') ||
@@ -119,7 +123,7 @@ const AuditLog = () => {
                                             {log.user ? log.user.substring(0, 2).toUpperCase() : 'S'}
                                         </div>
                                         <div>
-                                            <p className="text-sm font-medium">{log.user || 'Sistema'}</p>
+                                            <p className="text-sm font-medium" title={log.actorId}>{log.user || 'Sistema'}</p>
                                             <p className="text-xs text-text-secondary">{log.role || 'N/A'}</p>
                                         </div>
                                     </div>
