@@ -28,6 +28,7 @@ export async function requirements(provider, method, args) {
         const resource = { Patient: 'patients', Case: 'cases', Center: 'centers', Doctor: 'doctors', Organ: 'organs', Exam: 'exams', Insurer: 'insurers', Equipment: 'equipment', Role: 'roles', User: 'users' }[crud[2]];
         return [[resource, { add: 'create', update: 'edit', delete: crud[2] === 'User' ? 'deactivate' : 'delete' }[crud[1]]]];
     }
+    if (method === 'admitUser') return [['users', 'assignRole'], ['users', 'deactivate']];
     if (method === 'addUser') return [['users', 'create'], ['users', 'assignRole']];
     if (method === 'updateUser') {
         const old = (await provider.getUsers()).find(u => u.id === args[0].id);

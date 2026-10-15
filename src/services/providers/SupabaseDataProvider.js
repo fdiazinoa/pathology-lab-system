@@ -1,3 +1,4 @@
+import { managedLabUser } from '../labUserDirectory';
 import DataProvider from './DataProvider';
 import { supabase } from '../supabaseClient';
 import { buildLabInfoPayload, labInfoToSettings } from '../labSettings';
@@ -273,10 +274,14 @@ class SupabaseDataProvider extends DataProvider {
         return data;
     }
     async getUsers() {
-        const { data, error } = await supabase.from('profiles').select('*').order('full_name');
+        const { data, error } = await supabase.rpc('list_lab_users');
         if (error) throw error;
-        const legacy = { admin: '1', pathologist: '2', technician: '3', courier: '4' };
-        return (data || []).map(p => ({ id: p.id, name: p.full_name || '', email: '', roleId: p.role === 'admin' ? '1' : p.permission_role_id || legacy[p.role] || '', status: p.is_active ? 'Active' : 'Inactive', profileRole: p.role }));
+        return (data || []).map(managedLabUser);
+    }
+    async admitUser(id, roleId) {
+        const { error } = await supabase.rpc('admit_lab_user', { target_user_id: id, selected_role_id: roleId });
+        if (error) throw error;
+        return (await this.getUsers()).find(user => user.id === id);
     }
     async updateUser(user) {
         const { data, error } = await supabase.from('profiles').update({ full_name: user.name, permission_role_id: user.roleId, is_active: user.status === 'Active' }).eq('id', user.id).select().single();
