@@ -51,3 +51,8 @@ test('custom roles come from the verified profile and system administrators stay
     const admin = await fixture({ profile: { role: 'admin', permission_role_id: 'custom-role' } }).auth.authorizedUser();
     assert.equal(admin.roleId, '1');
 });
+
+test('pending profiles cannot log in even if metadata or a role assignment suggests privileges', async () => {
+    assert.equal(await fixture({ profile: { role: 'viewer', is_active: false } }).auth.authorizedUser(), null);
+    assert.equal(await fixture({ profile: { role: 'viewer', is_active: true, permission_role_id: '1' } }).auth.authorizedUser(), null);
+});

@@ -1,13 +1,13 @@
 begin;
 -- Synthetic principals and roles are removed by the final ROLLBACK.
-insert into auth.users(id,email) values ('aaaaaaaa-0000-4000-8000-000000000001','rls-readonly@example.invalid'),('aaaaaaaa-0000-4000-8000-000000000002','rls-importer@example.invalid');
+insert into auth.users(id,email,email_confirmed_at) values ('aaaaaaaa-0000-4000-8000-000000000001','rls-readonly@example.invalid',now()),('aaaaaaaa-0000-4000-8000-000000000002','rls-importer@example.invalid',now());
 insert into public.app_roles(id,name,permissions) values
  ('rls-test-reader','RLS test reader','{"doctors":{"read":true},"roles":{"read":true}}'),
  ('rls-test-importer','RLS test importer','{"templates":{"read":true,"import":true}}');
-insert into public.profiles(id,full_name,role,is_active,permission_role_id) values
- ('aaaaaaaa-0000-4000-8000-000000000001','Test reader','pathologist',true,'rls-test-reader'),
- ('aaaaaaaa-0000-4000-8000-000000000002','Test importer','technician',true,'rls-test-importer');
+select set_config('request.jwt.claim.sub',(select id::text from public.profiles where role='admin' and is_active limit 1),true);
 set local role authenticated;
+select public.admit_lab_user('aaaaaaaa-0000-4000-8000-000000000001','rls-test-reader');
+select public.admit_lab_user('aaaaaaaa-0000-4000-8000-000000000002','rls-test-importer');
 select set_config('request.jwt.claim.sub','aaaaaaaa-0000-4000-8000-000000000001',true);
 do $$
 declare affected integer;
