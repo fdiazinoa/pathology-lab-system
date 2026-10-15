@@ -29,3 +29,13 @@ Los modos DEMO/PROD locales sirven como simulación y no constituyen una fronter
 - `npm run lint` tiene un bloqueo previo: el repositorio no incluye configuración ESLint. Se ejecutaron controles focalizados de variables no definidas, claves duplicadas y código inalcanzable sobre los archivos modificados.
 
 No se cambiaron asignaciones de usuarios reales durante la implementación.
+
+## Admisión de registros
+
+Cada alta de Auth crea un perfil `viewer` inactivo, sin rol asignado. La migración recupera registros anteriores que no tenían perfil y preserva todos los perfiles existentes. Los metadatos del registro solo aportan el nombre visible; nunca autorizan.
+
+En **Usuarios → Pendientes de admisión**, el administrador comprueba el correo y selecciona un rol antes de pulsar **Admitir y asignar rol**. El RPC comprueba en el servidor `users.assignRole` y `users.deactivate`, el correo confirmado y el rol activo, y activa el perfil de forma atómica. Solo un administrador del sistema puede admitir a otro administrador. Los cambios quedan auditados. Una cuenta inactiva ya admitida se distingue de una cuenta pendiente.
+
+El directorio muestra correos y su confirmación mediante funciones privadas que solo devuelven campos de directorio. Los usuarios con `users.read` ven el listado; los demás únicamente su propio registro. El esquema Auth y sus credenciales no se exponen. **Actualizar** refresca el listado sin recargar la página.
+
+`tests/sql/user-admission.sql` verifica el registro pendiente, el rechazo de auto-admisión y de correos sin confirmar, la elección explícita del rol y la auditoría. Todas las pruebas de admisión se revierten; no se concedieron permisos a usuarios reales durante esta corrección.

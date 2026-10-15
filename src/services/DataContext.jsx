@@ -84,6 +84,7 @@ export const DataProvider = ({ children }) => {
             const [loadedUser, earlyRoles] = await Promise.all([dataProvider.getCurrentUser(), dataProvider.getRoles()]);
             setCurrentUser(loadedUser);
             setRoles(earlyRoles);
+            if (!loadedUser) { setUsers([]); return; }
             setUsers(await dataProvider.getUsers());
             setGlobalAuditLog(await dataProvider.getGlobalAuditLog());
             setCenters(await dataProvider.getCenters());
@@ -459,6 +460,15 @@ export const DataProvider = ({ children }) => {
     const updateRole = useCallback(async (r) => { if (dataProvider) { await dataProvider.updateRole(r); setRoles(prev => prev.map(x => x.id === r.id ? r : x)); } }, [dataProvider]);
     const deleteRole = useCallback(async (id) => { if (dataProvider) { await dataProvider.deleteRole(id); setRoles(prev => prev.filter(x => x.id !== id)); } }, [dataProvider]);
 
+    const refreshUsers = useCallback(async () => {
+        if (dataProvider) setUsers(await dataProvider.getUsers());
+    }, [dataProvider]);
+    const admitUser = useCallback(async (id, roleId) => {
+        if (!dataProvider) return;
+        await dataProvider.admitUser(id, roleId);
+        setUsers(await dataProvider.getUsers());
+    }, [dataProvider]);
+
     const addUser = useCallback(async (u) => { if (dataProvider) { const saved = await dataProvider.addUser(u); setUsers(prev => [...prev, saved]); } }, [dataProvider]);
     const updateUser = useCallback(async (u) => { if (dataProvider) { const saved = await dataProvider.updateUser(u); setUsers(prev => prev.map(x => x.id === u.id ? saved : x)); setCurrentUser(await dataProvider.getCurrentUser()); } }, [dataProvider]);
     const deleteUser = useCallback(async (id) => { if (dataProvider) { await dataProvider.deleteUser(id); setUsers(prev => prev.map(x => x.id === id ? { ...x, status: 'Inactive' } : x)); setCurrentUser(await dataProvider.getCurrentUser()); } }, [dataProvider]);
@@ -630,7 +640,7 @@ export const DataProvider = ({ children }) => {
         exams, addExam, updateExam, deleteExam,
         centers, addCenter, updateCenter, deleteCenter,
         roles, addRole, updateRole, deleteRole,
-        users, addUser, updateUser, deleteUser,
+        users, addUser, updateUser, deleteUser, admitUser, refreshUsers,
         lisConnection, toggleLisConnection, simulateLisDataTransfer,
         testPrinter,
         addImage, updateImage, deleteImage,
@@ -652,7 +662,7 @@ export const DataProvider = ({ children }) => {
         exams, addExam, updateExam, deleteExam,
         centers, addCenter, updateCenter, deleteCenter,
         roles, addRole, updateRole, deleteRole,
-        users, addUser, updateUser, deleteUser,
+        users, addUser, updateUser, deleteUser, admitUser, refreshUsers,
         lisConnection, toggleLisConnection, simulateLisDataTransfer,
         testPrinter,
         addImage, updateImage, deleteImage,
