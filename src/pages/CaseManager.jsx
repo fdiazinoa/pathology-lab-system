@@ -26,12 +26,14 @@ import ResultTemplatePicker from '../components/ResultTemplatePicker';
 import SearchableCatalogField from '../components/SearchableCatalogField';
 import { applyStructuredTemplate, clearAppliedTemplate } from '../services/structuredResultTemplates';
 import StudyResultFields from '../components/StudyResultFields';
+import ReceptionPicker from '../components/ReceptionPicker';
+import { pendingReceptions, receptionExamId } from '../services/receptionCases';
 
 const CaseManager = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [searchParams] = useSearchParams();
-    const { patients, addCase, updateCase, deleteCase, getCase, cases, insurers, organs, doctors, settings, updateCaseInterconsultation, exams, currentUser, roles, isProductionMode, logUsageEvent, can } = useData();
+    const { patients, addCase, updateCase, deleteCase, getCase, cases, insurers, organs, doctors, settings, updateCaseInterconsultation, exams, currentUser, roles, isProductionMode, logUsageEvent, can, loading: dataLoading } = useData();
     const currentCase = id ? cases.find(c => c.id === id) : null;
 
     console.log("CaseManager settings:", settings);
@@ -205,6 +207,20 @@ const CaseManager = () => {
         secondLook: { active: false, reason: '' }
     });
 
+    const [receptionPicker, setReceptionPicker] = useState(null);
+    const continueReception = receipt => {
+        if (!can('cases', 'edit')) { alert('Necesita permiso para editar casos y continuar una recepción.'); return; }
+        setReceptionPicker(null);
+        navigate(`/cases/${receipt.id}/edit`);
+    };
+    const selectPatient = patientId => {
+        setFormData(previous => ({ ...previous, patientId }));
+        if (id || !patientId) return;
+        const pending = pendingReceptions(cases, patientId);
+        if (pending.length === 1) continueReception(pending[0]);
+        else if (pending.length > 1) setReceptionPicker(patientId);
+    };
+
     const studyGroup = settings?.resultTemplateExamGroups?.[String(formData.examId)];
 
     const [validationModal, setValidationModal] = useState({
@@ -216,13 +232,13 @@ const CaseManager = () => {
     const initializedPatient = useRef(null);
     const requestedPatientId = searchParams.get('patientId');
     useEffect(() => {
-        if (id) return;
+        if (id || dataLoading) return;
         const patient = patients.find(p => p.id === requestedPatientId);
         if (patient && initializedPatient.current !== requestedPatientId) {
             initializedPatient.current = requestedPatientId;
-            setFormData(prev => ({ ...prev, patientId: patient.id }));
+            selectPatient(patient.id);
         }
-    }, [id, requestedPatientId, patients]);
+    }, [id, requestedPatientId, patients, cases, dataLoading]);
 
     const hasLoggedView = useRef(false);
 
@@ -236,14 +252,11 @@ const CaseManager = () => {
                 console.log("Editing Case:", existingCase);
 
                 // Fallback for Exam ID if missing but Type exists
-                let resolvedExamId = existingCase.examId || '';
-                if (!resolvedExamId && existingCase.type && exams.length > 0) {
-                    const foundExam = exams.find(e => e.name === existingCase.type);
-                    if (foundExam) resolvedExamId = foundExam.id;
-                }
+                let resolvedExamId = receptionExamId(existingCase, exams);
+
 
                 // Fallback for Organ if exact match fails (trim)
-                let resolvedOrgan = existingCase.organ || '';
+                let resolvedOrgan = existingCase.organ === 'Por definir (Macro)' ? '' : existingCase.organ || '';
 
                 // Preserve names for fallback display
                 setPreservedNames({
@@ -258,10 +271,14 @@ const CaseManager = () => {
                     examId: resolvedExamId,
                     price: existingCase.price || 0,
                     organ: resolvedOrgan,
-                    clinicalData: existingCase.clinicalData,
-                    macroscopy: existingCase.macroscopy,
-                    microscopy: existingCase.microscopy,
-                    diagnosis: existingCase.diagnosis,
+                    clinicalData: existingCase.clinicalData || '',
+                    originCenterId: existingCase.originCenterId || '',
+                    originCenter: existingCase.originCenter || '',
+                    collectionDate: existingCase.collectionDate || '',
+                    priority: existingCase.priority || 'Normal',
+                    macroscopy: existingCase.macroscopy || '',
+                    microscopy: existingCase.microscopy || '',
+                    diagnosis: existingCase.diagnosis || '',
                     resultDetails: existingCase.resultDetails || {},
                     ihc: existingCase.ihc || '',
                     images: existingCase.images || [],
@@ -550,6 +567,8 @@ const CaseManager = () => {
             return;
         }
 
+        if (!id && pendingReceptions(cases, formData.patientId).length) { setReceptionPicker(formData.patientId); return; }
+
         // Run consistency check before saving
         const consistency = checkReportConsistency(formData);
         setConsistencyResults(consistency);
@@ -647,11 +666,12 @@ const CaseManager = () => {
             patientName: selectedPatient ? (selectedPatient.name || selectedPatient.full_name) : 'Desconocido',
             age: selectedPatient ? selectedPatient.age : '?',
             sex: selectedPatient ? selectedPatient.sex : '?',
-            createdAt: id ? (existingCase?.createdAt) : new Date().toISOString().split('T')[0],
+            createdAt: id ? (existingCase?.createdAt || existingCase?.created_at) : new Date().toISOString().split('T')[0],
             updatedAt: new Date().toISOString().split('T')[0],
             aiCertified: isCertified,
             ...formData, // Overwrite with form data
-            status: 'Borrador',
+            status: existingCase?.status || 'Borrador',
+            ...(existingCase?.source === 'reception' ? { receptionStatus: 'in_progress' } : {}),
             // Ensure nested objects are merged if needed, but formData has the full state for these:
             quantitativeResults: { ...(existingCase?.quantitativeResults || {}), ...formData.quantitativeResults },
             secondLook: { ...(existingCase?.secondLook || {}), ...formData.secondLook }
@@ -877,30 +897,30 @@ const CaseManager = () => {
                     </div>
                 )}
 
+                {!id && <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm">
+                    <p className="mb-2">¿La muestra ya fue recibida? Continúe su registro para conservar sus datos y número de caso.</p>
+                    <Button type="button" onClick={() => setReceptionPicker('all')} disabled={!can('cases', 'edit')}>Recepciones pendientes ({pendingReceptions(cases).length})</Button>
+                </div>}
+                {id && currentCase?.source === 'reception' && <div role="status" className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm">
+                    <p className="font-semibold">Continuando recepción {currentCase.case_number || currentCase.sampleId}</p>
+                    <p>{currentCase.originCenter || 'Sin centro'} · {currentCase.priority || 'Normal'} · {currentCase.collectionDate ? new Date(currentCase.collectionDate).toLocaleString('es-DO') : 'Sin fecha de recolección'}</p>
+                    <p>Se conservará el mismo registro al guardar.</p>
+                </div>}
+                {receptionPicker && <ReceptionPicker records={pendingReceptions(cases, receptionPicker === 'all' ? undefined : receptionPicker)} patients={patients} doctors={doctors}
+                    onSelect={continueReception} onClose={() => setReceptionPicker(null)} />}
                 <form onSubmit={handleSave} className="space-y-6">
                     {/* Patient & Study Data */}
                     <Card title="Datos del Caso">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-sm font-medium text-text-main">Paciente</label>
-                                <select
-                                    className="flex w-full rounded-md border border-border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
-                                    value={formData.patientId}
-                                    onChange={e => setFormData({ ...formData, patientId: e.target.value })}
-                                    required
-                                >
-                                    <option value="">Seleccionar Paciente...</option>
-                                    {patients.map(p => (
-                                        <option key={p.id} value={p.id}>{p.name || p.full_name} ({p.id})</option>
-                                    ))}
-                                    {/* Fallback for preserved patient if not in list */}
-                                    {formData.patientId && !patients.find(p => p.id === formData.patientId) && (
-                                        <option value={formData.patientId}>
-                                            {preservedNames.patientName || formData.patientId} (Preservado)
-                                        </option>
-                                    )}
-                                </select>
-                            </div>
+                            <SearchableCatalogField
+                                label="Paciente" title="Buscar paciente" placeholder="Buscar por nombre o cédula…"
+                                items={patients.map(patient => ({
+                                    id: patient.id, value: patient.id, label: patient.name || patient.full_name,
+                                    detail: [patient.cedula ? `Cédula: ${patient.cedula}` : 'Sin documento', patient.age != null ? `${patient.age} años` : '', patient.sex].filter(Boolean).join(' · ')
+                                }))}
+                                value={formData.patientId} fallbackLabel={preservedNames.patientName || 'Paciente registrado'}
+                                onChange={selectPatient} disabled={Boolean(id) || dataLoading} disabledTitle="El paciente se conserva al continuar una recepción." required
+                            />
 
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-sm font-medium text-text-main">Tipo de Estudio / Examen</label>

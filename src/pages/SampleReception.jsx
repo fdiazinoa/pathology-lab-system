@@ -101,7 +101,7 @@ const SampleReception = () => {
 
         // Generate IDs
         const year = new Date().getFullYear();
-        const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        const randomSuffix = crypto.randomUUID().slice(0, 8).toUpperCase();
         const sampleId = `S-${year}-${randomSuffix}`;
         const caseId = `C-${year}-${randomSuffix}`; // In a real app, logic might differ
 
@@ -111,6 +111,10 @@ const SampleReception = () => {
         const newCase = {
             id: caseId,
             sampleId: sampleId,
+            source: 'reception',
+            receptionStatus: 'pending',
+            originCenterId: formData.originCenterId,
+            collectionDate: formData.collectionDate,
             patientId: formData.patientId,
             patientName: selectedPatient ? selectedPatient.name : 'Desconocido',
             age: selectedPatient ? selectedPatient.age : '?',
@@ -196,7 +200,7 @@ const SampleReception = () => {
                                                     onClick={() => handleSelectPatient(p)}
                                                 >
                                                     <span className="font-bold text-sm">{p.name}</span>
-                                                    <span className="text-xs text-text-secondary">ID: {p.id} • Cédula: {p.cedula || 'N/A'}</span>
+                                                    <span className="text-xs text-text-secondary">Cédula: {p.cedula || 'N/A'}</span>
                                                 </button>
                                             ))
                                         ) : (
@@ -373,7 +377,7 @@ const SampleReception = () => {
                                 <QRCodeCanvas value={generatedSample.id} size={80} />
                                 <div className="flex-1 min-w-0">
                                     <h3 className="font-bold text-lg truncate">{generatedSample.sampleId}</h3>
-                                    <p className="text-xs font-mono text-gray-500">{generatedSample.id}</p>
+                                    <p className="text-xs font-mono text-gray-500">{generatedSample.case_number || generatedSample.sampleId}</p>
                                     <p className="font-bold truncate mt-1">{generatedSample.patientName}</p>
                                     <p className="text-xs text-gray-600 truncate">{generatedSample.type} - {generatedSample.priority}</p>
                                     <p className="text-[10px] text-gray-400 mt-1">{new Date().toLocaleString()}</p>
