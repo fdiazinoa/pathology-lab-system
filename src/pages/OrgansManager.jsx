@@ -6,6 +6,16 @@ import Input from '../components/Input';
 import { ORGAN_GROUPS } from '../services/organGroups';
 import { useData } from '../services/DataContext';
 
+const GROUP_COLORS = {
+    '': { idle: 'bg-slate-100 border-slate-300 text-slate-800 hover:bg-slate-200', active: 'bg-slate-700 border-slate-700 text-white ring-slate-400' },
+    'Ginecológicas': { idle: 'bg-rose-100 border-rose-300 text-rose-900 hover:bg-rose-200', active: 'bg-rose-700 border-rose-700 text-white ring-rose-400' },
+    'Gastrointestinal': { idle: 'bg-amber-100 border-amber-300 text-amber-900 hover:bg-amber-200', active: 'bg-amber-700 border-amber-700 text-white ring-amber-400' },
+    'Urogenital': { idle: 'bg-sky-100 border-sky-300 text-sky-900 hover:bg-sky-200', active: 'bg-sky-700 border-sky-700 text-white ring-sky-400' },
+    'Glándulas Mamarias': { idle: 'bg-violet-100 border-violet-300 text-violet-900 hover:bg-violet-200', active: 'bg-violet-700 border-violet-700 text-white ring-violet-400' },
+    'Piel y Partes Blandas': { idle: 'bg-emerald-100 border-emerald-300 text-emerald-900 hover:bg-emerald-200', active: 'bg-emerald-700 border-emerald-700 text-white ring-emerald-400' },
+    'Patología Quirúrgica': { idle: 'bg-orange-100 border-orange-300 text-orange-900 hover:bg-orange-200', active: 'bg-orange-700 border-orange-700 text-white ring-orange-400' }
+};
+
 const OrgansManager = () => {
     const { organs, addOrgan, updateOrgan, deleteOrgan, can } = useData();
     const [isEditing, setIsEditing] = useState(null);
@@ -109,7 +119,15 @@ const OrgansManager = () => {
 
             <div className="space-y-3">
                 <div className="flex flex-wrap gap-2" role="group" aria-label="Grupos anatómicos">
-                    {['', ...ORGAN_GROUPS].map(value => <button key={value} type="button" aria-pressed={group === value} onClick={() => setGroup(value)} className={`rounded-lg border px-3 py-2 text-sm ${group === value ? 'bg-blue-50 border-blue-500 text-blue-800' : 'bg-white'}`}>{value || 'Todos'} ({organs.filter(o => !value || o.anatomical_group === value).length})</button>)}
+                    {['', ...ORGAN_GROUPS].map(value => {
+                        const selected = group === value;
+                        const colors = GROUP_COLORS[value];
+                        return <button key={value} type="button" aria-pressed={selected} onClick={() => setGroup(value)}
+                            className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-slate-700 ${selected ? `${colors.active} ring-2 ring-offset-2 shadow-sm` : colors.idle}`}>
+                            {value || 'Todos'}
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${selected ? 'bg-white/20' : 'bg-white/70'}`}>{organs.filter(o => !value || o.anatomical_group === value).length}</span>
+                        </button>;
+                    })}
                 </div>
                 <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={needsReview} onChange={event => setNeedsReview(event.target.checked)} />Solo pendientes de revisión ({organs.filter(o => o.classification_review_required).length})</label>
                 <div className="flex flex-col md:flex-row gap-3 md:items-center">
