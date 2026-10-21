@@ -806,6 +806,18 @@ const Settings = () => {
                                     </div>
                                 </div>
 
+                                <div className="flex items-center justify-between border-t border-gray-100 pt-4">
+                                    <div>
+                                        <label htmlFor="operational-workflow-toggle" className="font-medium text-text-main">Registro operativo de etapas</label>
+                                        <p className="text-sm text-text-secondary">Registra entrada, inicio y finalización con responsable y estación. Los registros anteriores se conservan.</p>
+                                    </div>
+                                    <input id="operational-workflow-toggle" type="checkbox" className="h-5 w-5"
+                                        disabled={!can('settings', 'edit')}
+                                        checked={!!formData.enableOperationalWorkflow}
+                                        onChange={event => setFormData(previous => ({ ...previous, enableOperationalWorkflow: event.target.checked,
+                                            ...(event.target.checked ? { enableLabWorkflow: true } : {}) }))} />
+                                </div>
+
                                 {can('system', 'edit') && (
                                     <div className="flex items-center justify-between border-t border-gray-100 pt-4">
                                         <div>

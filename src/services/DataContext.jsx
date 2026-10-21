@@ -323,7 +323,17 @@ export const DataProvider = ({ children }) => {
         await updateCase(updatedCase);
     }, [cases, currentUser, roles, updateCase]);
 
+    const getOperationalWorkflow = useCallback(async (caseId) => dataProvider.getOperationalWorkflow(caseId), [dataProvider]);
+    const addWorkflowStation = useCallback(async (station) => dataProvider.addWorkflowStation(station), [dataProvider]);
+    const recordOperationalStage = useCallback(async (caseId, stageId, action, stationId, scan) => {
+        const result = await dataProvider.recordOperationalStage(caseId, stageId, action, stationId, scan);
+        setCases(previous => previous.map(record => record.id === caseId
+            ? { ...record, stage: result.currentStage, current_stage: result.currentStage } : record));
+        return result;
+    }, [dataProvider]);
+
     const updateCaseStage = useCallback(async (id, newStage) => {
+        if (settings.enableOperationalWorkflow) throw new Error('Registre el movimiento desde el registro operativo de etapas.');
         const currentCase = cases.find(c => c.id === id);
         if (!currentCase) return;
 
@@ -350,7 +360,7 @@ export const DataProvider = ({ children }) => {
         console.log('[DataContext] Atomic Update:', updatedCase);
         await updateCase(updatedCase);
         // Do NOT call addAuditLog here as it causes a race condition with stale state
-    }, [cases, updateCase, currentUser, roles]);
+    }, [cases, updateCase, currentUser, roles, settings.enableOperationalWorkflow]);
 
     const updateCaseInterconsultation = useCallback(async (id, data) => {
         const currentCase = cases.find(c => c.id === id);
@@ -631,6 +641,7 @@ export const DataProvider = ({ children }) => {
         patients, addPatient, updatePatient,
         cases, setCases, getCase: (id) => cases.find(c => c.id === id), addCase, updateCase, deleteCase,
         updateCaseStage, updateCaseInterconsultation, updateCaseTumorBoard,
+        getOperationalWorkflow, addWorkflowStation, recordOperationalStage,
         globalCases, publishToGlobal,
         globalAuditLog, addAuditLog,
         settings, updateSettings, configHistory,
@@ -653,6 +664,7 @@ export const DataProvider = ({ children }) => {
         can, loading, isProductionMode, switchSystemMode, resetDemoData, runMigration, currentUser, login, loginWithGoogle, loginWithGoogleProfile, logout,
         patients, addPatient, updatePatient,
         cases, addCase, updateCase, deleteCase, updateCaseStage, updateCaseInterconsultation, updateCaseTumorBoard,
+        getOperationalWorkflow, addWorkflowStation, recordOperationalStage,
         globalCases, publishToGlobal,
         globalAuditLog, addAuditLog,
         settings, updateSettings, configHistory,

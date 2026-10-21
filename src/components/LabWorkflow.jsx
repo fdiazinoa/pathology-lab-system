@@ -4,6 +4,7 @@ import Card from './Card';
 import Button from './Button';
 import { useData } from '../services/DataContext';
 import { matchCaseScan } from '../services/caseScan';
+import OperationalLabWorkflow from './OperationalLabWorkflow';
 
 const WorkflowStep = ({ title, icon: Icon, data, onAction, isLoading, status, canAdvance, requiresQR }) => {
     const isCompleted = data && data.completed;
@@ -67,7 +68,7 @@ const WorkflowStep = ({ title, icon: Icon, data, onAction, isLoading, status, ca
     );
 };
 
-const LabWorkflow = ({ trackingData, onUpdateTracking, settings, currentUser, caseId, specimens }) => {
+const LegacyLabWorkflow = ({ trackingData, onUpdateTracking, settings, currentUser, caseId, specimens }) => {
     const { logUsageEvent } = useData();
     const safeTrackingData = trackingData || {};
     const [processingStep, setProcessingStep] = useState(null);
@@ -147,4 +148,6 @@ const LabWorkflow = ({ trackingData, onUpdateTracking, settings, currentUser, ca
     );
 };
 
-export default LabWorkflow;
+export default function LabWorkflow(props) {
+    return props.settings.enableOperationalWorkflow ? <OperationalLabWorkflow {...props} /> : <LegacyLabWorkflow {...props} />;
+}

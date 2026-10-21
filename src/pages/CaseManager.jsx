@@ -29,6 +29,7 @@ import StudyResultFields from '../components/StudyResultFields';
 import ReceptionPicker from '../components/ReceptionPicker';
 import { pendingReceptions, receptionExamId } from '../services/receptionCases';
 import { matchCaseScan } from '../services/caseScan';
+import { caseEditorSignature } from '../services/operationalWorkflow';
 
 const initialCaseForm = () => ({
         patientId: '',
@@ -257,10 +258,15 @@ const CaseManager = () => {
     const [preservedNames, setPreservedNames] = useState({ patientName: '', doctorName: '' });
 
     // Effect to load case data when editing
+    const loadedCaseSignature = useRef(null);
     useEffect(() => {
+        if (!id) { loadedCaseSignature.current = null; return; }
         if (id && cases.length > 0) {
             const existingCase = cases.find(c => c.id === id);
             if (existingCase) {
+                const signature = caseEditorSignature(existingCase, exams);
+                if (loadedCaseSignature.current === signature) return;
+                loadedCaseSignature.current = signature;
                 console.log("Editing Case:", existingCase);
 
                 // Fallback for Exam ID if missing but Type exists
