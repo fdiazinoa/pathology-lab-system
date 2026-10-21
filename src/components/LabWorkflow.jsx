@@ -3,6 +3,7 @@ import { Camera, Layers, Scissors, Monitor, CheckCircle, AlertTriangle, Clock, A
 import Card from './Card';
 import Button from './Button';
 import { useData } from '../services/DataContext';
+import { matchCaseScan } from '../services/caseScan';
 
 const WorkflowStep = ({ title, icon: Icon, data, onAction, isLoading, status, canAdvance, requiresQR }) => {
     const isCompleted = data && data.completed;
@@ -43,6 +44,7 @@ const WorkflowStep = ({ title, icon: Icon, data, onAction, isLoading, status, ca
                 ) : (
                     <div className="mt-3">
                         <Button
+                            type="button"
                             size="sm"
                             variant={canAdvance ? "primary" : "secondary"}
                             onClick={onAction}
@@ -65,7 +67,7 @@ const WorkflowStep = ({ title, icon: Icon, data, onAction, isLoading, status, ca
     );
 };
 
-const LabWorkflow = ({ trackingData, onUpdateTracking, settings, currentUser, caseId }) => {
+const LabWorkflow = ({ trackingData, onUpdateTracking, settings, currentUser, caseId, specimens }) => {
     const { logUsageEvent } = useData();
     const safeTrackingData = trackingData || {};
     const [processingStep, setProcessingStep] = useState(null);
@@ -87,10 +89,12 @@ const LabWorkflow = ({ trackingData, onUpdateTracking, settings, currentUser, ca
         setProcessingStep(stageId);
 
         // 1. QR Check
+        let verifiedScan = null;
         if (settings.requireInternalQRScan) {
-            const scan = window.prompt(`[TRAZABILIDAD] Escanee el código QR para validar la etapa: ${stageId}`);
-            if (scan !== caseId) {
-                alert("Código QR incorrecto. No se puede avanzar.");
+            const scan = window.prompt(`[TRAZABILIDAD] Escanee el QR del caso o de uno de sus bloques para validar la etapa: ${stageId}`);
+            verifiedScan = matchCaseScan(scan, { id: caseId, specimens });
+            if (!verifiedScan) {
+                if (scan !== null) alert("El código QR no pertenece a este caso ni a sus bloques. No se puede avanzar.");
                 setProcessingStep(null);
                 return;
             }
@@ -105,6 +109,7 @@ const LabWorkflow = ({ trackingData, onUpdateTracking, settings, currentUser, ca
             timestamp: new Date().toISOString(),
             user: currentUser ? currentUser.name : 'Sistema',
             qrVerified: settings.requireInternalQRScan,
+            ...verifiedScan,
             station: 'Station-01' // Mock station
         };
 

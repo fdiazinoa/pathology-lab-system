@@ -4,7 +4,7 @@ import Button from './Button';
 import { generateId } from '../utils/pathologyHelpers';
 import BlockLabel from './BlockLabel';
 
-const SpecimenManager = ({ specimens = [], onUpdate }) => {
+const SpecimenManager = ({ specimens = [], onUpdate, caseId, caseNumber }) => {
     const [labelToPrint, setLabelToPrint] = useState(null);
 
     // Helper: Get next available letter (A, B, C...)
@@ -177,7 +177,8 @@ const SpecimenManager = ({ specimens = [], onUpdate }) => {
                                             <button
                                                 onClick={() => handlePrintBlock(block, specimen.label)}
                                                 className="ml-2 text-gray-400 hover:text-blue-600 transition-colors"
-                                                title="Imprimir Etiqueta"
+                                                disabled={!caseId}
+                                                title={caseId ? 'Imprimir Etiqueta' : 'Guarde el caso antes de imprimir etiquetas'}
                                                 type="button"
                                             >
                                                 <Printer size={12} />
@@ -205,7 +206,7 @@ const SpecimenManager = ({ specimens = [], onUpdate }) => {
                 <div id="printable-area">
                     <BlockLabel
                         blockId={labelToPrint.id}
-                        caseId="CASE-ID" // TODO: Pass real Case ID
+                        caseId={caseNumber || caseId}
                         label={labelToPrint.label}
                         date={new Date().toLocaleDateString()}
                     />
