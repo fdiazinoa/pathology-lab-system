@@ -4,6 +4,7 @@ import DataProvider from './DataProvider';
 import { supabase } from '../supabaseClient';
 import { buildLabInfoPayload, labInfoToSettings } from '../labSettings';
 import { caseReportMetadata, caseWithReport } from '../caseReportMetadata';
+import { caseStage } from '../caseStages';
 
 class SupabaseDataProvider extends DataProvider {
     constructor() {
@@ -93,7 +94,7 @@ class SupabaseDataProvider extends DataProvider {
                 organ: newCase.organ,
                 diagnosis: newCase.diagnosis || null,
                 status: newCase.status || 'Borrador',
-                current_stage: newCase.current_stage || newCase.stage || 'recepcion',
+                current_stage: caseStage(newCase),
                 payment_method: newCase.payment_method || newCase.paymentType || 'Privado',
                 total_cost: newCase.total_cost ?? newCase.price ?? newCase.cost ?? 0,
                 metadata: caseReportMetadata(newCase)
@@ -115,7 +116,7 @@ class SupabaseDataProvider extends DataProvider {
                 organ: updatedCase.organ,
                 payment_method: updatedCase.paymentType,
                 status: updatedCase.status,
-                current_stage: updatedCase.current_stage || updatedCase.stage,
+                current_stage: caseStage(updatedCase),
                 diagnosis: updatedCase.diagnosis,
                 total_cost: updatedCase.price ?? updatedCase.total_cost ?? updatedCase.cost,
                 metadata: caseReportMetadata(updatedCase, existing.metadata || {})
