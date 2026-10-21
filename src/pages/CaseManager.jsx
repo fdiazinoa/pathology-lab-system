@@ -1041,7 +1041,7 @@ const CaseManager = () => {
                         <LabWorkflow
                             trackingData={formData.tracking}
                             onUpdateTracking={(step, data) => setFormData(prev => ({
-                                ...prev.tracking,
+                                ...prev,
                                 tracking: {
                                     ...prev.tracking,
                                     [step]: data
