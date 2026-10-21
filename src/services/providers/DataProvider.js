@@ -1,3 +1,5 @@
+import { localOperationalSnapshot, addLocalWorkflowStation, recordLocalOperationalStage } from '../localOperationalWorkflow.js';
+
 /**
  * Base DataProvider class defining the interface for data access.
  * All methods should return Promises.
@@ -8,6 +10,11 @@ class DataProvider {
             throw new Error("Abstract class 'DataProvider' cannot be instantiated directly.");
         }
     }
+
+    // --- Operational workflow (local providers; Supabase overrides these methods) ---
+    async getOperationalWorkflow(caseId) { return localOperationalSnapshot(this, caseId); }
+    async addWorkflowStation(station) { return addLocalWorkflowStation(this, station); }
+    async recordOperationalStage(...args) { return recordLocalOperationalStage(this, ...args); }
 
     // --- Authentication & Users ---
     get supportsGoogleProfileLogin() { return false; }

@@ -15,7 +15,7 @@ const STAGES = [
 
 const CaseMap = () => {
     const navigate = useNavigate();
-    const { cases, updateCaseStage } = useData();
+    const { cases, updateCaseStage, settings, can } = useData();
 
     const getCasesByStage = (stage) => {
         return cases.filter(c => caseMapStage(c) === stage);
@@ -40,6 +40,7 @@ const CaseMap = () => {
 
     const handleDrop = async (e, stageId) => {
         e.preventDefault();
+        if (settings.enableOperationalWorkflow) return;
         const caseId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('case_id');
         console.log('Drop Case:', caseId, 'Target Stage:', stageId);
 
@@ -69,6 +70,7 @@ const CaseMap = () => {
                     <div>
                         <h1 className="text-2xl font-bold text-text-main">Mapa de Casos en Tiempo Real</h1>
                         <p className="text-text-secondary">Tablero operativo de seguimiento y SLA.</p>
+                        {settings.enableOperationalWorkflow && <p className="text-sm text-text-secondary">Las etapas se actualizan desde el registro operativo de cada caso.</p>}
                     </div>
                 </div>
                 <div className="flex gap-4 text-sm">
@@ -109,7 +111,7 @@ const CaseMap = () => {
                                     return (
                                         <div
                                             key={c.id}
-                                            draggable
+                                            draggable={!settings.enableOperationalWorkflow && can('processing', 'edit')}
                                             onDragStart={(e) => handleDragStart(e, c.id)}
                                             className="bg-white p-4 rounded-xl border border-transparent shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 cursor-grab active:cursor-grabbing transition-all duration-200 group"
                                             onClick={() => navigate(`/cases/${c.id}`)}

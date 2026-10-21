@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient';
 import { buildLabInfoPayload, labInfoToSettings } from '../labSettings';
 import { caseReportMetadata, caseWithReport } from '../caseReportMetadata';
 import { caseStage } from '../caseStages';
+import { stationPayload } from '../operationalWorkflow';
 
 class SupabaseDataProvider extends DataProvider {
     constructor() {
@@ -126,6 +127,31 @@ class SupabaseDataProvider extends DataProvider {
             .single();
         if (error) throw error;
         return caseWithReport(data);
+    }
+
+    async getOperationalWorkflow(caseId) {
+        const [stations, events] = await Promise.all([
+            supabase.from('workflow_stations').select('*').order('code'),
+            supabase.from('case_stage_events').select('*').eq('case_id', caseId).order('recorded_at').order('id')
+        ]);
+        if (stations.error) throw stations.error;
+        if (events.error) throw events.error;
+        return { stations: stations.data, events: events.data };
+    }
+
+    async addWorkflowStation(station) {
+        const { data, error } = await supabase.from('workflow_stations').insert(stationPayload(station)).select().single();
+        if (error) throw error;
+        return data;
+    }
+
+    async recordOperationalStage(caseId, stageId, action, stationId, scan) {
+        const { data, error } = await supabase.rpc('record_operational_stage', {
+            p_case_id: caseId, p_stage_id: stageId, p_action: action,
+            p_station_id: stationId, p_scanned_code: scan || null
+        });
+        if (error) throw error;
+        return data;
     }
 
     // --- Global Cases ---

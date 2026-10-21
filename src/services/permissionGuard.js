@@ -18,6 +18,9 @@ export function guardProvider(provider, can) {
 const emptyInitial = (before, after) => before == null && (after === '' || (Array.isArray(after) && after.length === 0) || (after && typeof after === 'object' && Object.keys(after).length === 0));
 const changed = (before, after, key) => Object.hasOwn(after, key) && JSON.stringify(before?.[key] ?? null) !== JSON.stringify(after[key] ?? null);
 export async function requirements(provider, method, args) {
+    if (method === 'getOperationalWorkflow') return [['cases', 'read'], ['processing', 'read']];
+    if (method === 'recordOperationalStage') return [['cases', 'read'], ['processing', 'edit']];
+    if (method === 'addWorkflowStation') return [['system', 'edit']];
     const crud = method.match(/^(add|update|delete)(Patient|Case|Center|Doctor|Organ|Exam|Insurer|Equipment|Role|User)$/);
     if (method === 'addCase') {
         const next = args[0];
