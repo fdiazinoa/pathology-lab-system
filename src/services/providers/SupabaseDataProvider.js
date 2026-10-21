@@ -179,14 +179,7 @@ class SupabaseDataProvider extends DataProvider {
                 };
             }
 
-            return {
-                labName: data.name,
-                address: data.address,
-                phone: data.phone,
-                email: data.email,
-                logo_url: data.logo_url,
-                ...data.settings
-            };
+            return labInfoToSettings(data);
         } catch (error) {
             console.error("Error fetching settings:", error);
             return { labName: 'Laboratorio de Patología', aiEnabled: true };
