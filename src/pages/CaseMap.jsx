@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Clock, AlertCircle, CheckCircle2, MoreHorizontal } from 'lucide-react';
 import { useData } from '../services/DataContext';
 import Button from '../components/Button';
+import { caseMapStage } from '../services/caseStages';
 
 const STAGES = [
     { id: 'histologia', label: 'Histología / Corte', color: 'bg-blue-50 border-blue-200 text-blue-800' },
@@ -17,18 +18,7 @@ const CaseMap = () => {
     const { cases, updateCaseStage } = useData();
 
     const getCasesByStage = (stage) => {
-        return cases.filter(c => {
-            const currentStage = c.stage || 'histologia';
-            // Map legacy accented stages to new IDs if necessary
-            let normalizedStage = currentStage;
-            if (currentStage === 'Histología') normalizedStage = 'histologia';
-            if (currentStage === 'Microscopía') normalizedStage = 'microscopia';
-            if (currentStage === 'Estudio Especial') normalizedStage = 'estudios_especiales';
-            if (currentStage === 'Por Firmar') normalizedStage = 'por_firmar';
-            if (currentStage === 'Finalizado') normalizedStage = 'finalizado';
-
-            return normalizedStage === stage;
-        });
+        return cases.filter(c => caseMapStage(c) === stage);
     };
 
     const calculateSLA = (createdAt) => {
@@ -48,13 +38,17 @@ const CaseMap = () => {
         e.dataTransfer.effectAllowed = 'move';
     };
 
-    const handleDrop = (e, stageId) => {
+    const handleDrop = async (e, stageId) => {
         e.preventDefault();
         const caseId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('case_id');
         console.log('Drop Case:', caseId, 'Target Stage:', stageId);
 
         if (caseId) {
-            updateCaseStage(caseId, stageId);
+            try {
+                await updateCaseStage(caseId, stageId);
+            } catch (error) {
+                alert(`No se pudo cambiar la etapa: ${error.message}`);
+            }
         } else {
             console.error('No caseId found in dataTransfer');
         }

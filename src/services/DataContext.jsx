@@ -4,6 +4,7 @@ import ProductionDataProvider from './providers/ProductionDataProvider';
 import SupabaseDataProvider from './providers/AuthenticatedSupabaseDataProvider';
 import { hasPermission } from './permissions';
 import { guardProvider } from './permissionGuard';
+import { caseStage } from './caseStages';
 import BackupService from './BackupService';
 import TelemetryService from './TelemetryService';
 
@@ -326,7 +327,7 @@ export const DataProvider = ({ children }) => {
         const currentCase = cases.find(c => c.id === id);
         if (!currentCase) return;
 
-        const oldStage = currentCase.stage;
+        const oldStage = caseStage(currentCase);
 
         // Create the log entry locally
         const userRole = roles.find(r => r.id === currentUser?.roleId)?.name || 'Sistema';
@@ -341,6 +342,7 @@ export const DataProvider = ({ children }) => {
 
         const updatedCase = {
             ...currentCase,
+            current_stage: newStage,
             stage: newStage,
             auditLogs: [...(currentCase.auditLogs || []), logEntry]
         };

@@ -28,6 +28,7 @@ import { applyStructuredTemplate, clearAppliedTemplate } from '../services/struc
 import StudyResultFields from '../components/StudyResultFields';
 import ReceptionPicker from '../components/ReceptionPicker';
 import { pendingReceptions, receptionExamId } from '../services/receptionCases';
+import { matchCaseScan } from '../services/caseScan';
 
 const initialCaseForm = () => ({
         patientId: '',
@@ -743,11 +744,13 @@ const CaseManager = () => {
     const handleModuleAccess = (moduleName, path) => {
         if (!id) return alert("Debe guardar el caso primero.");
 
+        const currentCase = cases.find(c => c.id === id);
+        let verifiedScan = null;
         if (settings.requireInternalQRScan) {
-            const scan = window.prompt(`[SEGURIDAD] Escanee el código QR de la muestra para acceder a ${moduleName}:`);
-            // For simulation, we check if the input matches the Case ID
-            if (scan !== id) {
-                alert("Código QR incorrecto o no escaneado. Acceso denegado.");
+            const scan = window.prompt(`[SEGURIDAD] Escanee el QR del caso o de uno de sus bloques para acceder a ${moduleName}:`);
+            verifiedScan = matchCaseScan(scan, currentCase);
+            if (!verifiedScan) {
+                if (scan !== null) alert("El código QR no pertenece a este caso ni a sus bloques. Acceso denegado.");
                 return;
             }
         }
@@ -757,10 +760,10 @@ const CaseManager = () => {
             date: new Date().toISOString(),
             user: currentUser?.name || 'Sistema',
             action: `Acceso a ${moduleName}`,
-            qrVerified: settings.requireInternalQRScan
+            qrVerified: settings.requireInternalQRScan,
+            ...verifiedScan
         };
 
-        const currentCase = cases.find(c => c.id === id);
         if (currentCase) {
             const updatedCase = {
                 ...currentCase,
@@ -1041,7 +1044,7 @@ const CaseManager = () => {
                         <LabWorkflow
                             trackingData={formData.tracking}
                             onUpdateTracking={(step, data) => setFormData(prev => ({
-                                ...prev.tracking,
+                                ...prev,
                                 tracking: {
                                     ...prev.tracking,
                                     [step]: data
@@ -1050,12 +1053,15 @@ const CaseManager = () => {
                             settings={settings}
                             currentUser={currentUser}
                             caseId={id}
+                            specimens={getCase(id)?.specimens}
                         />
                     )}
 
                     {/* Specimen Management */}
                     <div className="mb-6">
                         <SpecimenManager
+                            caseId={id}
+                            caseNumber={getCase(id)?.case_number}
                             specimens={formData.specimens}
                             onUpdate={(updatedSpecimens) => setFormData({ ...formData, specimens: updatedSpecimens })}
                         />
