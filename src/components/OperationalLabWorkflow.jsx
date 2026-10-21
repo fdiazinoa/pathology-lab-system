@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Card from './Card';
 import Button from './Button';
+import WorkflowTat from './WorkflowTat';
 import { useData } from '../services/DataContext';
 import { WORKFLOW_STAGES, WORKFLOW_ACTIONS, canEnterStage, stageProgress } from '../services/operationalWorkflow';
 
@@ -103,6 +104,7 @@ export default function OperationalLabWorkflow({ caseId, trackingData, settings 
             {loading && <p role="status">Cargando registro operativo…</p>}
             {error && <p role="alert" className="text-red-700 border border-red-200 bg-red-50 p-3 rounded-md">{error}</p>}
             {closed && <p className="text-sm">El caso está cerrado. Los movimientos anteriores permanecen disponibles para consulta.</p>}
+            {!loading && hasSnapshot && <WorkflowTat key={caseId} record={getCase(caseId)} events={events} />}
             {!loading && WORKFLOW_STAGES.map((stage, index) => {
                 const progress = stageProgress(events, trackingData, stage.id);
                 const blocked = !canEnterStage(events, trackingData, stage.id);
