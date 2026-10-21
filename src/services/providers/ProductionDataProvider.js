@@ -1,10 +1,12 @@
 import { defaultRoles } from '../permissions';
+import { localCasesWithOperationalStages } from '../localOperationalWorkflow';
 import DataProvider from './DataProvider';
 import { readLocalExams, saveLocalExam, deleteLocalExam } from '../localExamCatalog';
 
 class ProductionDataProvider extends DataProvider {
     constructor() {
         super();
+        this.operationalStoragePrefix = 'prod';
         console.log("Initializing ProductionDataProvider (Local Simulation)...");
     }
 
@@ -107,7 +109,7 @@ class ProductionDataProvider extends DataProvider {
     async getCases() {
         await this._delay();
         const saved = localStorage.getItem('prod_cases');
-        return saved ? JSON.parse(saved) : [];
+        return localCasesWithOperationalStages(this, saved ? JSON.parse(saved) : []);
     }
 
     async getCase(id) {

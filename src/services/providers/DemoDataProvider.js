@@ -1,4 +1,5 @@
 import { defaultRoles } from '../permissions';
+import { localCasesWithOperationalStages } from '../localOperationalWorkflow';
 import DataProvider from './DataProvider';
 import { readLocalExams, saveLocalExam, deleteLocalExam } from '../localExamCatalog';
 import { MOCK_PATIENTS, MOCK_CASES, MOCK_GLOBAL_CASES } from '../mockData';
@@ -7,6 +8,7 @@ import { jwtDecode } from "jwt-decode";
 class DemoDataProvider extends DataProvider {
     constructor() {
         super();
+        this.operationalStoragePrefix = 'app';
         this.initData();
     }
 
@@ -204,7 +206,7 @@ class DemoDataProvider extends DataProvider {
         await this._delay();
         try {
             const saved = localStorage.getItem('app_cases');
-            return saved ? JSON.parse(saved) : MOCK_CASES;
+            return localCasesWithOperationalStages(this, saved ? JSON.parse(saved) : MOCK_CASES);
         } catch (e) {
             console.error("Error parsing app_cases", e);
             return MOCK_CASES;

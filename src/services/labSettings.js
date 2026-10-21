@@ -1,5 +1,5 @@
 const LAB_FIELDS = { labName: 'name', address: 'address', phone: 'phone', email: 'email', logo_url: 'logo_url' };
-const JSON_FIELDS = new Set(['aiEnabled', 'enableLabWorkflow', 'requireInternalQRScan', 'requireStepQR', 'resultTemplates', 'resultTemplateExamGroups']);
+const JSON_FIELDS = new Set(['aiEnabled', 'enableLabWorkflow', 'enableOperationalWorkflow', 'requireInternalQRScan', 'requireStepQR', 'resultTemplates', 'resultTemplateExamGroups']);
 
 // Merge JSON settings: saving a catalog must not erase the lab identity or other options.
 export function buildLabInfoPayload(existing, changes) {
